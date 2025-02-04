@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\Auth\UserController;
+use App\Http\Controllers\BalanceController;
+use App\Http\Controllers\PaymentController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -16,3 +18,5 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::resource('projects', ProjectController::class)->middleware('auth');
+Route::resource('balances', BalanceController::class);
+Route::resource('payments', PaymentController::class)->middleware('auth');

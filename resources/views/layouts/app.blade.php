@@ -39,6 +39,12 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('projects.index') }}">Proyectos</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('balances.index') }}">Balances</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('payments.index') }}">Pagos</a>
+                            </li>
                         @endauth
                     </ul>
 

@@ -32,33 +32,19 @@
                                             {{ $project->fecha_entrega ? $project->fecha_entrega->format('d/m/Y') : 'No definida' }}
                                         </div>
                                         <div class="mb-2">
-                                            <small class="text-muted">Precio Total:</small><br>
-                                            <span class="text-primary">${{ number_format($project->precio, 2) }}</span>
+                                            <small class="text-muted">Estado:</small><br>
+                                            <span class="badge bg-{{ $project->estado === 'completado' ? 'success' : 
+                                                ($project->estado === 'en_progreso' ? 'primary' : 
+                                                ($project->estado === 'cancelado' ? 'danger' : 'warning')) }}">
+                                                {{ ucfirst(str_replace('_', ' ', $project->estado)) }}
+                                            </span>
                                         </div>
-                                        <div class="mb-2">
-                                            <small class="text-muted">Saldo Pendiente:</small><br>
-                                            <span class="text-danger">${{ number_format($project->saldo, 2) }}</span>
-                                        </div>
-                                        <div class="mb-2">
-                                            <small class="text-muted">Estado de Pagos:</small><br>
-                                            <div class="mt-1">
-                                                @if($project->tiene_pago_mensual)
-                                                    <span class="badge bg-info">
-                                                        Mensual: ${{ number_format($project->monto_mensual, 2) }}
-                                                    </span>
-                                                @endif
-                                                @if($project->tiene_pago_unico)
-                                                    <span class="badge bg-success">
-                                                        Único: ${{ number_format($project->monto_unico, 2) }}
-                                                    </span>
-                                                @endif
-                                                @if($project->monto_anual > 0)
-                                                    <span class="badge bg-warning">
-                                                        Anual: ${{ number_format($project->monto_anual, 2) }}
-                                                    </span>
-                                                @endif
+                                        @if($project->implementado_en)
+                                            <div class="mb-2">
+                                                <small class="text-muted">Implementado en:</small><br>
+                                                {{ $project->implementado_en->format('d/m/Y') }}
                                             </div>
-                                        </div>
+                                        @endif
                                         @if($project->descripcion)
                                             <div class="mb-2">
                                                 <small class="text-muted">Descripción:</small><br>
@@ -108,7 +94,7 @@
 
 <!-- Modal para crear proyecto -->
 <div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="createProjectModalLabel">Crear Nuevo Proyecto</h5>
@@ -127,33 +113,13 @@
                         </div>
                     @endif
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="nombre" class="form-label">Nombre del Proyecto *</label>
-                            <input type="text" class="form-control @error('nombre') is-invalid @enderror" 
-                                id="nombre" name="nombre" required value="{{ old('nombre') }}">
-                            @error('nombre')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="col-md-6">
-                            <label for="fecha_entrega" class="form-label">Fecha de Entrega</label>
-                            <input type="date" class="form-control @error('fecha_entrega') is-invalid @enderror" 
-                                id="fecha_entrega" name="fecha_entrega" value="{{ old('fecha_entrega') }}">
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="precio" class="form-label">Precio Total *</label>
-                            <input type="number" step="0.01" class="form-control @error('precio') is-invalid @enderror" 
-                                id="precio" name="precio" required value="{{ old('precio', 0) }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="saldo" class="form-label">Saldo *</label>
-                            <input type="number" step="0.01" class="form-control @error('saldo') is-invalid @enderror" 
-                                id="saldo" name="saldo" required value="{{ old('saldo', 0) }}">
-                        </div>
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre del Proyecto *</label>
+                        <input type="text" class="form-control @error('nombre') is-invalid @enderror" 
+                            id="nombre" name="nombre" required value="{{ old('nombre') }}">
+                        @error('nombre')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="mb-3">
@@ -162,36 +128,31 @@
                             id="descripcion" name="descripcion" rows="3">{{ old('descripcion') }}</textarea>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="monto_anual" class="form-label">Monto Anual *</label>
-                            <input type="number" step="0.01" class="form-control @error('monto_anual') is-invalid @enderror" 
-                                id="monto_anual" name="monto_anual" required value="{{ old('monto_anual', 0) }}">
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-check mt-4">
-                                <input class="form-check-input" type="checkbox" id="tiene_pago_mensual" 
-                                    name="tiene_pago_mensual" value="1" {{ old('tiene_pago_mensual') ? 'checked' : '' }}>
-                                <label class="form-check-label" for="tiene_pago_mensual">
-                                    Tiene pago mensual
-                                </label>
-                            </div>
-                            <input type="number" step="0.01" class="form-control mt-2 @error('monto_mensual') is-invalid @enderror" 
-                                id="monto_mensual" name="monto_mensual" placeholder="Monto mensual" 
-                                value="{{ old('monto_mensual') }}">
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-check mt-4">
-                                <input class="form-check-input" type="checkbox" id="tiene_pago_unico" 
-                                    name="tiene_pago_unico" value="1" {{ old('tiene_pago_unico') ? 'checked' : '' }}>
-                                <label class="form-check-label" for="tiene_pago_unico">
-                                    Tiene pago único
-                                </label>
-                            </div>
-                            <input type="number" step="0.01" class="form-control mt-2 @error('monto_unico') is-invalid @enderror" 
-                                id="monto_unico" name="monto_unico" placeholder="Monto único" 
-                                value="{{ old('monto_unico') }}">
-                        </div>
+                    <div class="mb-3">
+                        <label for="fecha_entrega" class="form-label">Fecha de Entrega</label>
+                        <input type="date" class="form-control @error('fecha_entrega') is-invalid @enderror" 
+                            id="fecha_entrega" name="fecha_entrega" value="{{ old('fecha_entrega') }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="implementado_en" class="form-label">Fecha de Implementación</label>
+                        <input type="date" class="form-control @error('implementado_en') is-invalid @enderror" 
+                            id="implementado_en" name="implementado_en" value="{{ old('implementado_en') }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="estado" class="form-label">Estado *</label>
+                        <select class="form-select @error('estado') is-invalid @enderror" 
+                            id="estado" name="estado" required>
+                            <option value="">Seleccionar estado</option>
+                            <option value="pendiente" {{ old('estado', 'pendiente') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
+                            <option value="en_progreso" {{ old('estado') === 'en_progreso' ? 'selected' : '' }}>En Progreso</option>
+                            <option value="completado" {{ old('estado') === 'completado' ? 'selected' : '' }}>Completado</option>
+                            <option value="cancelado" {{ old('estado') === 'cancelado' ? 'selected' : '' }}>Cancelado</option>
+                        </select>
+                        @error('estado')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -205,7 +166,7 @@
 
 <!-- Modal para editar proyecto -->
 <div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="editProjectModalLabel">Editar Proyecto</h5>
@@ -215,36 +176,9 @@
                 @csrf
                 @method('PUT')
                 <div class="modal-body">
-                    @if ($errors->any())
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="edit_nombre" class="form-label">Nombre del Proyecto *</label>
-                            <input type="text" class="form-control" id="edit_nombre" name="nombre" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_fecha_entrega" class="form-label">Fecha de Entrega</label>
-                            <input type="date" class="form-control" id="edit_fecha_entrega" name="fecha_entrega">
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="edit_precio" class="form-label">Precio Total *</label>
-                            <input type="number" step="0.01" class="form-control" id="edit_precio" name="precio" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_saldo" class="form-label">Saldo *</label>
-                            <input type="number" step="0.01" class="form-control" id="edit_saldo" name="saldo" required>
-                        </div>
+                    <div class="mb-3">
+                        <label for="edit_nombre" class="form-label">Nombre del Proyecto *</label>
+                        <input type="text" class="form-control" id="edit_nombre" name="nombre" required>
                     </div>
 
                     <div class="mb-3">
@@ -252,29 +186,24 @@
                         <textarea class="form-control" id="edit_descripcion" name="descripcion" rows="3"></textarea>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="edit_monto_anual" class="form-label">Monto Anual *</label>
-                            <input type="number" step="0.01" class="form-control" id="edit_monto_anual" name="monto_anual" required>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-check mt-4">
-                                <input class="form-check-input" type="checkbox" id="edit_tiene_pago_mensual" name="tiene_pago_mensual" value="1">
-                                <label class="form-check-label" for="edit_tiene_pago_mensual">
-                                    Tiene pago mensual
-                                </label>
-                            </div>
-                            <input type="number" step="0.01" class="form-control mt-2" id="edit_monto_mensual" name="monto_mensual" placeholder="Monto mensual">
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-check mt-4">
-                                <input class="form-check-input" type="checkbox" id="edit_tiene_pago_unico" name="tiene_pago_unico" value="1">
-                                <label class="form-check-label" for="edit_tiene_pago_unico">
-                                    Tiene pago único
-                                </label>
-                            </div>
-                            <input type="number" step="0.01" class="form-control mt-2" id="edit_monto_unico" name="monto_unico" placeholder="Monto único">
-                        </div>
+                    <div class="mb-3">
+                        <label for="edit_fecha_entrega" class="form-label">Fecha de Entrega</label>
+                        <input type="date" class="form-control" id="edit_fecha_entrega" name="fecha_entrega">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_implementado_en" class="form-label">Fecha de Implementación</label>
+                        <input type="date" class="form-control" id="edit_implementado_en" name="implementado_en">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_estado" class="form-label">Estado *</label>
+                        <select class="form-select" id="edit_estado" name="estado" required>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="en_progreso">En Progreso</option>
+                            <option value="completado">Completado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -292,21 +221,11 @@
 <script>
 // Variable global para el modal
 let editProjectModal = null;
-let originalModalContent = '';
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar el modal una sola vez
+    // Inicializar el modal
     editProjectModal = new bootstrap.Modal(document.getElementById('editProjectModal'));
     
-    // Guardar el contenido original
-    originalModalContent = document.querySelector('#editProjectModal .modal-body').innerHTML;
-    
-    // Configurar listeners
-    setupFormListeners('tiene_pago_mensual', 'monto_mensual');
-    setupFormListeners('tiene_pago_unico', 'monto_unico');
-    setupFormListeners('edit_tiene_pago_mensual', 'edit_monto_mensual');
-    setupFormListeners('edit_tiene_pago_unico', 'edit_monto_unico');
-
     // Mostrar modal de creación si hay errores
     @if($errors->any())
         var createProjectModal = new bootstrap.Modal(document.getElementById('createProjectModal'));
@@ -317,15 +236,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function editProject(projectId) {
     // Obtener referencia al modal
     const modalElement = document.getElementById('editProjectModal');
-    
-    // Mostrar spinner
-    modalElement.querySelector('.modal-body').innerHTML = `
-        <div class="text-center py-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Cargando...</span>
-            </div>
-        </div>
-    `;
     
     // Mostrar el modal
     if (editProjectModal) {
@@ -350,80 +260,21 @@ function editProject(projectId) {
         return response.json();
     })
     .then(data => {
-        console.log('Datos recibidos:', data); // Para debugging
-        
-        // Restaurar el contenido original del modal
-        modalElement.querySelector('.modal-body').innerHTML = originalModalContent;
-        
         // Actualizar el formulario
         const form = document.getElementById('editProjectForm');
         form.action = `/projects/${projectId}`;
 
         // Llenar los campos
-        fillFormFields(data);
+        document.getElementById('edit_nombre').value = data.nombre || '';
+        document.getElementById('edit_descripcion').value = data.descripcion || '';
+        document.getElementById('edit_fecha_entrega').value = data.fecha_entrega || '';
+        document.getElementById('edit_implementado_en').value = data.implementado_en || '';
+        document.getElementById('edit_estado').value = data.estado || 'pendiente';
     })
     .catch(error => {
         console.error('Error:', error);
-        modalElement.querySelector('.modal-body').innerHTML = `
-            <div class="alert alert-danger m-3">
-                <p class="mb-0">Error al cargar los datos del proyecto.</p>
-                <small>${error.message}</small>
-            </div>
-        `;
+        alert('Error al cargar los datos del proyecto');
     });
-}
-
-function fillFormFields(data) {
-    // Función auxiliar para establecer valores de forma segura
-    const setValue = (id, value) => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.value = value || '';
-        }
-    };
-
-    // Campos de texto y números
-    setValue('edit_nombre', data.nombre);
-    setValue('edit_descripcion', data.descripcion);
-    setValue('edit_fecha_entrega', data.fecha_entrega);
-    setValue('edit_precio', data.precio);
-    setValue('edit_saldo', data.saldo);
-    setValue('edit_monto_anual', data.monto_anual);
-
-    // Manejar pagos mensuales
-    const mensualCheck = document.getElementById('edit_tiene_pago_mensual');
-    const mensualInput = document.getElementById('edit_monto_mensual');
-    if (mensualCheck && mensualInput) {
-        mensualCheck.checked = Boolean(data.tiene_pago_mensual);
-        mensualInput.disabled = !data.tiene_pago_mensual;
-        mensualInput.value = data.tiene_pago_mensual ? (data.monto_mensual || '') : '';
-    }
-
-    // Manejar pagos únicos
-    const unicoCheck = document.getElementById('edit_tiene_pago_unico');
-    const unicoInput = document.getElementById('edit_monto_unico');
-    if (unicoCheck && unicoInput) {
-        unicoCheck.checked = Boolean(data.tiene_pago_unico);
-        unicoInput.disabled = !data.tiene_pago_unico;
-        unicoInput.value = data.tiene_pago_unico ? (data.monto_unico || '') : '';
-    }
-}
-
-// Función para configurar los event listeners de los checkboxes
-function setupFormListeners(checkboxId, inputId) {
-    const checkbox = document.getElementById(checkboxId);
-    const input = document.getElementById(inputId);
-    
-    if (checkbox && input) {
-        checkbox.addEventListener('change', function() {
-            input.disabled = !this.checked;
-            input.required = this.checked;
-            if (!this.checked) input.value = '';
-        });
-        
-        // Inicializar estado
-        input.disabled = !checkbox.checked;
-    }
 }
 </script>
 @endpush
@@ -438,9 +289,6 @@ function setupFormListeners(checkboxId, inputId) {
     }
     .btn-group .btn {
         flex: 1;
-    }
-    .badge {
-        font-size: 0.8em;
     }
 </style>
 @endpush

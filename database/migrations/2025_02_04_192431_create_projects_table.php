@@ -16,17 +16,8 @@ return new class extends Migration
             $table->string('nombre');
             $table->text('descripcion')->nullable();
             $table->date('fecha_entrega')->nullable();
-            $table->decimal('precio', 10, 2)->default(0.00);
-            $table->decimal('saldo', 10, 2)->default(0.00);
             $table->date('implementado_en')->nullable();
-
-            // Pagos
-            $table->decimal('monto_anual', 10, 2)->default(0.00);
-            $table->boolean('tiene_pago_unico')->default(false);
-            $table->decimal('monto_unico', 10, 2)->nullable();
-            $table->boolean('tiene_pago_mensual')->default(false);
-            $table->decimal('monto_mensual', 10, 2)->nullable();
-
+            $table->enum('estado', ['pendiente', 'en_progreso', 'completado', 'cancelado'])->default('pendiente');
             $table->timestamps();
         });
     }

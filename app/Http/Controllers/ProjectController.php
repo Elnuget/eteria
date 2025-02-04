@@ -34,31 +34,33 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'descripcion' => 'nullable|string',
-            'fecha_entrega' => 'nullable|date',
-            'precio' => 'required|numeric|min:0',
-            'saldo' => 'required|numeric|min:0',
-            'implementado_en' => 'nullable|date',
-            'monto_anual' => 'required|numeric|min:0',
-            'tiene_pago_unico' => 'boolean',
-            'monto_unico' => 'nullable|numeric|min:0|required_if:tiene_pago_unico,true',
-            'tiene_pago_mensual' => 'boolean',
-            'monto_mensual' => 'nullable|numeric|min:0|required_if:tiene_pago_mensual,true',
-        ]);
-
-        // Asegurar que los valores booleanos sean correctos
-        $validated['tiene_pago_unico'] = $request->has('tiene_pago_unico');
-        $validated['tiene_pago_mensual'] = $request->has('tiene_pago_mensual');
-
         try {
-            Project::create($validated);
+            $validated = $request->validate([
+                'nombre' => 'required|string|max:255',
+                'descripcion' => 'nullable|string',
+                'fecha_entrega' => 'nullable|date',
+                'implementado_en' => 'nullable|date',
+                'estado' => 'required|string|in:pendiente,en_progreso,completado,cancelado'
+            ]);
+
+            // Asignar estado por defecto si no se proporciona
+            if (!isset($validated['estado'])) {
+                $validated['estado'] = 'pendiente';
+            }
+
+            \Log::info('Datos validados:', $validated); // Para debugging
+
+            $project = Project::create($validated);
+
             return redirect()->route('projects.index')
                 ->with('success', 'Proyecto creado exitosamente.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Error de validación: ' . $e->getMessage());
+            return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
+            \Log::error('Error al crear proyecto: ' . $e->getMessage());
             return back()->withInput()
-                ->withErrors(['error' => 'Error al crear el proyecto. Por favor, intente nuevamente.']);
+                ->withErrors(['error' => 'Error al crear el proyecto. Por favor, intente nuevamente. (' . $e->getMessage() . ')']);
         }
     }
 
@@ -77,19 +79,13 @@ class ProjectController extends Controller
     {
         if (request()->ajax()) {
             try {
-                // Formatear los datos para la respuesta JSON
                 $projectData = [
                     'id' => $project->id,
                     'nombre' => $project->nombre,
                     'descripcion' => $project->descripcion,
                     'fecha_entrega' => optional($project->fecha_entrega)->format('Y-m-d'),
-                    'precio' => number_format($project->precio, 2, '.', ''),
-                    'saldo' => number_format($project->saldo, 2, '.', ''),
-                    'monto_anual' => number_format($project->monto_anual, 2, '.', ''),
-                    'tiene_pago_mensual' => (bool) $project->tiene_pago_mensual,
-                    'monto_mensual' => $project->monto_mensual ? number_format($project->monto_mensual, 2, '.', '') : null,
-                    'tiene_pago_unico' => (bool) $project->tiene_pago_unico,
-                    'monto_unico' => $project->monto_unico ? number_format($project->monto_unico, 2, '.', '') : null,
+                    'implementado_en' => optional($project->implementado_en)->format('Y-m-d'),
+                    'estado' => $project->estado
                 ];
 
                 return response()->json($projectData);
@@ -111,19 +107,9 @@ class ProjectController extends Controller
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
             'fecha_entrega' => 'nullable|date',
-            'precio' => 'required|numeric|min:0',
-            'saldo' => 'required|numeric|min:0',
             'implementado_en' => 'nullable|date',
-            'monto_anual' => 'required|numeric|min:0',
-            'tiene_pago_unico' => 'boolean',
-            'monto_unico' => 'nullable|numeric|min:0|required_if:tiene_pago_unico,true',
-            'tiene_pago_mensual' => 'boolean',
-            'monto_mensual' => 'nullable|numeric|min:0|required_if:tiene_pago_mensual,true',
+            'estado' => 'required|string|in:pendiente,en_progreso,completado,cancelado'
         ]);
-
-        // Asegurar que los valores booleanos sean correctos
-        $validated['tiene_pago_unico'] = $request->has('tiene_pago_unico');
-        $validated['tiene_pago_mensual'] = $request->has('tiene_pago_mensual');
 
         try {
             $project->update($validated);
