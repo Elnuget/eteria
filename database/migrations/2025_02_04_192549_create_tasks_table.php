@@ -21,6 +21,7 @@ return new class extends Migration
             $table->foreignId('completado_por')->nullable()->constrained('users')->onDelete('set null'); 
             $table->integer('tiempo_estimado')->nullable(); // En minutos
             $table->integer('tiempo_real')->nullable(); // En minutos
+            $table->timestamp('tiempo_inicio')->nullable(); // Nuevo campo
             $table->timestamps();
         });
     }
