@@ -66,6 +66,11 @@
                                     </form>
                                 </div>
                             </li>
+                            @auth
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('users.index') }}">Usuarios</a>
+                                </li>
+                            @endauth
                         @endguest
                     </ul>
                 </div>
