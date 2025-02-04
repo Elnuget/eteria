@@ -39,12 +39,14 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('projects.index') }}">Proyectos</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('tasks.index') }}">Tareas</a>
+                            </li>
                         @endauth
                     </ul>
 
                     <!-- Right Side Of Navbar -->
                     <ul class="navbar-nav ms-auto">
-                        <!-- Authentication Links -->
                         @guest
                             @if (Route::has('login'))
                                 <li class="nav-item">
@@ -59,27 +61,41 @@
                             @endif
                         @else
                             <li class="nav-item dropdown">
-                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
+                                <button class="nav-link dropdown-toggle btn btn-link" 
+                                        type="button"
+                                        id="navbarDropdown" 
+                                        data-bs-toggle="dropdown" 
+                                        aria-expanded="false">
                                     {{ Auth::user()->name }}
-                                </a>
+                                </button>
 
-                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                    <a class="dropdown-item" href="{{ route('logout') }}"
-                                       onclick="event.preventDefault();
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                    @if(Auth::user()->is_admin)
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('users.index') }}">
+                                                <i class="fas fa-users"></i> Usuarios
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    @endif
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('login') }}">
+                                            <i class="fas fa-user-switch"></i> Cambiar Usuario
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('logout') }}"
+                                           onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
-                                        {{ __('Logout') }}
-                                    </a>
+                                            <i class="fas fa-sign-out-alt"></i> {{ __('Cerrar Sesión') }}
+                                        </a>
 
-                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                        @csrf
-                                    </form>
-                                </div>
+                                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                            @csrf
+                                        </form>
+                                    </li>
+                                </ul>
                             </li>
-                            @auth
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('users.index') }}">Usuarios</a>
-                                </li>
-                            @endauth
                         @endguest
                     </ul>
                 </div>
@@ -92,5 +108,25 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     @stack('scripts')
+
+    <style>
+        .btn-link {
+            text-decoration: none;
+            color: #212529;
+            padding: 0.5rem 1rem;
+        }
+        .btn-link:hover {
+            color: #0056b3;
+        }
+        .dropdown-menu {
+            min-width: 200px;
+        }
+        .dropdown-item {
+            padding: 0.5rem 1rem;
+        }
+        .dropdown-item i {
+            margin-right: 0.5rem;
+        }
+    </style>
 </body>
 </html>
