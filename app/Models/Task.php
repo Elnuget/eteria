@@ -12,20 +12,34 @@ class Task extends Model
         'descripcion',
         'proyecto_id',
         'estado',
+        'prioridad',
+        'dificultad',
         'desarrollado_por',
         'completado_por',
         'tiempo_estimado',
         'tiempo_real',
+        'fecha_asignacion',
+        'fecha_limite',
         'tiempo_inicio',
+        'fecha_recordatorio',
+        'recordatorio_enviado'
     ];
 
     protected $casts = [
         'tiempo_estimado' => 'integer',
         'tiempo_real' => 'integer',
+        'recordatorio_enviado' => 'boolean',
+        'fecha_asignacion' => 'datetime',
+        'tiempo_inicio' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
 
     protected $dates = [
+        'fecha_asignacion',
+        'fecha_limite',
         'tiempo_inicio',
+        'fecha_recordatorio'
     ];
 
     public function project(): BelongsTo

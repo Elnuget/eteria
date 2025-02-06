@@ -6,6 +6,7 @@ use App\Models\Task;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Helpers\TimeFormatter;
 
 class TaskController extends Controller
 {
@@ -16,12 +17,39 @@ class TaskController extends Controller
 
     public function index()
     {
+        // Orden de prioridad: urgente > alta > media > baja
+        $priorityOrder = [
+            'urgente' => 1,
+            'alta' => 2,
+            'media' => 3,
+            'baja' => 4
+        ];
+
         $tasks = Task::with(['project', 'developer', 'completedBy'])
-                    ->orderBy('created_at', 'desc')
-                    ->paginate(9); // Cambiado de get() a paginate()
+            ->orderByRaw("CASE 
+                WHEN prioridad = 'urgente' THEN 1 
+                WHEN prioridad = 'alta' THEN 2 
+                WHEN prioridad = 'media' THEN 3 
+                WHEN prioridad = 'baja' THEN 4 
+            END")
+            ->orderBy('created_at', 'desc')
+            ->paginate(9);
+
+        // Obtener tareas pendientes del usuario actual
+        $tareasPendientes = Task::where('desarrollado_por', auth()->id())
+            ->whereIn('estado', ['pendiente', 'en progreso'])
+            ->orderByRaw("CASE 
+                WHEN prioridad = 'urgente' THEN 1 
+                WHEN prioridad = 'alta' THEN 2 
+                WHEN prioridad = 'media' THEN 3 
+                WHEN prioridad = 'baja' THEN 4 
+            END")
+            ->get();
+
         $projects = Project::all();
         $users = User::all();
-        return view('tasks.index', compact('tasks', 'projects', 'users'));
+        
+        return view('tasks.index', compact('tasks', 'projects', 'users', 'tareasPendientes'));
     }
 
     public function create()
@@ -38,8 +66,17 @@ class TaskController extends Controller
             'descripcion' => 'nullable|string',
             'proyecto_id' => 'required|exists:projects,id',
             'estado' => 'required|in:pendiente,en progreso,completada',
-            'tiempo_estimado' => 'nullable|integer|min:0',
+            'prioridad' => 'required|in:baja,media,alta,urgente',
+            'dificultad' => 'required|in:facil,intermedia,dificil,experto',
+            'tiempo_estimado' => 'required|integer|min:0',
+            'fecha_limite' => 'nullable|date',
+            'fecha_recordatorio' => 'nullable|date'
         ]);
+
+        // Agregar fecha de asignación si hay desarrollador asignado
+        if ($request->has('desarrollado_por')) {
+            $validated['fecha_asignacion'] = now();
+        }
 
         Task::create($validated);
 
@@ -66,7 +103,11 @@ class TaskController extends Controller
             'descripcion' => 'nullable|string',
             'proyecto_id' => 'required|exists:projects,id',
             'estado' => 'required|in:pendiente,en progreso,completada',
-            'tiempo_estimado' => 'nullable|integer|min:0',
+            'prioridad' => 'required|in:baja,media,alta,urgente',
+            'dificultad' => 'required|in:facil,intermedia,dificil,experto',
+            'tiempo_estimado' => 'required|integer|min:0',
+            'fecha_limite' => 'nullable|date',
+            'fecha_recordatorio' => 'nullable|date'
         ]);
 
         // Si la tarea se marca como completada, registrar el usuario que la completó
@@ -98,7 +139,8 @@ class TaskController extends Controller
         $task->update([
             'desarrollado_por' => auth()->id(),
             'estado' => 'en progreso',
-            'tiempo_inicio' => now()
+            'tiempo_inicio' => now(),
+            'fecha_asignacion' => now() // Asegurarnos de que sea un objeto Carbon
         ]);
 
         return redirect()->route('tasks.index')
@@ -113,30 +155,6 @@ class TaskController extends Controller
         }
 
         $tiempoReal = (int)now()->diffInSeconds($task->tiempo_inicio);
-        $mensaje = '';
-
-        if ($tiempoReal < 60) {
-            // Menos de un minuto
-            $mensaje = (int)$tiempoReal . ' segundos';
-        } elseif ($tiempoReal < 3600) {
-            // Menos de una hora
-            $minutos = (int)floor($tiempoReal / 60);
-            $segundos = (int)($tiempoReal % 60);
-            $mensaje = $minutos . ' minutos y ' . $segundos . ' segundos';
-        } elseif ($tiempoReal < 86400) {
-            // Menos de un día
-            $horas = (int)floor($tiempoReal / 3600);
-            $minutos = (int)floor(($tiempoReal % 3600) / 60);
-            $segundos = (int)($tiempoReal % 60);
-            $mensaje = $horas . ' horas, ' . $minutos . ' minutos y ' . $segundos . ' segundos';
-        } else {
-            // Más de un día
-            $dias = (int)floor($tiempoReal / 86400);
-            $horas = (int)floor(($tiempoReal % 86400) / 3600);
-            $minutos = (int)floor(($tiempoReal % 3600) / 60);
-            $segundos = (int)($tiempoReal % 60);
-            $mensaje = $dias . ' días, ' . $horas . ' horas, ' . $minutos . ' minutos y ' . $segundos . ' segundos';
-        }
 
         $task->update([
             'estado' => 'completada',
@@ -145,6 +163,6 @@ class TaskController extends Controller
         ]);
 
         return redirect()->route('tasks.index')
-            ->with('success', 'Tarea completada exitosamente en ' . $mensaje);
+            ->with('success', 'Tarea completada exitosamente en ' . TimeFormatter::formatSeconds($tiempoReal));
     }
 }

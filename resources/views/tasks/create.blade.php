@@ -64,6 +64,20 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="prioridad" class="form-label">Prioridad *</label>
+                            <select class="form-select @error('prioridad') is-invalid @enderror" 
+                                id="prioridad" name="prioridad" required>
+                                <option value="baja">Baja</option>
+                                <option value="media" selected>Media</option>
+                                <option value="alta">Alta</option>
+                                <option value="urgente">Urgente</option>
+                            </select>
+                            @error('prioridad')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
                             <label for="desarrollado_por" class="form-label">Desarrollador</label>
                             <select class="form-select @error('desarrollado_por') is-invalid @enderror" 
                                 id="desarrollado_por" name="desarrollado_por">

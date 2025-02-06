@@ -17,11 +17,17 @@ return new class extends Migration
             $table->text('descripcion')->nullable();
             $table->foreignId('proyecto_id')->constrained('projects')->onDelete('cascade');
             $table->enum('estado', ['pendiente', 'en progreso', 'completada'])->default('pendiente');
-            $table->foreignId('desarrollado_por')->nullable()->constrained('users')->onDelete('set null'); 
-            $table->foreignId('completado_por')->nullable()->constrained('users')->onDelete('set null'); 
+            $table->enum('prioridad', ['baja', 'media', 'alta', 'urgente'])->default('media');
+            $table->enum('dificultad', ['facil', 'intermedia', 'dificil', 'experto'])->default('intermedia');
+            $table->foreignId('desarrollado_por')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('completado_por')->nullable()->constrained('users')->onDelete('set null');
             $table->integer('tiempo_estimado')->nullable(); // En minutos
             $table->integer('tiempo_real')->nullable(); // En minutos
-            $table->timestamp('tiempo_inicio')->nullable(); // Nuevo campo
+            $table->timestamp('fecha_asignacion')->nullable();
+            $table->timestamp('fecha_limite')->nullable();
+            $table->timestamp('tiempo_inicio')->nullable();
+            $table->timestamp('fecha_recordatorio')->nullable();
+            $table->boolean('recordatorio_enviado')->default(false);
             $table->timestamps();
         });
     }
