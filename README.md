@@ -11,3 +11,19 @@ php artisan config:cache
 php artisan route:clear 
 php artisan route:cache
 php artisan migrate:fresh --seed
+
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+php artisan route:clear
+composer install
+npm run build 
+composer install --optimize-autoloader --no-dev 
+git pull origin main
+chown -R www-data:www-data /var/www/eteria
+chmod -R 755 /var/www/eteria
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+php artisan route:clear
+
