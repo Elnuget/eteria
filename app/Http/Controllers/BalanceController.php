@@ -20,7 +20,9 @@ class BalanceController extends Controller
      */
     public function index(): View
     {
-        $balances = Balance::with('proyecto')->latest()->paginate(10);
+        $balances = Balance::with('proyecto') // se cambió 'project' por 'proyecto'
+                         ->orderBy('created_at', 'desc')
+                         ->paginate(9);
         $proyectos = Project::all(['id', 'nombre']);
         return view('balances.index', compact('balances', 'proyectos'));
     }
@@ -54,9 +56,9 @@ class BalanceController extends Controller
         return view('balances.show', compact('balance'));
     }
 
-    public function edit(Balance $balance): View
+    public function edit(Balance $balance)
     {
-        return view('balances.edit', compact('balance'));
+        return response()->json($balance);
     }
 
     public function update(Request $request, Balance $balance): RedirectResponse
@@ -85,4 +87,4 @@ class BalanceController extends Controller
         return redirect()->route('balances.index')
             ->with('success', 'Balance eliminado exitosamente.');
     }
-} 
+}

@@ -33,4 +33,4 @@ class Balance extends Model
     {
         return $this->belongsTo(Project::class, 'proyecto_id');
     }
-} 
+}

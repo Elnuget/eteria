@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Models\Balance;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -14,8 +15,11 @@ class PaymentController extends Controller
      */
     public function index(): View
     {
-        $payments = Payment::with('balance')->latest()->paginate(10);
-        return view('payments.index', compact('payments'));
+        $payments = Payment::with('balance')
+                         ->orderBy('created_at', 'desc')
+                         ->paginate(9);
+        $balances = Balance::all();
+        return view('payments.index', compact('payments', 'balances'));
     }
 
     /**
@@ -39,7 +43,13 @@ class PaymentController extends Controller
             'descripcion' => 'nullable|string'
         ]);
 
-        Payment::create($validated);
+        $payment = Payment::create($validated);
+
+        // Update the pending and paid amounts of the balance
+        $balance = Balance::find($validated['balance_id']);
+        $balance->monto_pendiente -= $validated['monto'];
+        $balance->monto_pagado = Payment::where('balance_id', $balance->id)->sum('monto');
+        $balance->save();
 
         return redirect()->route('payments.index')
             ->with('success', 'Pago registrado exitosamente.');
@@ -85,9 +95,14 @@ class PaymentController extends Controller
      */
     public function destroy(Payment $payment): RedirectResponse
     {
+        // Update the pending amount of the balance
+        $balance = $payment->balance;
+        $balance->monto_pendiente += $payment->monto;
+        $balance->save();
+
         $payment->delete();
 
         return redirect()->route('payments.index')
             ->with('success', 'Pago eliminado exitosamente.');
     }
-} 
+}

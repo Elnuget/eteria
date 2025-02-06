@@ -131,13 +131,13 @@
                     <div class="mb-3">
                         <label for="fecha_entrega" class="form-label">Fecha de Entrega</label>
                         <input type="date" class="form-control @error('fecha_entrega') is-invalid @enderror" 
-                            id="fecha_entrega" name="fecha_entrega" value="{{ old('fecha_entrega') }}">
+                            id="fecha_entrega" name="fecha_entrega" value="{{ old('fecha_entrega', date('Y-m-d')) }}">
                     </div>
 
                     <div class="mb-3">
                         <label for="implementado_en" class="form-label">Fecha de Implementación</label>
                         <input type="date" class="form-control @error('implementado_en') is-invalid @enderror" 
-                            id="implementado_en" name="implementado_en" value="{{ old('implementado_en') }}">
+                            id="implementado_en" name="implementado_en" value="{{ old('implementado_en', date('Y-m-d')) }}">
                     </div>
 
                     <div class="mb-3">

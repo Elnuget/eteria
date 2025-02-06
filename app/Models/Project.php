@@ -18,4 +18,4 @@ class Project extends Model
         'fecha_entrega' => 'date',
         'implementado_en' => 'date',
     ];
-} 
+}

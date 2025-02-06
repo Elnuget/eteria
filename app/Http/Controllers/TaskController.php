@@ -16,7 +16,9 @@ class TaskController extends Controller
 
     public function index()
     {
-        $tasks = Task::with(['project', 'developer', 'completedBy'])->get();
+        $tasks = Task::with(['project', 'developer', 'completedBy'])
+                    ->orderBy('created_at', 'desc')
+                    ->paginate(9); // Cambiado de get() a paginate()
         $projects = Project::all();
         $users = User::all();
         return view('tasks.index', compact('tasks', 'projects', 'users'));
@@ -145,4 +147,4 @@ class TaskController extends Controller
         return redirect()->route('tasks.index')
             ->with('success', 'Tarea completada exitosamente en ' . $mensaje);
     }
-} 
+}

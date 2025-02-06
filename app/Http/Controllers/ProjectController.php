@@ -17,7 +17,8 @@ class ProjectController extends Controller
      */
     public function index()
     {
-        $projects = Project::latest()->paginate(10);
+        $projects = Project::orderBy('created_at', 'desc')
+                         ->paginate(9);
         return view('projects.index', compact('projects'));
     }
 
@@ -131,4 +132,4 @@ class ProjectController extends Controller
         return redirect()->route('projects.index')
             ->with('success', 'Proyecto eliminado exitosamente.');
     }
-} 
+}

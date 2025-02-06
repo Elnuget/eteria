@@ -134,27 +134,15 @@
                             @endforeach
                         </select>
                     </div>
-
                     <div class="mb-3">
-                        <label for="monto" class="form-label">Monto Total *</label>
-                        <input type="number" step="0.01" class="form-control" id="monto" name="monto" required>
+                        <label for="motivo" class="form-label">Motivo</label>
+                        <textarea class="form-control" id="motivo" name="motivo" rows="3"></textarea>
                     </div>
-
-                    <div class="mb-3">
-                        <label for="monto_pagado" class="form-label">Monto Pagado *</label>
-                        <input type="number" step="0.01" class="form-control" id="monto_pagado" name="monto_pagado" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="monto_pendiente" class="form-label">Monto Pendiente *</label>
-                        <input type="number" step="0.01" class="form-control" id="monto_pendiente" name="monto_pendiente" required>
-                    </div>
-
                     <div class="mb-3">
                         <label for="fecha_generacion" class="form-label">Fecha de Generación *</label>
-                        <input type="date" class="form-control" id="fecha_generacion" name="fecha_generacion" required>
+                        <input type="date" class="form-control" id="fecha_generacion" name="fecha_generacion" required 
+                            value="{{ date('Y-m-d') }}">
                     </div>
-
                     <div class="mb-3">
                         <label for="tipo_saldo" class="form-label">Tipo de Saldo *</label>
                         <select class="form-select" id="tipo_saldo" name="tipo_saldo" required>
@@ -163,10 +151,21 @@
                             <option value="unico">Único</option>
                         </select>
                     </div>
+                    <div class="mb-3">
+                        <label for="monto" class="form-label">Monto Total *</label>
+                        <input type="number" step="0.01" class="form-control" id="monto" name="monto" required 
+                            onchange="actualizarMontoPendiente()" value="0">
+                    </div>
 
                     <div class="mb-3">
-                        <label for="motivo" class="form-label">Motivo</label>
-                        <textarea class="form-control" id="motivo" name="motivo" rows="3"></textarea>
+                        <label for="monto_pagado" class="form-label">Monto Pagado *</label>
+                        <input type="number" step="0.01" class="form-control" id="monto_pagado" name="monto_pagado" required 
+                            onchange="actualizarMontoPendiente()" value="0">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="monto_pendiente" class="form-label">Monto Pendiente *</label>
+                        <input type="number" step="0.01" class="form-control" id="monto_pendiente" name="monto_pendiente" required readonly>
                     </div>
 
                     <div class="mb-3">
@@ -199,7 +198,47 @@
                 @csrf
                 @method('PUT')
                 <div class="modal-body">
-                    <!-- Los campos del formulario son los mismos que en el modal de crear -->
+                    <div class="mb-3">
+                        <label for="edit_proyecto_id" class="form-label">Proyecto *</label>
+                        <select class="form-select" id="edit_proyecto_id" name="proyecto_id" required>
+                            <option value="">Seleccionar proyecto</option>
+                            @foreach($proyectos as $proyecto)
+                                <option value="{{ $proyecto->id }}">{{ $proyecto->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_fecha_generacion" class="form-label">Fecha de Generación *</label>
+                        <input type="date" class="form-control" id="edit_fecha_generacion" name="fecha_generacion" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_tipo_saldo" class="form-label">Tipo de Saldo *</label>
+                        <select class="form-select" id="edit_tipo_saldo" name="tipo_saldo" required>
+                            <option value="anual">Anual</option>
+                            <option value="mensual">Mensual</option>
+                            <option value="unico">Único</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_monto" class="form-label">Monto Total *</label>
+                        <input type="number" step="0.01" class="form-control" id="edit_monto" name="monto" required onchange="actualizarMontoPendienteEdit()">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_monto_pagado" class="form-label">Monto Pagado *</label>
+                        <input type="number" step="0.01" class="form-control" id="edit_monto_pagado" name="monto_pagado" required onchange="actualizarMontoPendienteEdit()">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_monto_pendiente" class="form-label">Monto Pendiente *</label>
+                        <input type="number" step="0.01" class="form-control" id="edit_monto_pendiente" name="monto_pendiente" required readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_motivo" class="form-label">Motivo</label>
+                        <textarea class="form-control" id="edit_motivo" name="motivo" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="edit_pagado_completo" name="pagado_completo">
+                        <label class="form-check-label" for="edit_pagado_completo">Pagado Completo</label>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -235,26 +274,63 @@ function editBalance(balanceId) {
         editBalanceModal.show();
     }
 
-    fetch(`/balances/${balanceId}/edit`)
-        .then(response => response.json())
-        .then(data => {
-            const form = document.getElementById('editBalanceForm');
-            form.action = `/balances/${balanceId}`;
+    fetch(`/balances/${balanceId}/edit`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        const form = document.getElementById('editBalanceForm');
+        form.action = `/balances/${balanceId}`;
 
-            // Llenar los campos con los datos del balance
-            document.getElementById('edit_proyecto_id').value = data.proyecto_id;
-            document.getElementById('edit_monto').value = data.monto;
-            document.getElementById('edit_monto_pagado').value = data.monto_pagado;
-            document.getElementById('edit_monto_pendiente').value = data.monto_pendiente;
-            document.getElementById('edit_fecha_generacion').value = data.fecha_generacion;
-            document.getElementById('edit_tipo_saldo').value = data.tipo_saldo;
-            document.getElementById('edit_motivo').value = data.motivo;
-            document.getElementById('edit_pagado_completo').checked = data.pagado_completo;
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error al cargar los datos del balance');
-        });
+        // Formatear la fecha de generación
+        const fechaGeneracion = new Date(data.fecha_generacion);
+        const formattedFechaGeneracion = fechaGeneracion.toISOString().split('T')[0];
+
+        // Llenar los campos con los datos del balance
+        document.getElementById('edit_proyecto_id').value = data.proyecto_id;
+        document.getElementById('edit_monto').value = data.monto;
+        document.getElementById('edit_monto_pagado').value = data.monto_pagado;
+        document.getElementById('edit_monto_pendiente').value = data.monto_pendiente;
+        document.getElementById('edit_fecha_generacion').value = formattedFechaGeneracion;
+        document.getElementById('edit_tipo_saldo').value = data.tipo_saldo;
+        document.getElementById('edit_motivo').value = data.motivo;
+        document.getElementById('edit_pagado_completo').checked = data.pagado_completo;
+
+        actualizarMontoPendienteEdit();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al cargar los datos del balance');
+    });
+}
+
+function actualizarMontoPendiente() {
+    const montoTotal = parseFloat(document.getElementById('monto').value) || 0;
+    const montoPagado = parseFloat(document.getElementById('monto_pagado').value) || 0;
+    const montoPendiente = montoTotal - montoPagado;
+    document.getElementById('monto_pendiente').value = montoPendiente.toFixed(2);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar monto pendiente al cargar la página
+    actualizarMontoPendiente();
+});
+
+// Función para actualizar monto pendiente en el modal de edición
+function actualizarMontoPendienteEdit() {
+    const montoTotal = parseFloat(document.getElementById('edit_monto').value) || 0;
+    const montoPagado = parseFloat(document.getElementById('edit_monto_pagado').value) || 0;
+    const montoPendiente = montoTotal - montoPagado;
+    document.getElementById('edit_monto_pendiente').value = montoPendiente.toFixed(2);
 }
 </script>
 @endpush
@@ -271,4 +347,4 @@ function editBalance(balanceId) {
         flex: 1;
     }
 </style>
-@endpush 
+@endpush

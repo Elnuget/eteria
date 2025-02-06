@@ -19,56 +19,66 @@
                         </div>
                     @endif
 
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Balance</th>
-                                    <th>Monto</th>
-                                    <th>Fecha de Pago</th>
-                                    <th>Método de Pago</th>
-                                    <th>Descripción</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($payments as $payment)
-                                    <tr>
-                                        <td>{{ $payment->id }}</td>
-                                        <td>{{ $payment->balance->id }}</td>
-                                        <td>${{ number_format($payment->monto, 2) }}</td>
-                                        <td>{{ $payment->fecha_pago->format('d/m/Y') }}</td>
-                                        <td>{{ $payment->metodo_pago ?? 'N/A' }}</td>
-                                        <td>{{ Str::limit($payment->descripcion, 30) ?? 'N/A' }}</td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <button type="button" 
-                                                        class="btn btn-outline-primary btn-sm"
-                                                        onclick="editPayment({{ $payment->id }})">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <form action="{{ route('payments.destroy', $payment) }}" 
-                                                      method="POST" 
-                                                      class="d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" 
-                                                            class="btn btn-outline-danger btn-sm"
-                                                            onclick="return confirm('¿Estás seguro de eliminar este pago?')">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                        @forelse ($payments as $payment)
+                            <div class="col">
+                                <div class="card h-100 shadow-sm">
+                                    <div class="card-header bg-transparent">
+                                        <h5 class="card-title mb-0">Pago #{{ $payment->id }}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-2">
+                                            <small class="text-muted">Balance ID:</small><br>
+                                            {{ $payment->balance->id }}
+                                        </div>
+                                        <div class="mb-2">
+                                            <small class="text-muted">Monto:</small><br>
+                                            ${{ number_format($payment->monto, 2) }}
+                                        </div>
+                                        <div class="mb-2">
+                                            <small class="text-muted">Fecha de Pago:</small><br>
+                                            {{ $payment->fecha_pago->format('d/m/Y') }}
+                                        </div>
+                                        <div class="mb-2">
+                                            <small class="text-muted">Método de Pago:</small><br>
+                                            {{ $payment->metodo_pago ?? 'N/A' }}
+                                        </div>
+                                        @if($payment->descripcion)
+                                            <div class="mb-2">
+                                                <small class="text-muted">Descripción:</small><br>
+                                                {{ Str::limit($payment->descripcion, 100) }}
                                             </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="text-center">No hay pagos registrados.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                        @endif
+                                    </div>
+                                    <div class="card-footer bg-transparent">
+                                        <div class="btn-group w-100" role="group">
+                                            <button type="button" 
+                                                    class="btn btn-outline-primary btn-sm"
+                                                    onclick="editPayment({{ $payment->id }})">
+                                                <i class="fas fa-edit"></i> Editar
+                                            </button>
+                                            <form action="{{ route('payments.destroy', $payment) }}" 
+                                                  method="POST" 
+                                                  class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" 
+                                                        class="btn btn-outline-danger btn-sm"
+                                                        onclick="return confirm('¿Estás seguro de eliminar este pago?')">
+                                                    <i class="fas fa-trash"></i> Eliminar
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-12">
+                                <div class="alert alert-info text-center">
+                                    No hay pagos registrados.
+                                </div>
+                            </div>
+                        @endforelse
                     </div>
 
                     <div class="d-flex justify-content-center mt-4">
@@ -93,7 +103,12 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="balance_id" class="form-label">Balance ID *</label>
-                        <input type="number" class="form-control" id="balance_id" name="balance_id" required>
+                        <select class="form-select" id="balance_id" name="balance_id" required onchange="updateMonto()">
+                            <option value="">Seleccionar balance</option>
+                            @foreach($balances as $balance)
+                                <option value="{{ $balance->id }}" data-pendiente="{{ $balance->monto_pendiente }}">{{ $balance->proyecto->nombre }} - {{ $balance->motivo }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
                     <div class="mb-3">
@@ -103,7 +118,7 @@
 
                     <div class="mb-3">
                         <label for="fecha_pago" class="form-label">Fecha de Pago *</label>
-                        <input type="date" class="form-control" id="fecha_pago" name="fecha_pago" required>
+                        <input type="date" class="form-control" id="fecha_pago" name="fecha_pago" value="{{ date('Y-m-d') }}" required>
                     </div>
 
                     <div class="mb-3">
@@ -112,7 +127,7 @@
                             <option value="">Seleccionar método</option>
                             <option value="efectivo">Efectivo</option>
                             <option value="transferencia">Transferencia</option>
-                            <option value="tarjeta">Tarjeta</option>
+                            <option value="deposito">Depósito</option>
                         </select>
                     </div>
 
@@ -144,7 +159,12 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="edit_balance_id" class="form-label">Balance ID *</label>
-                        <input type="number" class="form-control" id="edit_balance_id" name="balance_id" required>
+                        <select class="form-select" id="edit_balance_id" name="balance_id" required onchange="updateEditMonto()">
+                            <option value="">Seleccionar balance</option>
+                            @foreach($balances as $balance)
+                                <option value="{{ $balance->id }}" data-pendiente="{{ $balance->monto_pendiente }}">{{ $balance->proyecto->nombre }} - {{ $balance->motivo }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
                     <div class="mb-3">
@@ -154,7 +174,7 @@
 
                     <div class="mb-3">
                         <label for="edit_fecha_pago" class="form-label">Fecha de Pago *</label>
-                        <input type="date" class="form-control" id="edit_fecha_pago" name="fecha_pago" required>
+                        <input type="date" class="form-control" id="edit_fecha_pago" name="fecha_pago" value="{{ date('Y-m-d') }}" required>
                     </div>
 
                     <div class="mb-3">
@@ -163,7 +183,7 @@
                             <option value="">Seleccionar método</option>
                             <option value="efectivo">Efectivo</option>
                             <option value="transferencia">Transferencia</option>
-                            <option value="tarjeta">Tarjeta</option>
+                            <option value="deposito">Depósito</option>
                         </select>
                     </div>
 
@@ -195,6 +215,20 @@ document.addEventListener('DOMContentLoaded', function() {
         createPaymentModal.show();
     @endif
 });
+
+function updateMonto() {
+    const balanceSelect = document.getElementById('balance_id');
+    const selectedOption = balanceSelect.options[balanceSelect.selectedIndex];
+    const montoPendiente = selectedOption.getAttribute('data-pendiente');
+    document.getElementById('monto').value = montoPendiente;
+}
+
+function updateEditMonto() {
+    const balanceSelect = document.getElementById('edit_balance_id');
+    const selectedOption = balanceSelect.options[balanceSelect.selectedIndex];
+    const montoPendiente = selectedOption.getAttribute('data-pendiente');
+    document.getElementById('edit_monto').value = montoPendiente;
+}
 
 function editPayment(paymentId) {
     const modalElement = document.getElementById('editPaymentModal');
@@ -237,5 +271,14 @@ function editPayment(paymentId) {
 .table td, .table th {
     vertical-align: middle;
 }
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+.card:hover {
+    transform: translateY(-5px);
+}
+.btn-group .btn {
+    flex: 1;
+}
 </style>
-@endpush 
+@endpush
