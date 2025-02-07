@@ -7,6 +7,7 @@ use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Carbon\Carbon;
 
 class BalanceController extends Controller
 {
@@ -20,9 +21,9 @@ class BalanceController extends Controller
      */
     public function index(): View
     {
-        $balances = Balance::with('proyecto') // se cambió 'project' por 'proyecto'
+        $balances = Balance::with('proyecto')
                          ->orderBy('created_at', 'desc')
-                         ->paginate(9);
+                         ->get();
         $proyectos = Project::all(['id', 'nombre']);
         return view('balances.index', compact('balances', 'proyectos'));
     }
@@ -86,5 +87,53 @@ class BalanceController extends Controller
 
         return redirect()->route('balances.index')
             ->with('success', 'Balance eliminado exitosamente.');
+    }
+
+    public function updateBalances(Request $request)
+    {
+        $balancesPagados = Balance::where('pagado_completo', true)
+            ->whereIn('tipo_saldo', ['mensual', 'anual'])
+            ->get();
+
+        $balancesActualizados = 0;
+        $mensajeError = '';
+
+        foreach ($balancesPagados as $balance) {
+            // Calcular la siguiente fecha según el tipo de saldo
+            $nextFechaGeneracion = $balance->tipo_saldo === 'mensual' 
+                ? $balance->fecha_generacion->addMonth() 
+                : $balance->fecha_generacion->addYear();
+
+            // Verificar si ya existe un balance para la siguiente fecha
+            $existingBalance = Balance::where('proyecto_id', $balance->proyecto_id)
+                ->where('fecha_generacion', $nextFechaGeneracion)
+                ->first();
+
+            if (!$existingBalance) {
+                Balance::create([
+                    'proyecto_id' => $balance->proyecto_id,
+                    'monto' => $balance->monto,
+                    'monto_pagado' => 0,
+                    'monto_pendiente' => $balance->monto,
+                    'fecha_generacion' => $nextFechaGeneracion,
+                    'tipo_saldo' => $balance->tipo_saldo,
+                    'motivo' => $balance->motivo,
+                    'pagado_completo' => false
+                ]);
+                $balancesActualizados++;
+            }
+        }
+
+        if ($balancesActualizados > 0) {
+            return response()->json([
+                'success' => true,
+                'message' => "Se han creado {$balancesActualizados} nuevos balances."
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontraron balances para actualizar o ya existen balances para los siguientes períodos.'
+            ]);
+        }
     }
 }

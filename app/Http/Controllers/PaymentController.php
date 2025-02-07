@@ -17,7 +17,7 @@ class PaymentController extends Controller
     {
         $payments = Payment::with('balance')
                          ->orderBy('created_at', 'desc')
-                         ->paginate(9);
+                         ->get();
         $balances = Balance::all();
         return view('payments.index', compact('payments', 'balances'));
     }

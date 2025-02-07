@@ -33,7 +33,7 @@ class TaskController extends Controller
                 WHEN prioridad = 'baja' THEN 4 
             END")
             ->orderBy('created_at', 'desc')
-            ->paginate(9);
+            ->get();
 
         // Obtener tareas pendientes del usuario actual
         $tareasPendientes = Task::where('desarrollado_por', auth()->id())

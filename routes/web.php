@@ -21,6 +21,7 @@ Route::middleware(['auth'])->group(function () {
 
 Route::resource('projects', ProjectController::class)->middleware('auth');
 Route::resource('balances', BalanceController::class);
+Route::post('/balances/updateBalances', [BalanceController::class, 'updateBalances'])->name('balances.updateBalances');
 Route::resource('payments', PaymentController::class)->middleware('auth');
 Route::resource('tasks', TaskController::class);
 Route::post('/tasks/{task}/tomar', [TaskController::class, 'tomarTarea'])->name('tasks.tomar');

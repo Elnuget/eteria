@@ -80,10 +80,6 @@
                             </div>
                         @endforelse
                     </div>
-
-                    <div class="d-flex justify-content-center mt-4">
-                        {{ $payments->links() }}
-                    </div>
                 </div>
             </div>
         </div>
@@ -220,7 +216,7 @@ function updateMonto() {
     const balanceSelect = document.getElementById('balance_id');
     const selectedOption = balanceSelect.options[balanceSelect.selectedIndex];
     const montoPendiente = selectedOption.getAttribute('data-pendiente');
-    document.getElementById('monto').value = montoPendiente;
+    document.getElementById('monto').value = montoPendiente ? parseFloat(montoPendiente).toFixed(2) : '';
 }
 
 function updateEditMonto() {

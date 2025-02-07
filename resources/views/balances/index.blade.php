@@ -7,9 +7,14 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Listado de Saldos</span>
-                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createBalanceModal">
-                        Nuevo Saldo
-                    </button>
+                    <div>
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createBalanceModal">
+                            Nuevo Saldo
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="actualizarBalances()">
+                            Actualizar Balances
+                        </button>
+                    </div>
                 </div>
 
                 <div class="card-body">
@@ -97,10 +102,6 @@
                                 </div>
                             </div>
                         @endforelse
-                    </div>
-
-                    <div class="d-flex justify-content-center mt-4">
-                        {{ $balances->links() }}
                     </div>
                 </div>
             </div>
@@ -390,12 +391,34 @@ function createPayment(balanceId, montoPendiente) {
     // Establecer el ID del balance en el campo oculto
     document.getElementById('balance_id').value = balanceId;
     
-    // Establecer el monto pendiente como valor por defecto
-    document.getElementById('monto').value = montoPendiente;
+    // Establecer el monto pendiente como valor por defecto en el campo de monto
+    const montoInput = document.getElementById('createPaymentModal').querySelector('[name="monto"]');
+    montoInput.value = montoPendiente.toFixed(2);
+    montoInput.max = montoPendiente.toFixed(2);
     
     // Mostrar el modal
     const modal = new bootstrap.Modal(document.getElementById('createPaymentModal'));
     modal.show();
+}
+
+function actualizarBalances() {
+    fetch('{{ route('balances.updateBalances') }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al actualizar los balances');
+    });
 }
 </script>
 @endpush
