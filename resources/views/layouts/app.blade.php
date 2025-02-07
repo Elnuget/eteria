@@ -40,7 +40,7 @@
                                 <a class="nav-link" href="{{ route('projects.index') }}">Proyectos</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('balances.index') }}">Balances</a>
+                                <a class="nav-link" href="{{ route('balances.index') }}">Saldos</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('payments.index') }}">Pagos</a>

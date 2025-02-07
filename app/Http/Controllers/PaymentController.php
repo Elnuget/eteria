@@ -45,10 +45,14 @@ class PaymentController extends Controller
 
         $payment = Payment::create($validated);
 
-        // Update the pending and paid amounts of the balance
+        // Actualizar el balance
         $balance = Balance::find($validated['balance_id']);
-        $balance->monto_pendiente -= $validated['monto'];
-        $balance->monto_pagado = Payment::where('balance_id', $balance->id)->sum('monto');
+        
+        // Actualizar monto_pagado sumando el nuevo pago
+        $balance->monto_pagado += $validated['monto'];
+        
+        // Recalcular monto_pendiente
+        $balance->monto_pendiente = $balance->monto - $balance->monto_pagado;
         
         // Verificar si el balance está completamente pagado
         if ($balance->monto_pendiente <= 0) {
@@ -101,9 +105,14 @@ class PaymentController extends Controller
      */
     public function destroy(Payment $payment): RedirectResponse
     {
-        // Update the pending amount of the balance
+        // Obtener el balance relacionado
         $balance = $payment->balance;
-        $balance->monto_pendiente += $payment->monto;
+        
+        // Restar el monto del pago del monto_pagado
+        $balance->monto_pagado -= $payment->monto;
+        
+        // Recalcular monto pendiente
+        $balance->monto_pendiente = $balance->monto - $balance->monto_pagado;
         
         // Verificar si el balance ya no está completamente pagado
         if ($balance->monto_pendiente > 0) {
@@ -111,7 +120,8 @@ class PaymentController extends Controller
         }
         
         $balance->save();
-
+        
+        // Eliminar el pago
         $payment->delete();
 
         return redirect()->route('payments.index')

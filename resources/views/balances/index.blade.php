@@ -6,9 +6,9 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>Listado de Balances</span>
+                    <span>Listado de Saldos</span>
                     <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createBalanceModal">
-                        Nuevo Balance
+                        Nuevo Saldo
                     </button>
                 </div>
 
@@ -69,6 +69,11 @@
                                                     class="btn btn-outline-primary btn-sm"
                                                     onclick="editBalance({{ $balance->id }})">
                                                 <i class="fas fa-edit"></i> Editar
+                                            </button>
+                                            <button type="button" 
+                                                    class="btn btn-outline-success btn-sm"
+                                                    onclick="createPayment({{ $balance->id }}, {{ $balance->monto_pendiente }})">
+                                                <i class="fas fa-dollar-sign"></i> Pagar
                                             </button>
                                             <form action="{{ route('balances.destroy', $balance) }}" 
                                                   method="POST" 
@@ -249,6 +254,54 @@
     </div>
 </div>
 
+<!-- Modal para crear pago -->
+<div class="modal fade" id="createPaymentModal" tabindex="-1" aria-labelledby="createPaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createPaymentModalLabel">Crear Nuevo Pago</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('payments.store') }}" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <input type="hidden" id="balance_id" name="balance_id">
+
+                    <div class="mb-3">
+                        <label for="monto" class="form-label">Monto *</label>
+                        <input type="number" step="0.01" class="form-control" id="monto" name="monto" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fecha_pago" class="form-label">Fecha de Pago *</label>
+                        <input type="date" class="form-control" id="fecha_pago" name="fecha_pago" 
+                               value="{{ date('Y-m-d') }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="metodo_pago" class="form-label">Método de Pago</label>
+                        <select class="form-select" id="metodo_pago" name="metodo_pago">
+                            <option value="">Seleccionar método</option>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="transferencia">Transferencia</option>
+                            <option value="deposito">Depósito</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -331,6 +384,18 @@ function actualizarMontoPendienteEdit() {
     const montoPagado = parseFloat(document.getElementById('edit_monto_pagado').value) || 0;
     const montoPendiente = montoTotal - montoPagado;
     document.getElementById('edit_monto_pendiente').value = montoPendiente.toFixed(2);
+}
+
+function createPayment(balanceId, montoPendiente) {
+    // Establecer el ID del balance en el campo oculto
+    document.getElementById('balance_id').value = balanceId;
+    
+    // Establecer el monto pendiente como valor por defecto
+    document.getElementById('monto').value = montoPendiente;
+    
+    // Mostrar el modal
+    const modal = new bootstrap.Modal(document.getElementById('createPaymentModal'));
+    modal.show();
 }
 </script>
 @endpush

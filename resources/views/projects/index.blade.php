@@ -59,6 +59,16 @@
                                                     onclick="editProject({{ $project->id }})">
                                                 <i class="fas fa-edit"></i> Editar
                                             </button>
+                                            <button type="button" 
+                                                    class="btn btn-outline-success btn-sm"
+                                                    onclick="createBalance({{ $project->id }})">
+                                                <i class="fas fa-dollar-sign"></i> Saldo
+                                            </button>
+                                            <button type="button" 
+                                                    class="btn btn-outline-info btn-sm"
+                                                    onclick="createTask({{ $project->id }})">
+                                                <i class="fas fa-tasks"></i> Tarea
+                                            </button>
                                             <form action="{{ route('projects.destroy', $project) }}" 
                                                   method="POST" 
                                                   class="d-inline">
@@ -215,6 +225,148 @@
     </div>
 </div>
 
+<!-- Modal para crear balance -->
+<div class="modal fade" id="createBalanceModal" tabindex="-1" aria-labelledby="createBalanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createBalanceModalLabel">Crear Nuevo Balance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('balances.store') }}" method="POST" id="createBalanceForm">
+                @csrf
+                <div class="modal-body">
+                    <input type="hidden" id="proyecto_id" name="proyecto_id">
+                    
+                    <div class="mb-3">
+                        <label for="motivo" class="form-label">Motivo</label>
+                        <textarea class="form-control" id="motivo" name="motivo" rows="3"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fecha_generacion" class="form-label">Fecha de Generación *</label>
+                        <input type="date" class="form-control" id="fecha_generacion" name="fecha_generacion" 
+                               required value="{{ date('Y-m-d') }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="tipo_saldo" class="form-label">Tipo de Saldo *</label>
+                        <select class="form-select" id="tipo_saldo" name="tipo_saldo" required>
+                            <option value="anual">Anual</option>
+                            <option value="mensual">Mensual</option>
+                            <option value="unico">Único</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="monto" class="form-label">Monto Total *</label>
+                        <input type="number" step="0.01" class="form-control" id="monto" name="monto" 
+                               required value="0" onchange="calcularMontoPendiente()">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="monto_pagado" class="form-label">Monto Pagado *</label>
+                        <input type="number" step="0.01" class="form-control" id="monto_pagado" 
+                               name="monto_pagado" required value="0" onchange="calcularMontoPendiente()">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="monto_pendiente" class="form-label">Monto Pendiente</label>
+                        <input type="number" step="0.01" class="form-control" id="monto_pendiente" 
+                               name="monto_pendiente" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="pagado_completo" 
+                                   name="pagado_completo">
+                            <label class="form-check-label" for="pagado_completo">
+                                Pagado Completo
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Balance</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para crear tarea -->
+<div class="modal fade" id="createTaskModal" tabindex="-1" aria-labelledby="createTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createTaskModalLabel">Nueva Tarea</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('tasks.store') }}" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <input type="hidden" id="proyecto_id_task" name="proyecto_id">
+
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre *</label>
+                        <input type="text" class="form-control @error('nombre') is-invalid @enderror" 
+                            id="nombre" name="nombre" value="{{ old('nombre') }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control @error('descripcion') is-invalid @enderror" 
+                            id="descripcion" name="descripcion" rows="3">{{ old('descripcion') }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="estado" class="form-label">Estado *</label>
+                        <select class="form-select @error('estado') is-invalid @enderror" 
+                            id="estado" name="estado" required>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="en progreso">En Progreso</option>
+                            <option value="completada">Completada</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="prioridad" class="form-label">Prioridad *</label>
+                        <select class="form-select @error('prioridad') is-invalid @enderror" 
+                            id="prioridad" name="prioridad" required>
+                            <option value="baja">Baja</option>
+                            <option value="media" selected>Media</option>
+                            <option value="alta">Alta</option>
+                            <option value="urgente">Urgente</option>
+                        </select>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="dificultad" class="form-label">Dificultad *</label>
+                            <select class="form-select" id="dificultad" name="dificultad" required>
+                                <option value="facil">Fácil</option>
+                                <option value="intermedia" selected>Intermedia</option>
+                                <option value="dificil">Difícil</option>
+                                <option value="experto">Experto</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="tiempo_estimado" class="form-label">Tiempo Estimado (min) *</label>
+                            <input type="number" class="form-control" id="tiempo_estimado" 
+                                   name="tiempo_estimado" min="0" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Tarea</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -275,6 +427,30 @@ function editProject(projectId) {
         console.error('Error:', error);
         alert('Error al cargar los datos del proyecto');
     });
+}
+
+function createBalance(projectId) {
+    document.getElementById('proyecto_id').value = projectId;
+    const modal = new bootstrap.Modal(document.getElementById('createBalanceModal'));
+    modal.show();
+}
+
+function calcularMontoPendiente() {
+    const montoTotal = parseFloat(document.getElementById('monto').value) || 0;
+    const montoPagado = parseFloat(document.getElementById('monto_pagado').value) || 0;
+    const montoPendiente = montoTotal - montoPagado;
+    document.getElementById('monto_pendiente').value = montoPendiente.toFixed(2);
+}
+
+// Inicializar el cálculo del monto pendiente
+document.addEventListener('DOMContentLoaded', function() {
+    calcularMontoPendiente();
+});
+
+function createTask(projectId) {
+    document.getElementById('proyecto_id_task').value = projectId;
+    const modal = new bootstrap.Modal(document.getElementById('createTaskModal'));
+    modal.show();
 }
 </script>
 @endpush
