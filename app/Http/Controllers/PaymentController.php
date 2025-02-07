@@ -49,6 +49,12 @@ class PaymentController extends Controller
         $balance = Balance::find($validated['balance_id']);
         $balance->monto_pendiente -= $validated['monto'];
         $balance->monto_pagado = Payment::where('balance_id', $balance->id)->sum('monto');
+        
+        // Verificar si el balance está completamente pagado
+        if ($balance->monto_pendiente <= 0) {
+            $balance->pagado_completo = true;
+        }
+        
         $balance->save();
 
         return redirect()->route('payments.index')
@@ -98,6 +104,12 @@ class PaymentController extends Controller
         // Update the pending amount of the balance
         $balance = $payment->balance;
         $balance->monto_pendiente += $payment->monto;
+        
+        // Verificar si el balance ya no está completamente pagado
+        if ($balance->monto_pendiente > 0) {
+            $balance->pagado_completo = false;
+        }
+        
         $balance->save();
 
         $payment->delete();
