@@ -27,3 +27,6 @@ php artisan cache:clear
 php artisan view:clear
 php artisan route:clear
 
+SHELL COMO ADMINISTRADOR: 
+Get-ExecutionPolicy 
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
