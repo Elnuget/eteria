@@ -19,12 +19,60 @@ class BalanceController extends Controller
     /**
      * Muestra una lista de todos los balances.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $balances = Balance::with('proyecto')
-                         ->orderBy('created_at', 'desc')
-                         ->get();
+        $query = Balance::with('proyecto');
+
+        // Filtro por estado de pago
+        if ($request->filled('estado')) {
+            switch ($request->estado) {
+                case 'pendiente':
+                    $query->where('pagado_completo', false)
+                          ->where('fecha_generacion', '>=', now());
+                    break;
+                case 'pagado':
+                    $query->where('pagado_completo', true);
+                    break;
+                case 'vencido':
+                    $query->where('pagado_completo', false)
+                          ->where('fecha_generacion', '<', now());
+                    break;
+            }
+        }
+
+        // Filtro por tipo de saldo
+        if ($request->filled('tipo')) {
+            $query->where('tipo_saldo', $request->tipo);
+        }
+
+        // Filtro por período
+        if ($request->filled('periodo')) {
+            $today = now();
+            switch ($request->periodo) {
+                case 'mes_actual':
+                    $query->whereBetween('fecha_generacion', [
+                        $today->copy()->startOfMonth(),
+                        $today->copy()->endOfMonth()
+                    ]);
+                    break;
+                case 'mes_anterior':
+                    $query->whereBetween('fecha_generacion', [
+                        $today->copy()->subMonth()->startOfMonth(),
+                        $today->copy()->subMonth()->endOfMonth()
+                    ]);
+                    break;
+                case 'proximo_mes':
+                    $query->whereBetween('fecha_generacion', [
+                        $today->copy()->addMonth()->startOfMonth(),
+                        $today->copy()->addMonth()->endOfMonth()
+                    ]);
+                    break;
+            }
+        }
+
+        $balances = $query->orderBy('created_at', 'desc')->get();
         $proyectos = Project::all(['id', 'nombre']);
+        
         return view('balances.index', compact('balances', 'proyectos'));
     }
 

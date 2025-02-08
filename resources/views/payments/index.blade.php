@@ -2,6 +2,114 @@
 
 @section('content')
 <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Listado de Pagos</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPaymentModal">
+            <i class="fas fa-plus"></i> Nuevo Pago
+        </button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-header bg-white" role="button" data-bs-toggle="collapse" data-bs-target="#filtrosCollapse">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-filter me-2"></i> Filtros
+                <i class="fas fa-chevron-down ms-2"></i>
+            </div>
+        </div>
+
+        <div class="collapse show" id="filtrosCollapse">
+            <div class="card-body pt-0">
+                <div class="row">
+                    <!-- Método de Pago -->
+                    <div class="col-md-4 mt-3">
+                        <label class="d-block mb-2">Método de Pago</label>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="{{ request()->fullUrlWithQuery(['metodo' => '']) }}" 
+                               class="btn btn-sm {{ !request('metodo') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                                <i class="fas fa-list"></i> Todos
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['metodo' => 'efectivo']) }}" 
+                               class="btn btn-sm {{ request('metodo') == 'efectivo' ? 'btn-success' : 'btn-outline-success' }}">
+                                <i class="fas fa-money-bill"></i> Efectivo
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['metodo' => 'transferencia']) }}" 
+                               class="btn btn-sm {{ request('metodo') == 'transferencia' ? 'btn-primary' : 'btn-outline-primary' }}">
+                                <i class="fas fa-exchange-alt"></i> Transferencia
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['metodo' => 'deposito']) }}" 
+                               class="btn btn-sm {{ request('metodo') == 'deposito' ? 'btn-info' : 'btn-outline-info' }}">
+                                <i class="fas fa-university"></i> Depósito
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Período de Pago -->
+                    <div class="col-md-4 mt-3">
+                        <label class="d-block mb-2">Período de Pago</label>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="{{ request()->fullUrlWithQuery(['periodo' => '']) }}" 
+                               class="btn btn-sm {{ !request('periodo') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                                <i class="fas fa-calendar"></i> Todos
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['periodo' => 'hoy']) }}" 
+                               class="btn btn-sm {{ request('periodo') == 'hoy' ? 'btn-success' : 'btn-outline-success' }}">
+                                <i class="fas fa-calendar-day"></i> Hoy
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['periodo' => 'semana']) }}" 
+                               class="btn btn-sm {{ request('periodo') == 'semana' ? 'btn-info' : 'btn-outline-info' }}">
+                                <i class="fas fa-calendar-week"></i> Esta Semana
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['periodo' => 'mes']) }}" 
+                               class="btn btn-sm {{ request('periodo') == 'mes' ? 'btn-primary' : 'btn-outline-primary' }}">
+                                <i class="fas fa-calendar-alt"></i> Este Mes
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['periodo' => 'mes_anterior']) }}" 
+                               class="btn btn-sm {{ request('periodo') == 'mes_anterior' ? 'btn-warning' : 'btn-outline-warning' }}">
+                                <i class="fas fa-calendar-minus"></i> Mes Anterior
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['periodo' => 'antiguos']) }}" 
+                               class="btn btn-sm {{ request('periodo') == 'antiguos' ? 'btn-danger' : 'btn-outline-danger' }}">
+                                <i class="fas fa-history"></i> Más Antiguos
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Monto -->
+                    <div class="col-md-4 mt-3">
+                        <label class="d-block mb-2">Rango de Monto</label>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="{{ request()->fullUrlWithQuery(['monto' => '']) }}" 
+                               class="btn btn-sm {{ !request('monto') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                                <i class="fas fa-dollar-sign"></i> Todos
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['monto' => 'bajo']) }}" 
+                               class="btn btn-sm {{ request('monto') == 'bajo' ? 'btn-success' : 'btn-outline-success' }}">
+                                <i class="fas fa-angle-down"></i> 0-1000
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['monto' => 'medio']) }}" 
+                               class="btn btn-sm {{ request('monto') == 'medio' ? 'btn-warning' : 'btn-outline-warning' }}">
+                                <i class="fas fa-equals"></i> 1000-5000
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['monto' => 'alto']) }}" 
+                               class="btn btn-sm {{ request('monto') == 'alto' ? 'btn-danger' : 'btn-outline-danger' }}">
+                                <i class="fas fa-angle-up"></i> 5000+
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                @if(request()->anyFilled(['metodo', 'periodo', 'monto']))
+                    <div class="mt-3 text-end">
+                        <a href="{{ route('payments.index') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-times"></i> Limpiar filtros
+                        </a>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card">
@@ -275,6 +383,21 @@ function editPayment(paymentId) {
 }
 .btn-group .btn {
     flex: 1;
+}
+
+/* Estilos para los botones */
+.btn-sm {
+    padding: 0.35rem 0.8rem;   /* Padding más pequeño */
+    font-size: 0.88rem;        /* Fuente más pequeña */
+    border-radius: 18px;       /* Radio de borde más pequeño */
+    white-space: nowrap;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    height: 32px;              /* Altura más pequeña */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 85px;           /* Ancho mínimo más pequeño */
 }
 </style>
 @endpush

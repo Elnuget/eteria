@@ -13,12 +13,64 @@ class PaymentController extends Controller
     /**
      * Muestra una lista de todos los pagos.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $payments = Payment::with('balance')
-                         ->orderBy('created_at', 'desc')
-                         ->get();
+        $query = Payment::with('balance');
+
+        // Filtro por método de pago
+        if ($request->filled('metodo')) {
+            $query->where('metodo_pago', $request->metodo);
+        }
+
+        // Filtro por período
+        if ($request->filled('periodo')) {
+            $today = now();
+            switch ($request->periodo) {
+                case 'hoy':
+                    $query->whereDate('fecha_pago', $today);
+                    break;
+                case 'semana':
+                    $query->whereBetween('fecha_pago', [
+                        $today->copy()->startOfWeek(),
+                        $today->copy()->endOfWeek()
+                    ]);
+                    break;
+                case 'mes':
+                    $query->whereBetween('fecha_pago', [
+                        $today->copy()->startOfMonth(),
+                        $today->copy()->endOfMonth()
+                    ]);
+                    break;
+                case 'mes_anterior':
+                    $query->whereBetween('fecha_pago', [
+                        $today->copy()->subMonth()->startOfMonth(),
+                        $today->copy()->subMonth()->endOfMonth()
+                    ]);
+                    break;
+                case 'antiguos':
+                    $query->where('fecha_pago', '<', $today->copy()->subMonths(2)->startOfMonth());
+                    break;
+            }
+        }
+
+        // Filtro por monto
+        if ($request->filled('monto')) {
+            switch ($request->monto) {
+                case 'bajo':
+                    $query->where('monto', '<=', 1000);
+                    break;
+                case 'medio':
+                    $query->whereBetween('monto', [1000, 5000]);
+                    break;
+                case 'alto':
+                    $query->where('monto', '>', 5000);
+                    break;
+            }
+        }
+
+        $payments = $query->orderBy('created_at', 'desc')->get();
         $balances = Balance::all();
+        
         return view('payments.index', compact('payments', 'balances'));
     }
 

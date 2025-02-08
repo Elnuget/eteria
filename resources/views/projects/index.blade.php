@@ -8,8 +8,123 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Listado de Proyectos</span>
                     <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createProjectModal">
-                        Nuevo Proyecto
+                        <i class="fas fa-plus"></i> Nuevo Proyecto
                     </button>
+                </div>
+
+                <!-- Sección de Filtros -->
+                <div class="card mb-0 border-0">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-filter"></i> Filtros
+                        </h5>
+                        @if(request()->anyFilled(['estado', 'implementado', 'periodo']))
+                            <a href="{{ route('projects.index') }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-times"></i> Limpiar filtros
+                            </a>
+                        @endif
+                    </div>
+                    <div class="card-body bg-light pt-0">
+                        <form method="GET" action="{{ route('projects.index') }}" id="filterForm" class="mt-3">
+                            <div class="row g-3">
+                                <!-- Estado -->
+                                <div class="col-md-4">
+                                    <label class="filter-label mb-2">Estado del Proyecto</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <input type="radio" class="btn-check" name="estado" id="todos" value="" 
+                                            {{ !request('estado') ? 'checked' : '' }}>
+                                        <label class="btn btn-sm btn-outline-secondary" for="todos">
+                                            <i class="fas fa-tasks"></i> Todos
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="estado" id="pendiente" 
+                                            value="pendiente" {{ request('estado') == 'pendiente' ? 'checked' : '' }}>
+                                        <label class="btn btn-sm btn-outline-warning" for="pendiente">
+                                            <i class="fas fa-clock"></i> Pendientes
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="estado" id="en_progreso" 
+                                            value="en_progreso" {{ request('estado') == 'en_progreso' ? 'checked' : '' }}>
+                                        <label class="btn btn-sm btn-outline-primary" for="en_progreso">
+                                            <i class="fas fa-spinner fa-spin"></i> En Progreso
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="estado" id="completado" 
+                                            value="completado" {{ request('estado') == 'completado' ? 'checked' : '' }}>
+                                        <label class="btn btn-sm btn-outline-success" for="completado">
+                                            <i class="fas fa-check-circle"></i> Completados
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="estado" id="cancelado" 
+                                            value="cancelado" {{ request('estado') == 'cancelado' ? 'checked' : '' }}>
+                                        <label class="btn btn-sm btn-outline-danger" for="cancelado">
+                                            <i class="fas fa-times-circle"></i> Cancelados
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Implementación -->
+                                <div class="col-md-4">
+                                    <label class="filter-label mb-2">Implementación</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <input type="radio" class="btn-check" name="implementado" id="todos_imp" 
+                                            value="" {{ !request('implementado') ? 'checked' : '' }}>
+                                        <label class="btn btn-sm btn-outline-secondary" for="todos_imp">
+                                            <i class="fas fa-globe"></i> Todos
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="implementado" id="esta_semana_imp" 
+                                            value="esta_semana" {{ request('implementado') == 'esta_semana' ? 'checked' : '' }}>
+                                        <label class="btn btn-sm btn-outline-info" for="esta_semana_imp">
+                                            <i class="fas fa-calendar-week"></i> Esta Semana
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="implementado" id="este_mes_imp" 
+                                            value="este_mes" {{ request('implementado') == 'este_mes' ? 'checked' : '' }}>
+                                        <label class="btn btn-sm btn-outline-primary" for="este_mes_imp">
+                                            <i class="fas fa-calendar-alt"></i> Este Mes
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="implementado" id="implementado" 
+                                            value="implementado" {{ request('implementado') == 'implementado' ? 'checked' : '' }}>
+                                        <label class="btn btn-sm btn-outline-success" for="implementado">
+                                            <i class="fas fa-check-circle"></i> Implementados
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="implementado" id="sin_implementar" 
+                                            value="sin_implementar" {{ request('implementado') == 'sin_implementar' ? 'checked' : '' }}>
+                                        <label class="btn btn-sm btn-outline-warning" for="sin_implementar">
+                                            <i class="fas fa-hourglass-half"></i> Sin Implementar
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Periodo -->
+                                <div class="col-md-4">
+                                    <label class="filter-label mb-2">Fecha de Entrega</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <input type="radio" class="btn-check" name="periodo" id="todos_fecha" 
+                                            value="" {{ !request('periodo') ? 'checked' : '' }}>
+                                        <label class="btn btn-sm btn-outline-secondary" for="todos_fecha">
+                                            <i class="fas fa-calendar"></i> Todas
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="periodo" id="esta_semana" 
+                                            value="semana" {{ request('periodo') == 'semana' ? 'checked' : '' }}>
+                                        <label class="btn btn-sm btn-outline-info" for="esta_semana">
+                                            <i class="fas fa-calendar-week"></i> Esta Semana
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="periodo" id="este_mes" 
+                                            value="mes" {{ request('periodo') == 'mes' ? 'checked' : '' }}>
+                                        <label class="btn btn-sm btn-outline-primary" for="este_mes">
+                                            <i class="fas fa-calendar-alt"></i> Este Mes
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
                 <div class="card-body">
@@ -379,6 +494,15 @@ document.addEventListener('DOMContentLoaded', function() {
         var createProjectModal = new bootstrap.Modal(document.getElementById('createProjectModal'));
         createProjectModal.show();
     @endif
+
+    const filterForm = document.getElementById('filterForm');
+    const radioButtons = filterForm.querySelectorAll('input[type="radio"]');
+    
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', () => {
+            filterForm.submit();
+        });
+    });
 });
 
 function editProject(projectId) {
@@ -461,6 +585,57 @@ function createTask(projectId) {
     }
     .btn-group .btn {
         flex: 1;
+    }
+    .filter-label {
+        font-weight: 600;
+        color: #444;
+        font-size: 0.9rem;
+    }
+
+    .btn-check + .btn {
+        transition: all 0.2s ease;
+    }
+
+    .btn-check:checked + .btn {
+        transform: scale(1.05);
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.8rem;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .btn i {
+        font-size: 0.8rem;
+    }
+
+    /* Estilos para estados activos */
+    .btn-check:checked + .btn-outline-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    .btn-check:checked + .btn-outline-warning {
+        background-color: #ffc107;
+        color: black;
+    }
+    .btn-check:checked + .btn-outline-primary {
+        background-color: #0d6efd;
+        color: white;
+    }
+    .btn-check:checked + .btn-outline-success {
+        background-color: #198754;
+        color: white;
+    }
+    .btn-check:checked + .btn-outline-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    .btn-check:checked + .btn-outline-info {
+        background-color: #0dcaf0;
+        color: white;
     }
 </style>
 @endpush

@@ -15,35 +15,27 @@ class TaskController extends Controller
         $this->middleware('auth');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        // Orden de prioridad: urgente > alta > media > baja
-        $priorityOrder = [
-            'urgente' => 1,
-            'alta' => 2,
-            'media' => 3,
-            'baja' => 4
-        ];
+        $query = Task::with(['project', 'developer', 'completedBy']);
 
-        $tasks = Task::with(['project', 'developer', 'completedBy'])
-            ->orderByRaw("CASE 
-                WHEN prioridad = 'urgente' THEN 1 
-                WHEN prioridad = 'alta' THEN 2 
-                WHEN prioridad = 'media' THEN 3 
-                WHEN prioridad = 'baja' THEN 4 
-            END")
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Filtros
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+        if ($request->filled('prioridad')) {
+            $query->where('prioridad', $request->prioridad);
+        }
+        if ($request->filled('dificultad')) {
+            $query->where('dificultad', $request->dificultad);
+        }
+
+        $tasks = $query->orderBy('created_at', 'desc')->get();
 
         // Obtener tareas pendientes del usuario actual
         $tareasPendientes = Task::where('desarrollado_por', auth()->id())
             ->whereIn('estado', ['pendiente', 'en progreso'])
-            ->orderByRaw("CASE 
-                WHEN prioridad = 'urgente' THEN 1 
-                WHEN prioridad = 'alta' THEN 2 
-                WHEN prioridad = 'media' THEN 3 
-                WHEN prioridad = 'baja' THEN 4 
-            END")
+            ->orderBy('created_at', 'desc')
             ->get();
 
         $projects = Project::all();

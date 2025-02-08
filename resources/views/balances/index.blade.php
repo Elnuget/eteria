@@ -2,6 +2,111 @@
 
 @section('content')
 <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Listado de Saldos</h2>
+        <div>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBalanceModal">
+                <i class="fas fa-plus"></i> Nuevo Saldo
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="actualizarBalances()">
+                <i class="fas fa-sync"></i> Actualizar Balances
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-header bg-white" role="button" data-bs-toggle="collapse" data-bs-target="#filtrosCollapse">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-filter me-2"></i> Filtros
+                <i class="fas fa-chevron-down ms-2"></i>
+            </div>
+        </div>
+
+        <div class="collapse show" id="filtrosCollapse">
+            <div class="card-body pt-0">
+                <div class="row">
+                    <!-- Estado de Pago -->
+                    <div class="col-md-4 mt-3">
+                        <label class="d-block mb-2">Estado de Pago</label>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="{{ request()->fullUrlWithQuery(['estado' => '']) }}" 
+                               class="btn btn-sm {{ !request('estado') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                                <i class="fas fa-list"></i> Todos
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['estado' => 'pendiente']) }}" 
+                               class="btn btn-sm {{ request('estado') == 'pendiente' ? 'btn-warning' : 'btn-outline-warning' }}">
+                                <i class="fas fa-clock"></i> Pendientes
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['estado' => 'pagado']) }}" 
+                               class="btn btn-sm {{ request('estado') == 'pagado' ? 'btn-success' : 'btn-outline-success' }}">
+                                <i class="fas fa-check-circle"></i> Pagados
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['estado' => 'vencido']) }}" 
+                               class="btn btn-sm {{ request('estado') == 'vencido' ? 'btn-danger' : 'btn-outline-danger' }}">
+                                <i class="fas fa-exclamation-circle"></i> Vencidos
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Tipo de Saldo -->
+                    <div class="col-md-4 mt-3">
+                        <label class="d-block mb-2">Tipo de Saldo</label>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="{{ request()->fullUrlWithQuery(['tipo' => '']) }}" 
+                               class="btn btn-sm {{ !request('tipo') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                                <i class="fas fa-layer-group"></i> Todos
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['tipo' => 'mensual']) }}" 
+                               class="btn btn-sm {{ request('tipo') == 'mensual' ? 'btn-info' : 'btn-outline-info' }}">
+                                <i class="fas fa-calendar-alt"></i> Mensual
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['tipo' => 'anual']) }}" 
+                               class="btn btn-sm {{ request('tipo') == 'anual' ? 'btn-primary' : 'btn-outline-primary' }}">
+                                <i class="fas fa-calendar"></i> Anual
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['tipo' => 'unico']) }}" 
+                               class="btn btn-sm {{ request('tipo') == 'unico' ? 'btn-dark' : 'btn-outline-dark' }}">
+                                <i class="fas fa-dot-circle"></i> Único
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Período -->
+                    <div class="col-md-4 mt-3">
+                        <label class="d-block mb-2">Período</label>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="{{ request()->fullUrlWithQuery(['periodo' => '']) }}" 
+                               class="btn btn-sm {{ !request('periodo') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                                <i class="fas fa-calendar"></i> Todos
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['periodo' => 'mes_actual']) }}" 
+                               class="btn btn-sm {{ request('periodo') == 'mes_actual' ? 'btn-info' : 'btn-outline-info' }}">
+                                <i class="fas fa-calendar-week"></i> Mes Actual
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['periodo' => 'mes_anterior']) }}" 
+                               class="btn btn-sm {{ request('periodo') == 'mes_anterior' ? 'btn-primary' : 'btn-outline-primary' }}">
+                                <i class="fas fa-calendar-minus"></i> Mes Anterior
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['periodo' => 'proximo_mes']) }}" 
+                               class="btn btn-sm {{ request('periodo') == 'proximo_mes' ? 'btn-warning' : 'btn-outline-warning' }}">
+                                <i class="fas fa-calendar-plus"></i> Próximo Mes
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                @if(request()->anyFilled(['estado', 'tipo', 'periodo']))
+                    <div class="mt-3 text-end">
+                        <a href="{{ route('balances.index') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-times"></i> Limpiar filtros
+                        </a>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card">
@@ -425,14 +530,121 @@ function actualizarBalances() {
 
 @push('styles')
 <style>
-    .card {
-        transition: transform 0.2s ease-in-out;
+    /* Estilos para los botones */
+    .btn-sm {
+        padding: 0.35rem 0.8rem;   /* Padding más pequeño */
+        font-size: 0.88rem;        /* Fuente más pequeña */
+        border-radius: 18px;       /* Radio de borde más pequeño */
+        white-space: nowrap;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        height: 32px;              /* Altura más pequeña */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 85px;           /* Ancho mínimo más pequeño */
     }
-    .card:hover {
-        transform: translateY(-5px);
+
+    .btn-sm i {
+        font-size: 0.82rem;        /* Iconos más pequeños */
+        margin-right: 0.35rem;     /* Menos espacio entre icono y texto */
     }
-    .btn-group .btn {
-        flex: 1;
+
+    /* Espaciado entre botones */
+    .gap-1 {
+        gap: 0.35rem !important;   /* Gap más pequeño */
+    }
+
+    /* Etiquetas de filtros */
+    label {
+        font-size: 0.95rem;        /* Etiquetas más pequeñas */
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 0.5rem;     /* Margen inferior más pequeño */
+    }
+
+    /* Contenedor de filtros */
+    .card-body {
+        padding: 1rem;             /* Padding más pequeño */
+    }
+
+    /* Ajustes de espaciado vertical */
+    .col-md-4 {
+        margin-top: 0.8rem;        /* Márgenes más pequeños */
+        margin-bottom: 0.5rem;
+    }
+
+    /* Efectos hover mejorados */
+    .btn-sm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Estilos para botones activos */
+    .btn-secondary:not(.btn-outline-secondary) {
+        background-color: #6c757d;
+        color: white;
+        font-weight: 600;
+    }
+
+    .btn-warning:not(.btn-outline-warning) {
+        background-color: #ffc107;
+        color: #000;
+        font-weight: 600;
+    }
+
+    .btn-success:not(.btn-outline-success) {
+        background-color: #198754;
+        color: white;
+        font-weight: 600;
+    }
+
+    .btn-danger:not(.btn-outline-danger) {
+        background-color: #dc3545;
+        color: white;
+        font-weight: 600;
+    }
+
+    .btn-info:not(.btn-outline-info) {
+        background-color: #0dcaf0;
+        color: white;
+        font-weight: 600;
+    }
+
+    .btn-primary:not(.btn-outline-primary) {
+        background-color: #0d6efd;
+        color: white;
+        font-weight: 600;
+    }
+
+    .btn-dark:not(.btn-outline-dark) {
+        background-color: #212529;
+        color: white;
+        font-weight: 600;
+    }
+
+    /* Contenedor de grupos de botones */
+    .d-flex.flex-wrap {
+        margin: -0.25rem;
+    }
+
+    .d-flex.flex-wrap > * {
+        margin: 0.25rem;
+    }
+
+    /* Botón de limpiar filtros */
+    .btn-outline-secondary {
+        border-width: 2px;
+    }
+
+    /* Cabecera de filtros */
+    .card-header {
+        padding: 1rem 1.5rem;
+        font-size: 1.1rem;
+    }
+
+    .card-header i {
+        font-size: 1rem;
     }
 </style>
 @endpush

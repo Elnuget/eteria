@@ -15,10 +15,60 @@ class ProjectController extends Controller
     /**
      * Muestra una lista de todos los proyectos.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $projects = Project::orderBy('created_at', 'desc')
-                         ->get();
+        $query = Project::query();
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Filtro por implementación (basado en fechas)
+        if ($request->filled('implementado')) {
+            $today = now();
+            switch ($request->implementado) {
+                case 'esta_semana':
+                    $query->whereBetween('implementado_en', [
+                        $today->copy()->startOfWeek(),
+                        $today->copy()->endOfWeek()
+                    ]);
+                    break;
+                case 'este_mes':
+                    $query->whereBetween('implementado_en', [
+                        $today->copy()->startOfMonth(),
+                        $today->copy()->endOfMonth()
+                    ]);
+                    break;
+                case 'sin_implementar':
+                    $query->whereNull('implementado_en');
+                    break;
+                case 'implementado':
+                    $query->whereNotNull('implementado_en');
+                    break;
+            }
+        }
+
+        // Filtro por fecha de entrega
+        if ($request->filled('periodo')) {
+            $today = now();
+            switch ($request->periodo) {
+                case 'semana':
+                    $query->whereBetween('fecha_entrega', [
+                        $today->copy()->startOfWeek(),
+                        $today->copy()->endOfWeek()
+                    ]);
+                    break;
+                case 'mes':
+                    $query->whereBetween('fecha_entrega', [
+                        $today->copy()->startOfMonth(),
+                        $today->copy()->endOfMonth()
+                    ]);
+                    break;
+            }
+        }
+
+        $projects = $query->orderBy('created_at', 'desc')->get();
         return view('projects.index', compact('projects'));
     }
 

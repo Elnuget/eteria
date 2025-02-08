@@ -9,6 +9,106 @@
         </button>
     </div>
 
+    <div class="card mb-4">
+        <div class="card-header bg-white" role="button" data-bs-toggle="collapse" data-bs-target="#filtrosCollapse">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-filter me-2"></i> Filtros
+                <i class="fas fa-chevron-down ms-2"></i>
+            </div>
+        </div>
+
+        <div class="collapse show" id="filtrosCollapse">
+            <div class="card-body pt-0">
+                <div class="row">
+                    <!-- Estado -->
+                    <div class="col-md-4 mt-3">
+                        <label class="d-block mb-2">Estado</label>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="{{ request()->fullUrlWithQuery(['estado' => '']) }}" 
+                               class="btn btn-sm {{ !request('estado') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                                <i class="fas fa-tasks"></i> Todas
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['estado' => 'pendiente']) }}" 
+                               class="btn btn-sm {{ request('estado') == 'pendiente' ? 'btn-warning' : 'btn-outline-warning' }}">
+                                <i class="fas fa-clock"></i> Pendientes
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['estado' => 'en progreso']) }}" 
+                               class="btn btn-sm {{ request('estado') == 'en progreso' ? 'btn-info' : 'btn-outline-info' }}">
+                                <i class="fas fa-spinner"></i> En Progreso
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['estado' => 'completada']) }}" 
+                               class="btn btn-sm {{ request('estado') == 'completada' ? 'btn-success' : 'btn-outline-success' }}">
+                                <i class="fas fa-check"></i> Completadas
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Prioridad -->
+                    <div class="col-md-4 mt-3">
+                        <label class="d-block mb-2">Prioridad</label>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="{{ request()->fullUrlWithQuery(['prioridad' => '']) }}" 
+                               class="btn btn-sm {{ !request('prioridad') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                                <i class="fas fa-layer-group"></i> Todas
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['prioridad' => 'urgente']) }}" 
+                               class="btn btn-sm {{ request('prioridad') == 'urgente' ? 'btn-danger' : 'btn-outline-danger' }}">
+                                <i class="fas fa-exclamation-circle"></i> Urgente
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['prioridad' => 'alta']) }}" 
+                               class="btn btn-sm {{ request('prioridad') == 'alta' ? 'btn-warning' : 'btn-outline-warning' }}">
+                                <i class="fas fa-arrow-up"></i> Alta
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['prioridad' => 'media']) }}" 
+                               class="btn btn-sm {{ request('prioridad') == 'media' ? 'btn-info' : 'btn-outline-info' }}">
+                                <i class="fas fa-equals"></i> Media
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['prioridad' => 'baja']) }}" 
+                               class="btn btn-sm {{ request('prioridad') == 'baja' ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                                <i class="fas fa-arrow-down"></i> Baja
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Dificultad -->
+                    <div class="col-md-4 mt-3">
+                        <label class="d-block mb-2">Dificultad</label>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="{{ request()->fullUrlWithQuery(['dificultad' => '']) }}" 
+                               class="btn btn-sm {{ !request('dificultad') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                                <i class="fas fa-star-half-alt"></i> Todas
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['dificultad' => 'facil']) }}" 
+                               class="btn btn-sm {{ request('dificultad') == 'facil' ? 'btn-success' : 'btn-outline-success' }}">
+                                <i class="fas fa-smile"></i> Fácil
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['dificultad' => 'intermedia']) }}" 
+                               class="btn btn-sm {{ request('dificultad') == 'intermedia' ? 'btn-info' : 'btn-outline-info' }}">
+                                <i class="fas fa-meh"></i> Intermedia
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['dificultad' => 'dificil']) }}" 
+                               class="btn btn-sm {{ request('dificultad') == 'dificil' ? 'btn-warning' : 'btn-outline-warning' }}">
+                                <i class="fas fa-frown"></i> Difícil
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['dificultad' => 'experto']) }}" 
+                               class="btn btn-sm {{ request('dificultad') == 'experto' ? 'btn-danger' : 'btn-outline-danger' }}">
+                                <i class="fas fa-dizzy"></i> Experto
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                @if(request()->anyFilled(['estado', 'prioridad', 'dificultad']))
+                    <div class="mt-3 text-end">
+                        <a href="{{ route('tasks.index') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-times"></i> Limpiar filtros
+                        </a>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
     @if(session('success'))
         <div class="alert alert-success">
             {{ session('success') }}
@@ -467,5 +567,198 @@
         font-size: 1.1rem;
         font-weight: 600;
     }
+    .input-group-text {
+        border-right: 0;
+    }
+    .form-select {
+        cursor: pointer;
+    }
+    .form-select:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .input-group:hover .input-group-text,
+    .input-group:hover .form-select {
+        border-color: #86b7fe;
+    }
+    .btn-outline-secondary:hover {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+    .btn-group {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    .btn-group .btn {
+        border-radius: 20px !important;
+        padding: 0.375rem 1rem;
+        font-size: 0.9rem;
+    }
+    .btn-check:checked + .btn-outline-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    .btn-check:checked + .btn-outline-warning {
+        background-color: #ffc107;
+        color: black;
+    }
+    .btn-check:checked + .btn-outline-info {
+        background-color: #0dcaf0;
+        color: white;
+    }
+    .btn-check:checked + .btn-outline-success {
+        background-color: #198754;
+        color: white;
+    }
+    .btn-check:checked + .btn-outline-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    .btn-check:checked + .btn-outline-primary {
+        background-color: #0d6efd;
+        color: white;
+    }
+    .filter-sections {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .filter-section {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 1rem;
+    }
+
+    .filter-section:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .filter-label {
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .filter-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .filter-pill .btn {
+        border-radius: 20px;
+        font-size: 0.85rem;
+        padding: 0.3rem 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        transition: all 0.2s ease;
+    }
+
+    .filter-pill .btn i {
+        font-size: 0.8rem;
+    }
+
+    .btn-check:checked + .btn {
+        transform: scale(1.05);
+    }
+
+    .btn-check:checked + .btn-outline-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .card-header {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .btn-sm {
+        padding: 0.35rem 0.8rem;
+        font-size: 0.9rem;
+        border-radius: 20px;
+        white-space: nowrap;
+        font-weight: 500;
+    }
+
+    .btn-sm i {
+        font-size: 0.85rem;
+        margin-right: 0.3rem;
+    }
+
+    .gap-1 {
+        gap: 0.4rem !important;
+    }
+
+    label {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 0.5rem;
+    }
+
+    .card-header {
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+    }
+
+    .card-header:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* Ajustes para el diseño horizontal */
+    .d-flex.flex-wrap {
+        margin: -0.2rem;
+    }
+
+    .d-flex.flex-wrap > * {
+        margin: 0.2rem;
+    }
+
+    /* Estilos para los botones activos */
+    .btn-secondary, .btn-outline-secondary:hover,
+    .btn-warning, .btn-outline-warning:hover,
+    .btn-info, .btn-outline-info:hover,
+    .btn-success, .btn-outline-success:hover,
+    .btn-danger, .btn-outline-danger:hover {
+        color: white;
+    }
+
+    .btn-warning, .btn-outline-warning:hover {
+        color: #000;
+    }
+
+    /* Ajustes para el espaciado vertical */
+    .col-md-4 {
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Ajustes para el contenedor de filtros */
+    .card-body {
+        padding: 1rem 1.25rem;
+    }
+
+    /* Mejorar la visibilidad de los botones activos */
+    .btn-sm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .btn.active {
+        transform: scale(1.05);
+        font-weight: 500;
+    }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+function setFilter(type, value) {
+    document.getElementById(type + '_filter').value = value;
+    document.getElementById('filterForm').submit();
+}
+</script>
 @endpush 
