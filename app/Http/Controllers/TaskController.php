@@ -30,18 +30,34 @@ class TaskController extends Controller
             $query->where('dificultad', $request->dificultad);
         }
 
+        // Obtener todas las tareas según los filtros
         $tasks = $query->orderBy('created_at', 'desc')->get();
 
-        // Obtener tareas pendientes del usuario actual
-        $tareasPendientes = Task::where('desarrollado_por', auth()->id())
+        // Obtener mis tareas activas (pendientes y en progreso)
+        $misTareasActivas = Task::where('desarrollado_por', auth()->id())
             ->whereIn('estado', ['pendiente', 'en progreso'])
+            ->orderBy('prioridad', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Obtener tareas del equipo (solo las que están en progreso por otros desarrolladores)
+        $tareasEquipo = Task::where('desarrollado_por', '!=', auth()->id())
+            ->whereNotNull('desarrollado_por')
+            ->where('estado', 'en progreso')
+            ->orderBy('prioridad', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
 
         $projects = Project::all();
         $users = User::all();
         
-        return view('tasks.index', compact('tasks', 'projects', 'users', 'tareasPendientes'));
+        return view('tasks.index', compact(
+            'tasks', 
+            'projects', 
+            'users', 
+            'misTareasActivas',
+            'tareasEquipo'
+        ));
     }
 
     public function create()

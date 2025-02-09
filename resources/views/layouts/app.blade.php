@@ -114,25 +114,7 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     @stack('scripts')
-
-    <style>
-        .btn-link {
-            text-decoration: none;
-            color: #212529;
-            padding: 0.5rem 1rem;
-        }
-        .btn-link:hover {
-            color: #0056b3;
-        }
-        .dropdown-menu {
-            min-width: 200px;
-        }
-        .dropdown-item {
-            padding: 0.5rem 1rem;
-        }
-        .dropdown-item i {
-            margin-right: 0.5rem;
-        }
-    </style>
 </body>
 </html>
+
+

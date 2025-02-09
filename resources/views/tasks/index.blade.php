@@ -9,6 +9,7 @@
         </button>
     </div>
 
+    <!-- Filtros -->
     <div class="card mb-4">
         <div class="card-header bg-white" role="button" data-bs-toggle="collapse" data-bs-target="#filtrosCollapse">
             <div class="d-flex align-items-center">
@@ -18,80 +19,80 @@
         </div>
 
         <div class="collapse show" id="filtrosCollapse">
-            <div class="card-body pt-0">
+            <div class="card-body filters-container">
                 <div class="row">
                     <!-- Estado -->
-                    <div class="col-md-4 mt-3">
-                        <label class="d-block mb-2">Estado</label>
-                        <div class="d-flex flex-wrap gap-1">
+                    <div class="col-md-4 filter-section">
+                        <label class="filter-label">Estado</label>
+                        <div class="filter-options">
                             <a href="{{ request()->fullUrlWithQuery(['estado' => '']) }}" 
-                               class="btn btn-sm {{ !request('estado') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                               class="btn filter-btn {{ !request('estado') ? 'btn-secondary' : 'btn-outline-secondary' }}">
                                 <i class="fas fa-tasks"></i> Todas
                             </a>
                             <a href="{{ request()->fullUrlWithQuery(['estado' => 'pendiente']) }}" 
-                               class="btn btn-sm {{ request('estado') == 'pendiente' ? 'btn-warning' : 'btn-outline-warning' }}">
+                               class="btn filter-btn {{ request('estado') == 'pendiente' ? 'btn-warning' : 'btn-outline-warning' }}">
                                 <i class="fas fa-clock"></i> Pendientes
                             </a>
                             <a href="{{ request()->fullUrlWithQuery(['estado' => 'en progreso']) }}" 
-                               class="btn btn-sm {{ request('estado') == 'en progreso' ? 'btn-info' : 'btn-outline-info' }}">
+                               class="btn filter-btn {{ request('estado') == 'en progreso' ? 'btn-info' : 'btn-outline-info' }}">
                                 <i class="fas fa-spinner"></i> En Progreso
                             </a>
                             <a href="{{ request()->fullUrlWithQuery(['estado' => 'completada']) }}" 
-                               class="btn btn-sm {{ request('estado') == 'completada' ? 'btn-success' : 'btn-outline-success' }}">
+                               class="btn filter-btn {{ request('estado') == 'completada' ? 'btn-success' : 'btn-outline-success' }}">
                                 <i class="fas fa-check"></i> Completadas
                             </a>
                         </div>
                     </div>
 
                     <!-- Prioridad -->
-                    <div class="col-md-4 mt-3">
-                        <label class="d-block mb-2">Prioridad</label>
-                        <div class="d-flex flex-wrap gap-1">
+                    <div class="col-md-4 filter-section">
+                        <label class="filter-label">Prioridad</label>
+                        <div class="filter-options">
                             <a href="{{ request()->fullUrlWithQuery(['prioridad' => '']) }}" 
-                               class="btn btn-sm {{ !request('prioridad') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                               class="btn filter-btn {{ !request('prioridad') ? 'btn-secondary' : 'btn-outline-secondary' }}">
                                 <i class="fas fa-layer-group"></i> Todas
                             </a>
                             <a href="{{ request()->fullUrlWithQuery(['prioridad' => 'urgente']) }}" 
-                               class="btn btn-sm {{ request('prioridad') == 'urgente' ? 'btn-danger' : 'btn-outline-danger' }}">
+                               class="btn filter-btn {{ request('prioridad') == 'urgente' ? 'btn-danger' : 'btn-outline-danger' }}">
                                 <i class="fas fa-exclamation-circle"></i> Urgente
                             </a>
                             <a href="{{ request()->fullUrlWithQuery(['prioridad' => 'alta']) }}" 
-                               class="btn btn-sm {{ request('prioridad') == 'alta' ? 'btn-warning' : 'btn-outline-warning' }}">
+                               class="btn filter-btn {{ request('prioridad') == 'alta' ? 'btn-warning' : 'btn-outline-warning' }}">
                                 <i class="fas fa-arrow-up"></i> Alta
                             </a>
                             <a href="{{ request()->fullUrlWithQuery(['prioridad' => 'media']) }}" 
-                               class="btn btn-sm {{ request('prioridad') == 'media' ? 'btn-info' : 'btn-outline-info' }}">
+                               class="btn filter-btn {{ request('prioridad') == 'media' ? 'btn-info' : 'btn-outline-info' }}">
                                 <i class="fas fa-equals"></i> Media
                             </a>
                             <a href="{{ request()->fullUrlWithQuery(['prioridad' => 'baja']) }}" 
-                               class="btn btn-sm {{ request('prioridad') == 'baja' ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                               class="btn filter-btn {{ request('prioridad') == 'baja' ? 'btn-secondary' : 'btn-outline-secondary' }}">
                                 <i class="fas fa-arrow-down"></i> Baja
                             </a>
                         </div>
                     </div>
 
                     <!-- Dificultad -->
-                    <div class="col-md-4 mt-3">
-                        <label class="d-block mb-2">Dificultad</label>
-                        <div class="d-flex flex-wrap gap-1">
+                    <div class="col-md-4 filter-section">
+                        <label class="filter-label">Dificultad</label>
+                        <div class="filter-options">
                             <a href="{{ request()->fullUrlWithQuery(['dificultad' => '']) }}" 
-                               class="btn btn-sm {{ !request('dificultad') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                               class="btn filter-btn {{ !request('dificultad') ? 'btn-secondary' : 'btn-outline-secondary' }}">
                                 <i class="fas fa-star-half-alt"></i> Todas
                             </a>
                             <a href="{{ request()->fullUrlWithQuery(['dificultad' => 'facil']) }}" 
-                               class="btn btn-sm {{ request('dificultad') == 'facil' ? 'btn-success' : 'btn-outline-success' }}">
+                               class="btn filter-btn {{ request('dificultad') == 'facil' ? 'btn-success' : 'btn-outline-success' }}">
                                 <i class="fas fa-smile"></i> Fácil
                             </a>
                             <a href="{{ request()->fullUrlWithQuery(['dificultad' => 'intermedia']) }}" 
-                               class="btn btn-sm {{ request('dificultad') == 'intermedia' ? 'btn-info' : 'btn-outline-info' }}">
+                               class="btn filter-btn {{ request('dificultad') == 'intermedia' ? 'btn-info' : 'btn-outline-info' }}">
                                 <i class="fas fa-meh"></i> Intermedia
                             </a>
                             <a href="{{ request()->fullUrlWithQuery(['dificultad' => 'dificil']) }}" 
-                               class="btn btn-sm {{ request('dificultad') == 'dificil' ? 'btn-warning' : 'btn-outline-warning' }}">
+                               class="btn filter-btn {{ request('dificultad') == 'dificil' ? 'btn-warning' : 'btn-outline-warning' }}">
                                 <i class="fas fa-frown"></i> Difícil
                             </a>
                             <a href="{{ request()->fullUrlWithQuery(['dificultad' => 'experto']) }}" 
-                               class="btn btn-sm {{ request('dificultad') == 'experto' ? 'btn-danger' : 'btn-outline-danger' }}">
+                               class="btn filter-btn {{ request('dificultad') == 'experto' ? 'btn-danger' : 'btn-outline-danger' }}">
                                 <i class="fas fa-dizzy"></i> Experto
                             </a>
                         </div>
@@ -99,8 +100,8 @@
                 </div>
 
                 @if(request()->anyFilled(['estado', 'prioridad', 'dificultad']))
-                    <div class="mt-3 text-end">
-                        <a href="{{ route('tasks.index') }}" class="btn btn-sm btn-outline-secondary">
+                    <div class="text-end mt-3">
+                        <a href="{{ route('tasks.index') }}" class="btn btn-outline-secondary filter-btn">
                             <i class="fas fa-times"></i> Limpiar filtros
                         </a>
                     </div>
@@ -121,53 +122,119 @@
         </div>
     @endif
 
-    @if($tareasPendientes->count() > 0)
-        <div class="card mb-4">
-            <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0">
-                    <i class="fas fa-tasks"></i> Tus Tareas Pendientes ({{ $tareasPendientes->count() }})
-                </h5>
-            </div>
-            <div class="card-body">
+    <!-- Mis Tareas Activas -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-user-clock"></i> Mis Tareas Activas ({{ $misTareasActivas->count() }})
+            </h5>
+        </div>
+        <div class="card-body">
+            @if($misTareasActivas->isEmpty())
+                <div class="alert alert-info mb-0">
+                    No tienes tareas activas en este momento.
+                </div>
+            @else
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
                                 <th>Tarea</th>
-                                <th>Prioridad</th>
-                                <th>Estado</th>
-                                <th>Tiempo Estimado</th>
                                 <th>Proyecto</th>
+                                <th>Estado</th>
+                                <th>Prioridad</th>
+                                <th>Tiempo Est.</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($tareasPendientes as $tareaPendiente)
+                            @foreach($misTareasActivas as $tarea)
                                 <tr>
-                                    <td>{{ $tareaPendiente->nombre }}</td>
+                                    <td>{{ $tarea->nombre }}</td>
+                                    <td>{{ $tarea->project->nombre }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ $tarea->estado === 'en progreso' ? 'warning' : 'secondary' }}">
+                                            {{ $tarea->estado }}
+                                        </span>
+                                    </td>
                                     <td>
                                         <span class="badge bg-{{ 
-                                            $tareaPendiente->prioridad === 'urgente' ? 'danger' : 
-                                            ($tareaPendiente->prioridad === 'alta' ? 'warning' : 
-                                            ($tareaPendiente->prioridad === 'media' ? 'info' : 'secondary')) 
+                                            $tarea->prioridad === 'urgente' ? 'danger' : 
+                                            ($tarea->prioridad === 'alta' ? 'warning' : 
+                                            ($tarea->prioridad === 'media' ? 'info' : 'secondary')) 
                                         }}">
-                                            {{ ucfirst($tareaPendiente->prioridad) }}
+                                            {{ ucfirst($tarea->prioridad) }}
                                         </span>
                                     </td>
+                                    <td>⏳ {{ $tarea->tiempo_estimado }} min</td>
                                     <td>
-                                        <span class="badge bg-{{ $tareaPendiente->estado === 'en progreso' ? 'warning' : 'secondary' }}">
-                                            {{ $tareaPendiente->estado }}
-                                        </span>
+                                        @if($tarea->estado !== 'completada')
+                                            <form action="{{ route('tasks.completar', $tarea) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn btn-success btn-sm" 
+                                                        onclick="return confirm('¿Completar esta tarea?')">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                        @endif
                                     </td>
-                                    <td>⏳ {{ $tareaPendiente->tiempo_estimado }} min</td>
-                                    <td>{{ $tareaPendiente->project->nombre }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
-            </div>
+            @endif
         </div>
-    @endif
+    </div>
+
+    <!-- Tareas del Equipo -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-users"></i> Tareas en Progreso del Equipo ({{ $tareasEquipo->count() }})
+            </h5>
+        </div>
+        <div class="card-body">
+            @if($tareasEquipo->isEmpty())
+                <div class="alert alert-info mb-0">
+                    No hay tareas en progreso por otros miembros del equipo.
+                </div>
+            @else
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Tarea</th>
+                                <th>Proyecto</th>
+                                <th>Prioridad</th>
+                                <th>Desarrollador</th>
+                                <th>Tiempo Est.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($tareasEquipo as $tarea)
+                                <tr>
+                                    <td>{{ $tarea->nombre }}</td>
+                                    <td>{{ $tarea->project->nombre }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 
+                                            $tarea->prioridad === 'urgente' ? 'danger' : 
+                                            ($tarea->prioridad === 'alta' ? 'warning' : 
+                                            ($tarea->prioridad === 'media' ? 'info' : 'secondary')) 
+                                        }}">
+                                            {{ ucfirst($tarea->prioridad) }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $tarea->developer->name }}</td>
+                                    <td>⏳ {{ $tarea->tiempo_estimado }} min</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+    </div>
 
     @if($tasks->isEmpty())
         <div class="alert alert-info">
@@ -750,6 +817,56 @@
     .btn.active {
         transform: scale(1.05);
         font-weight: 500;
+    }
+
+    /* Estilos para los filtros */
+    .filter-btn {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.875rem;
+        border-radius: 15px;
+        min-width: auto;
+        text-align: center;
+        margin: 0.15rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        transition: all 0.2s ease;
+        height: 28px;
+    }
+
+    .filter-btn i {
+        font-size: 0.875rem;
+    }
+
+    .filter-section {
+        margin-bottom: 1rem;
+    }
+
+    .filter-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 0.5rem;
+    }
+
+    .filter-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+
+    /* Ajustes para el contenedor de filtros */
+    .filters-container {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+
+    /* Ajuste para el botón de limpiar filtros */
+    .text-end .filter-btn {
+        font-size: 0.875rem;
+        padding: 0.25rem 0.75rem;
     }
 </style>
 @endpush
