@@ -184,6 +184,11 @@
                                                     onclick="createTask({{ $project->id }})">
                                                 <i class="fas fa-tasks"></i> Tarea
                                             </button>
+                                            <button type="button" 
+                                                    class="btn btn-outline-primary btn-sm"
+                                                    onclick="manageClients({{ $project->id }})">
+                                                <i class="fas fa-users"></i> Clientes
+                                            </button>
                                             <form action="{{ route('projects.destroy', $project) }}" 
                                                   method="POST" 
                                                   class="d-inline">
@@ -350,6 +355,16 @@
                     <input type="hidden" id="proyecto_id" name="proyecto_id">
                     
                     <div class="mb-3">
+                        <label for="cliente_id" class="form-label">Cliente</label>
+                        <select class="form-select" id="cliente_id" name="cliente_id">
+                            <option value="">Seleccionar cliente</option>
+                            @foreach($project->clientes as $cliente)
+                                <option value="{{ $cliente->id }}">{{ $cliente->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="motivo" class="form-label">Motivo</label>
                         <textarea class="form-control" id="motivo" name="motivo" rows="3"></textarea>
                     </div>
@@ -478,6 +493,43 @@
     </div>
 </div>
 
+<!-- Modal para gestionar clientes -->
+<div class="modal fade" id="manageClientsModal" tabindex="-1" aria-labelledby="manageClientsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="manageClientsModalLabel">Gestionar Clientes del Proyecto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col">
+                        <h6>Clientes Asociados</h6>
+                        <div class="list-group" id="clientesAsociados">
+                            <!-- Lista de clientes asociados -->
+                        </div>
+                    </div>
+                    <div class="col">
+                        <h6>Clientes Disponibles</h6>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="searchClientes" placeholder="Buscar clientes...">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <div class="list-group" id="clientesDisponibles">
+                            <!-- Lista de clientes disponibles -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeClientsModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -551,8 +603,33 @@ function editProject(projectId) {
 
 function createBalance(projectId) {
     document.getElementById('proyecto_id').value = projectId;
-    const modal = new bootstrap.Modal(document.getElementById('createBalanceModal'));
-    modal.show();
+    
+    // Cargar los clientes del proyecto
+    fetch(`/projects/${projectId}/clients`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const clienteSelect = document.getElementById('cliente_id');
+        clienteSelect.innerHTML = '<option value="">Seleccionar cliente</option>';
+        
+        data.associated.forEach(cliente => {
+            clienteSelect.innerHTML += `
+                <option value="${cliente.id}">${cliente.nombre}</option>
+            `;
+        });
+        
+        const modal = new bootstrap.Modal(document.getElementById('createBalanceModal'));
+        modal.show();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al cargar los clientes del proyecto');
+    });
 }
 
 function calcularMontoPendiente() {
@@ -572,6 +649,146 @@ function createTask(projectId) {
     const modal = new bootstrap.Modal(document.getElementById('createTaskModal'));
     modal.show();
 }
+
+function manageClients(projectId) {
+    // Remover cualquier backdrop existente
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+
+    const modal = new bootstrap.Modal(document.getElementById('manageClientsModal'));
+    
+    // Cargar clientes asociados y disponibles
+    fetch(`/projects/${projectId}/clients`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const clientesAsociados = document.getElementById('clientesAsociados');
+        const clientesDisponibles = document.getElementById('clientesDisponibles');
+        
+        // Limpiar listas
+        clientesAsociados.innerHTML = '';
+        clientesDisponibles.innerHTML = '';
+        
+        // Mostrar clientes asociados
+        data.associated.forEach(cliente => {
+            clientesAsociados.innerHTML += `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    ${cliente.nombre}
+                    <button class="btn btn-sm btn-danger" onclick="removeClient(${projectId}, ${cliente.id})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+        });
+        
+        // Mostrar clientes disponibles
+        data.available.forEach(cliente => {
+            clientesDisponibles.innerHTML += `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    ${cliente.nombre}
+                    <button class="btn btn-sm btn-success" onclick="addClient(${projectId}, ${cliente.id})">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            `;
+        });
+
+        // Agregar evento para limpiar el modal al cerrarse
+        const modalElement = document.getElementById('manageClientsModal');
+        modalElement.addEventListener('hidden.bs.modal', function () {
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
+
+        modal.show();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al cargar los clientes');
+    });
+}
+
+// Agregar función para cerrar el modal correctamente
+function closeClientsModal() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('manageClientsModal'));
+    if (modal) {
+        modal.hide();
+        document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    }
+}
+
+// Modificar las funciones de addClient y removeClient para usar el nuevo cierre
+function addClient(projectId, clienteId) {
+    fetch(`/projects/${projectId}/clients/${clienteId}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            closeClientsModal(); // Cerrar el modal actual
+            manageClients(projectId); // Recargar las listas
+        } else {
+            throw new Error('Error al agregar el cliente');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al agregar el cliente');
+    });
+}
+
+function removeClient(projectId, clienteId) {
+    if (!confirm('¿Estás seguro de querer eliminar este cliente del proyecto?')) {
+        return;
+    }
+    
+    fetch(`/projects/${projectId}/clients/${clienteId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            closeClientsModal(); // Cerrar el modal actual
+            manageClients(projectId); // Recargar las listas
+        } else {
+            throw new Error('Error al eliminar el cliente');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al eliminar el cliente');
+    });
+}
+
+// Búsqueda de clientes
+document.getElementById('searchClientes').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const clientesItems = document.querySelectorAll('#clientesDisponibles .list-group-item');
+    
+    clientesItems.forEach(item => {
+        const clienteName = item.textContent.toLowerCase();
+        item.style.display = clienteName.includes(searchTerm) ? '' : 'none';
+    });
+});
 </script>
 @endpush
 
@@ -583,9 +800,31 @@ function createTask(projectId) {
     .card:hover {
         transform: translateY(-5px);
     }
-    .btn-group .btn {
-        flex: 1;
+    
+    /* Estilos actualizados para los botones */
+    .btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
     }
+    
+    .btn-group .btn {
+        flex: 1 1 auto;
+        min-width: calc(33.333% - 0.25rem);
+        white-space: nowrap;
+        padding: 0.25rem;
+        font-size: 0.75rem;
+    }
+    
+    .btn-group form {
+        flex: 1 1 auto;
+        min-width: calc(33.333% - 0.25rem);
+    }
+    
+    .btn-group form .btn {
+        width: 100%;
+    }
+
     .filter-label {
         font-weight: 600;
         color: #444;
@@ -601,11 +840,10 @@ function createTask(projectId) {
     }
 
     .btn-sm {
-        padding: 0.25rem 0.8rem;
-        font-size: 0.875rem;
         display: inline-flex;
         align-items: center;
-        gap: 0.4rem;
+        justify-content: center;
+        gap: 0.25rem;
     }
 
     .btn i {
@@ -636,6 +874,41 @@ function createTask(projectId) {
     .btn-check:checked + .btn-outline-info {
         background-color: #0dcaf0;
         color: white;
+    }
+
+    /* Estilos para la gestión de clientes */
+    .list-group {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .list-group-item {
+        transition: background-color 0.2s;
+    }
+
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .list-group-item button {
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+
+    .list-group-item:hover button {
+        opacity: 1;
+    }
+
+    /* Ajustes responsivos para las tarjetas */
+    @media (max-width: 768px) {
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .btn-group .btn,
+        .btn-group form {
+            min-width: 100%;
+        }
     }
 </style>
 @endpush

@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\UserController;
 use App\Http\Controllers\BalanceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\ClienteController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -26,3 +27,9 @@ Route::resource('payments', PaymentController::class)->middleware('auth');
 Route::resource('tasks', TaskController::class);
 Route::post('/tasks/{task}/tomar', [TaskController::class, 'tomarTarea'])->name('tasks.tomar');
 Route::post('/tasks/{task}/completar', [TaskController::class, 'completarTarea'])->name('tasks.completar');
+Route::resource('clientes', ClienteController::class)->middleware('auth');
+Route::post('/clientes/{cliente}/attach-project', [ClienteController::class, 'attachProject'])->name('clientes.attach-project')->middleware('auth');
+Route::post('/clientes/{cliente}/detach-project', [ClienteController::class, 'detachProject'])->name('clientes.detach-project')->middleware('auth');
+Route::get('/projects/{project}/clients', [ProjectController::class, 'getClients'])->name('projects.clients.index');
+Route::post('/projects/{project}/clients/{client}', [ProjectController::class, 'attachClient'])->name('projects.clients.attach');
+Route::delete('/projects/{project}/clients/{client}', [ProjectController::class, 'detachClient'])->name('projects.clients.detach');

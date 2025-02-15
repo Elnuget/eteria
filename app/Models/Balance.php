@@ -9,6 +9,7 @@ class Balance extends Model
 {
     protected $fillable = [
         'proyecto_id',
+        'cliente_id',
         'monto',
         'monto_pagado',
         'monto_pendiente',
@@ -32,5 +33,13 @@ class Balance extends Model
     public function proyecto(): BelongsTo
     {
         return $this->belongsTo(Project::class, 'proyecto_id');
+    }
+
+    /**
+     * Obtiene el cliente asociado a este balance.
+     */
+    public function cliente(): BelongsTo
+    {
+        return $this->belongsTo(Cliente::class, 'cliente_id');
     }
 }

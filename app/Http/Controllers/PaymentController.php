@@ -15,7 +15,7 @@ class PaymentController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Payment::with('balance');
+        $query = Payment::with(['balance', 'balance.proyecto', 'balance.cliente']);
 
         // Filtro por método de pago
         if ($request->filled('metodo')) {
@@ -69,7 +69,7 @@ class PaymentController extends Controller
         }
 
         $payments = $query->orderBy('created_at', 'desc')->get();
-        $balances = Balance::all();
+        $balances = Balance::with(['proyecto', 'cliente'])->get();
         
         return view('payments.index', compact('payments', 'balances'));
     }

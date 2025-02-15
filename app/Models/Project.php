@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Project extends Model
 {
@@ -18,4 +19,13 @@ class Project extends Model
         'fecha_entrega' => 'date',
         'implementado_en' => 'date',
     ];
+
+    /**
+     * Obtiene los clientes asociados al proyecto.
+     */
+    public function clientes()
+    {
+        return $this->belongsToMany(Cliente::class, 'cliente_proyecto', 'proyecto_id', 'cliente_id')
+                    ->withTimestamps();
+    }
 }

@@ -37,17 +37,37 @@
                     <ul class="navbar-nav me-auto">
                         @auth
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('projects.index') }}">Proyectos</a>
+                                <a class="nav-link" href="{{ route('tasks.index') }}">
+                                    <i class="fas fa-tasks"></i> Tareas
+                                </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('balances.index') }}">Saldos</a>
+                                <a class="nav-link" href="{{ route('projects.index') }}">
+                                    <i class="fas fa-project-diagram"></i> Proyectos
+                                </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('payments.index') }}">Pagos</a>
+                                <a class="nav-link" href="{{ route('balances.index') }}">
+                                    <i class="fas fa-balance-scale"></i> Saldos
+                                </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('tasks.index') }}">Tareas</a>
+                                <a class="nav-link" href="{{ route('payments.index') }}">
+                                    <i class="fas fa-money-bill-wave"></i> Pagos
+                                </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('clientes.index') }}">
+                                    <i class="fas fa-users"></i> Clientes
+                                </a>
+                            </li>
+                            @if(Auth::user()->is_admin)
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('users.index') }}">
+                                        <i class="fas fa-users"></i> Usuarios
+                                    </a>
+                                </li>
+                            @endif
                         @endauth
                     </ul>
 

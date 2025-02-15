@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\Cliente;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class ProjectController extends Controller
 {
@@ -17,7 +19,7 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Project::query();
+        $query = Project::with('clientes');
 
         // Filtro por estado
         if ($request->filled('estado')) {
@@ -68,8 +70,10 @@ class ProjectController extends Controller
             }
         }
 
-        $projects = $query->orderBy('created_at', 'desc')->get();
-        return view('projects.index', compact('projects'));
+        $projects = $query->latest()->get();
+        $clientes = Cliente::orderBy('nombre')->get();
+
+        return view('projects.index', compact('projects', 'clientes'));
     }
 
     /**
@@ -181,5 +185,45 @@ class ProjectController extends Controller
 
         return redirect()->route('projects.index')
             ->with('success', 'Proyecto eliminado exitosamente.');
+    }
+
+    /**
+     * Obtiene los clientes asociados y disponibles para un proyecto
+     */
+    public function getClients(Project $project)
+    {
+        $associatedClients = $project->clientes;
+        $availableClients = Cliente::whereNotIn('id', $project->clientes->pluck('id'))->get();
+
+        return response()->json([
+            'associated' => $associatedClients,
+            'available' => $availableClients
+        ]);
+    }
+
+    /**
+     * Asocia un cliente a un proyecto
+     */
+    public function attachClient(Project $project, Cliente $client)
+    {
+        try {
+            $project->clientes()->attach($client->id);
+            return response()->json(['message' => 'Cliente asociado correctamente']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al asociar el cliente'], 500);
+        }
+    }
+
+    /**
+     * Desasocia un cliente de un proyecto
+     */
+    public function detachClient(Project $project, Cliente $client)
+    {
+        try {
+            $project->clientes()->detach($client->id);
+            return response()->json(['message' => 'Cliente desasociado correctamente']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al desasociar el cliente'], 500);
+        }
     }
 }

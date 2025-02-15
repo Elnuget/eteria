@@ -129,84 +129,76 @@
                         </div>
                     @endif
 
-                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                        @forelse ($balances as $balance)
-                            <div class="col">
-                                <div class="card h-100 shadow-sm">
-                                    <div class="card-header bg-transparent">
-                                        <h5 class="card-title mb-0">{{ $balance->proyecto->nombre }}</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="mb-2">
-                                            <small class="text-muted">Fecha de Generación:</small><br>
-                                            {{ $balance->fecha_generacion->format('d/m/Y') }}
-                                        </div>
-                                        <div class="mb-2">
-                                            <small class="text-muted">Tipo de Saldo:</small><br>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Proyecto</th>
+                                    <th>Cliente</th>
+                                    <th>Fecha Generación</th>
+                                    <th>Tipo Saldo</th>
+                                    <th>Estado</th>
+                                    <th>Monto Total</th>
+                                    <th>Pagado</th>
+                                    <th>Pendiente</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($balances as $balance)
+                                    <tr>
+                                        <td>{{ $balance->id }}</td>
+                                        <td>{{ $balance->proyecto ? $balance->proyecto->nombre : 'Sin proyecto' }}</td>
+                                        <td>{{ $balance->cliente ? $balance->cliente->nombre : 'Sin cliente' }}</td>
+                                        <td>{{ $balance->fecha_generacion->format('d/m/Y') }}</td>
+                                        <td>
                                             <span class="badge bg-{{ $balance->tipo_saldo === 'anual' ? 'primary' : 
                                                 ($balance->tipo_saldo === 'mensual' ? 'info' : 'warning') }}">
                                                 {{ ucfirst($balance->tipo_saldo) }}
                                             </span>
-                                        </div>
-                                        <div class="mb-2">
-                                            <small class="text-muted">Estado:</small><br>
+                                        </td>
+                                        <td>
                                             <span class="badge bg-{{ $balance->pagado_completo ? 'success' : 'danger' }}">
                                                 {{ $balance->pagado_completo ? 'Pagado' : 'Pendiente' }}
                                             </span>
-                                        </div>
-                                        <div class="mb-2">
-                                            <small class="text-muted">Monto Total:</small><br>
-                                            ${{ number_format($balance->monto, 2) }}
-                                        </div>
-                                        <div class="mb-2">
-                                            <small class="text-muted">Pagado:</small><br>
-                                            ${{ number_format($balance->monto_pagado, 2) }}
-                                        </div>
-                                        <div class="mb-2">
-                                            <small class="text-muted">Pendiente:</small><br>
-                                            ${{ number_format($balance->monto_pendiente, 2) }}
-                                        </div>
-                                        @if($balance->motivo)
-                                            <div class="mb-2">
-                                                <small class="text-muted">Motivo:</small><br>
-                                                {{ Str::limit($balance->motivo, 100) }}
-                                            </div>
-                                        @endif
-                                    </div>
-                                    <div class="card-footer bg-transparent">
-                                        <div class="btn-group w-100" role="group">
-                                            <button type="button" 
-                                                    class="btn btn-outline-primary btn-sm"
-                                                    onclick="editBalance({{ $balance->id }})">
-                                                <i class="fas fa-edit"></i> Editar
-                                            </button>
-                                            <button type="button" 
-                                                    class="btn btn-outline-success btn-sm"
-                                                    onclick="createPayment({{ $balance->id }}, {{ $balance->monto_pendiente }})">
-                                                <i class="fas fa-dollar-sign"></i> Pagar
-                                            </button>
-                                            <form action="{{ route('balances.destroy', $balance) }}" 
-                                                  method="POST" 
-                                                  class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" 
-                                                        class="btn btn-outline-danger btn-sm"
-                                                        onclick="return confirm('¿Estás seguro de eliminar este balance?')">
-                                                    <i class="fas fa-trash"></i> Eliminar
+                                        </td>
+                                        <td>${{ number_format($balance->monto, 2) }}</td>
+                                        <td>${{ number_format($balance->monto_pagado, 2) }}</td>
+                                        <td>${{ number_format($balance->monto_pendiente, 2) }}</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <button type="button" 
+                                                        class="btn btn-outline-primary btn-sm"
+                                                        onclick="editBalance({{ $balance->id }})">
+                                                    <i class="fas fa-edit"></i>
                                                 </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @empty
-                            <div class="col-12">
-                                <div class="alert alert-info text-center">
-                                    No hay balances registrados.
-                                </div>
-                            </div>
-                        @endforelse
+                                                <button type="button" 
+                                                        class="btn btn-outline-success btn-sm"
+                                                        onclick="createPayment({{ $balance->id }}, {{ $balance->monto_pendiente }})">
+                                                    <i class="fas fa-dollar-sign"></i>
+                                                </button>
+                                                <form action="{{ route('balances.destroy', $balance) }}" 
+                                                      method="POST" 
+                                                      class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" 
+                                                            class="btn btn-outline-danger btn-sm"
+                                                            onclick="return confirm('¿Estás seguro de eliminar este balance?')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="10" class="text-center">No hay balances registrados.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -236,15 +228,27 @@
                     @endif
 
                     <div class="mb-3">
-                        <label for="proyecto_id" class="form-label">Proyecto *</label>
+                        <label for="proyecto_id" class="form-label">Proyecto</label>
                         <select class="form-select @error('proyecto_id') is-invalid @enderror" 
-                            id="proyecto_id" name="proyecto_id" required>
-                            <option value="">Seleccionar proyecto</option>
+                            id="proyecto_id" name="proyecto_id">
+                            <option value="">Sin proyecto</option>
                             @foreach($proyectos as $proyecto)
                                 <option value="{{ $proyecto->id }}">{{ $proyecto->nombre }}</option>
                             @endforeach
                         </select>
                     </div>
+
+                    <div class="mb-3">
+                        <label for="cliente_id" class="form-label">Cliente</label>
+                        <select class="form-select @error('cliente_id') is-invalid @enderror" 
+                            id="cliente_id" name="cliente_id">
+                            <option value="">Sin cliente</option>
+                            @foreach($clientes as $cliente)
+                                <option value="{{ $cliente->id }}">{{ $cliente->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     <div class="mb-3">
                         <label for="motivo" class="form-label">Motivo</label>
                         <textarea class="form-control" id="motivo" name="motivo" rows="3"></textarea>
@@ -310,14 +314,25 @@
                 @method('PUT')
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="edit_proyecto_id" class="form-label">Proyecto *</label>
-                        <select class="form-select" id="edit_proyecto_id" name="proyecto_id" required>
-                            <option value="">Seleccionar proyecto</option>
+                        <label for="edit_proyecto_id" class="form-label">Proyecto</label>
+                        <select class="form-select" id="edit_proyecto_id" name="proyecto_id">
+                            <option value="">Sin proyecto</option>
                             @foreach($proyectos as $proyecto)
                                 <option value="{{ $proyecto->id }}">{{ $proyecto->nombre }}</option>
                             @endforeach
                         </select>
                     </div>
+
+                    <div class="mb-3">
+                        <label for="edit_cliente_id" class="form-label">Cliente</label>
+                        <select class="form-select" id="edit_cliente_id" name="cliente_id">
+                            <option value="">Sin cliente</option>
+                            @foreach($clientes as $cliente)
+                                <option value="{{ $cliente->id }}">{{ $cliente->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     <div class="mb-3">
                         <label for="edit_fecha_generacion" class="form-label">Fecha de Generación *</label>
                         <input type="date" class="form-control" id="edit_fecha_generacion" name="fecha_generacion" required>
@@ -456,6 +471,7 @@ function editBalance(balanceId) {
 
         // Llenar los campos con los datos del balance
         document.getElementById('edit_proyecto_id').value = data.proyecto_id;
+        document.getElementById('edit_cliente_id').value = data.cliente_id;
         document.getElementById('edit_monto').value = data.monto;
         document.getElementById('edit_monto_pagado').value = data.monto_pagado;
         document.getElementById('edit_monto_pendiente').value = data.monto_pendiente;
