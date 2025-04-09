@@ -7,10 +7,14 @@ use App\Http\Controllers\BalanceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\ChatController;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Ruta del chat
+Route::post('/api/chat', [ChatController::class, 'chat']);
 
 Auth::routes(['register' => false]);
 
