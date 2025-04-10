@@ -203,7 +203,7 @@ https://templatemo.com/tm-534-parallo
             bottom: 20px;
             right: 20px;
             width: 350px;
-            height: 500px;
+            height: 80px;
             background: #fff;
             border-radius: 15px;
             box-shadow: 0 5px 25px rgba(0,0,0,0.1);
@@ -212,12 +212,13 @@ https://templatemo.com/tm-534-parallo
             z-index: 1000;
             transition: all 0.3s ease;
             font-family: 'Open Sans', sans-serif;
+            overflow: hidden;
         }
 
         @media (max-width: 480px) {
             .chat-widget {
                 width: 100%;
-                height: 100%;
+                height: 80px;
                 bottom: 0;
                 right: 0;
                 border-radius: 0;
@@ -483,7 +484,7 @@ https://templatemo.com/tm-534-parallo
             const chatWidget = document.getElementById('chat-widget');
             const chatInput = document.querySelector('.chat-input');
 
-            let isMinimized = false;
+            let isMinimized = true;
             let isTyping = false;
 
             function getCurrentTime() {
@@ -620,18 +621,6 @@ https://templatemo.com/tm-534-parallo
                 }
             }
 
-            // Event Listeners
-            sendButton.addEventListener('click', sendMessage);
-            
-            userInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
-
-            minimizeButton.addEventListener('click', toggleChat);
-
             // Ajuste para dispositivos móviles
             function adjustMobileView() {
                 if (window.innerWidth <= 480) {
@@ -643,11 +632,29 @@ https://templatemo.com/tm-534-parallo
                 }
             }
 
-            window.addEventListener('resize', adjustMobileView);
+            // Inicializar el chat
+            function initializeChat() {
+                chatWidget.style.height = '80px';
+                chatMessages.style.display = 'none';
+                chatInput.style.display = 'none';
+                minimizeButton.innerHTML = '<i class="fas fa-plus"></i>';
+            }
+
+            initializeChat();
             adjustMobileView();
 
-            // Enfoque inicial en el input
-            userInput.focus();
+            // Event Listeners
+            sendButton.addEventListener('click', sendMessage);
+            
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            minimizeButton.addEventListener('click', toggleChat);
+            window.addEventListener('resize', adjustMobileView);
         });
     </script>
   </body>
