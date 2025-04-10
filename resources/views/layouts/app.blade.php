@@ -61,6 +61,11 @@
                                     <i class="fas fa-users"></i> Clientes
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('whatsapp.index') }}">
+                                    <i class="fab fa-whatsapp"></i> WhatsApp
+                                </a>
+                            </li>
                             @if(Auth::user()->is_admin)
                                 <li class="nav-item">
                                     <a class="nav-link" href="{{ route('users.index') }}">

@@ -8,6 +8,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\WhatsAppController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -22,6 +23,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::resource('users', UserController::class);
     Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
+    Route::get('/whatsapp', [WhatsAppController::class, 'index'])->name('whatsapp.index');
+    Route::post('/whatsapp/send', [WhatsAppController::class, 'send'])->name('whatsapp.send');
 });
 
 Route::resource('projects', ProjectController::class)->middleware('auth');
