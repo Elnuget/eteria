@@ -26,8 +26,7 @@
                         @csrf
                         <div class="mb-3">
                             <label class="form-label">Número de Teléfono</label>
-                            <input type="text" class="form-control" value="+593983163609" readonly>
-                            <input type="hidden" name="phone" value="+593983163609">
+                            <input type="text" class="form-control" value="{{ $toNumber }}" readonly>
                             <small class="text-muted">Este número está configurado como destino fijo</small>
                         </div>
                         <div class="mb-3">

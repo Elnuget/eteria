@@ -8,32 +8,41 @@ use Twilio\Rest\Client;
 class WhatsAppController extends Controller
 {
     private $twilio;
-    private $fromNumber = "whatsapp:+14155238886";
+    private $fromNumber;
+    private $toNumber;
 
     public function __construct()
     {
         $this->middleware('auth');
         
-        $sid = "ACe55f4b5247caa78f85d09ebfb904a951";
-        $token = "851e00940270135db865dbd5c6d986aa";
+        $sid = config('services.twilio.sid');
+        $token = config('services.twilio.token');
+        
+        if (empty($sid) || empty($token)) {
+            throw new \RuntimeException('Las credenciales de Twilio no están configuradas correctamente.');
+        }
+        
         $this->twilio = new Client($sid, $token);
+        $this->fromNumber = "whatsapp:" . config('services.twilio.from_number');
+        $this->toNumber = "whatsapp:" . config('services.twilio.to_number');
     }
 
     public function index()
     {
-        return view('whatsapp.index');
+        return view('whatsapp.index', [
+            'toNumber' => config('services.twilio.to_number')
+        ]);
     }
 
     public function send(Request $request)
     {
         $request->validate([
-            'phone' => 'required|string',
             'message' => 'required|string',
         ]);
 
         try {
             $message = $this->twilio->messages
-                ->create("whatsapp:" . $request->phone,
+                ->create($this->toNumber,
                     array(
                         "from" => $this->fromNumber,
                         "body" => $request->message
