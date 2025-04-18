@@ -34,7 +34,16 @@ class ContextoController extends Controller
      */
     public function show(Contexto $contexto)
     {
-        return response()->json($contexto);
+        if ($contexto) {
+            return response()->json([
+                'success' => true,
+                'data' => $contexto
+            ]);
+        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Contexto no encontrado'
+        ], 404);
     }
 
     /**
@@ -46,7 +55,14 @@ class ContextoController extends Controller
             'contexto' => 'required|string'
         ]);
 
-        $contexto->update($request->all());
+        if (!$contexto) {
+            return redirect()->route('contextos.index')->with('error', 'Contexto no encontrado');
+        }
+
+        $contexto->update([
+            'contexto' => $request->contexto
+        ]);
+
         return redirect()->route('contextos.index')->with('success', 'Contexto actualizado exitosamente');
     }
 
@@ -55,6 +71,10 @@ class ContextoController extends Controller
      */
     public function destroy(Contexto $contexto)
     {
+        if (!$contexto) {
+            return redirect()->route('contextos.index')->with('error', 'Contexto no encontrado');
+        }
+
         $contexto->delete();
         return redirect()->route('contextos.index')->with('success', 'Contexto eliminado exitosamente');
     }

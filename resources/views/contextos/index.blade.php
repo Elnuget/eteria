@@ -30,8 +30,14 @@
                                     <td>{{ Str::limit($contexto->contexto, 100) }}</td>
                                     <td>{{ $contexto->created_at->format('d/m/Y H:i') }}</td>
                                     <td>
+                                        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#viewContextoModal" 
+                                                onclick="viewContexto(this)" data-contexto="{{ $contexto->contexto }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
                                         <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editContextoModal" 
-                                                onclick="editContexto({{ $contexto->id }}, '{{ addslashes($contexto->contexto) }}')">
+                                                onclick="editContexto(this)" 
+                                                data-id="{{ $contexto->id }}" 
+                                                data-contexto="{{ $contexto->contexto }}">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteContextoModal" 
@@ -89,7 +95,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="edit_contexto" class="form-label">Contexto</label>
-                        <textarea class="form-control" id="edit_contexto" name="contexto" rows="5" required></textarea>
+                        <textarea class="form-control" id="edit_contexto" name="contexto" rows="10" required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -124,14 +130,61 @@
     </div>
 </div>
 
+<!-- Modal Ver -->
+<div class="modal fade" id="viewContextoModal" tabindex="-1" aria-labelledby="viewContextoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewContextoModalLabel">Ver Contexto Completo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div id="view_contexto" class="border rounded p-3 bg-light" style="white-space: pre-wrap; min-height: 200px;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script>
-    function editContexto(id, contexto) {
-        const form = document.getElementById('editContextoForm');
-        form.action = `/contextos/${id}`;
-        document.getElementById('edit_contexto').value = contexto;
+    function viewContexto(button) {
+        const contexto = button.getAttribute('data-contexto');
+        if (contexto) {
+            document.getElementById('view_contexto').innerHTML = contexto
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;')
+                .replace(/\n/g, '<br>');
+        }
+    }
+
+    function editContexto(button) {
+        const id = button.getAttribute('data-id');
+        const contexto = button.getAttribute('data-contexto');
+        
+        if (id && contexto) {
+            const form = document.getElementById('editContextoForm');
+            form.action = `/contextos/${id}`;
+            
+            // Decodificar entidades HTML y establecer el valor
+            const textarea = document.getElementById('edit_contexto');
+            textarea.value = contexto
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#039;/g, "'")
+                .replace(/<br\s*\/?>/g, '\n');
+        }
     }
 
     function setDeleteId(id) {
@@ -151,6 +204,11 @@
     // Mostrar mensajes de éxito
     @if(session('success'))
         alert('{{ session('success') }}');
+    @endif
+
+    // Mostrar mensajes de error
+    @if(session('error'))
+        alert('{{ session('error') }}');
     @endif
 </script>
 @endpush 
