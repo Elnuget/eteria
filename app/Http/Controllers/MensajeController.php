@@ -32,12 +32,14 @@ class MensajeController extends Controller
         $request->validate([
             'numero' => 'required|string',
             'nombre' => 'nullable|string|max:255',
+            'mensaje' => 'required|string',
             'estado' => 'required|in:entrada,salida'
         ]);
 
         $mensaje = Mensaje::create([
             'numero' => $request->numero,
             'nombre' => $request->nombre,
+            'mensaje' => $request->mensaje,
             'estado' => $request->estado,
             'fecha' => now()
         ]);
@@ -69,6 +71,7 @@ class MensajeController extends Controller
         $request->validate([
             'numero' => 'required|string',
             'nombre' => 'nullable|string|max:255',
+            'mensaje' => 'required|string',
             'estado' => 'required|in:entrada,salida'
         ]);
 

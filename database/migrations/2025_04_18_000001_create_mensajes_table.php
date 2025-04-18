@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('numero');
             $table->string('nombre')->nullable();
+            $table->text('mensaje');
             $table->enum('estado', ['entrada', 'salida']);
             $table->timestamp('fecha')->useCurrent();
             $table->timestamps();

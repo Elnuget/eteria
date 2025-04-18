@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Http\Controllers\WhatsAppController;
 
 class Mensaje extends Model
 {
@@ -17,6 +18,7 @@ class Mensaje extends Model
     protected $fillable = [
         'numero',
         'nombre',
+        'mensaje',
         'estado',
         'fecha'
     ];
@@ -29,6 +31,24 @@ class Mensaje extends Model
     protected $casts = [
         'fecha' => 'datetime'
     ];
+
+    protected static function booted()
+    {
+        static::created(function ($mensaje) {
+            if ($mensaje->estado === 'salida') {
+                try {
+                    $whatsapp = new WhatsAppController();
+                    $mensaje_texto = $mensaje->mensaje . "\n\n";
+                    $mensaje_texto .= $mensaje->nombre ? "De: {$mensaje->nombre}\n" : "";
+                    $mensaje_texto .= "Fecha: " . $mensaje->fecha->format('d/m/Y H:i');
+                    
+                    $whatsapp->sendMessage($mensaje->numero, $mensaje_texto);
+                } catch (\Exception $e) {
+                    \Log::error('Error al enviar mensaje de WhatsApp: ' . $e->getMessage());
+                }
+            }
+        });
+    }
 
     /**
      * Obtener el usuario que envió el mensaje.

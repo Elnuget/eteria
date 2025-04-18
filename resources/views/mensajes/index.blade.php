@@ -19,6 +19,7 @@
                                 <tr>
                                     <th>Número</th>
                                     <th>Nombre</th>
+                                    <th>Mensaje</th>
                                     <th>Estado</th>
                                     <th>Fecha</th>
                                     <th>Acciones</th>
@@ -29,11 +30,12 @@
                                 <tr>
                                     <td>{{ $mensaje->numero }}</td>
                                     <td>{{ $mensaje->nombre ?? 'N/A' }}</td>
+                                    <td>{{ Str::limit($mensaje->mensaje, 50) }}</td>
                                     <td>{{ ucfirst($mensaje->estado) }}</td>
                                     <td>{{ $mensaje->fecha->format('d/m/Y H:i') }}</td>
                                     <td>
                                         <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#showMensajeModal" 
-                                                onclick="showMensaje({{ $mensaje->id }}, '{{ $mensaje->numero }}', '{{ $mensaje->nombre }}', '{{ $mensaje->estado }}', '{{ $mensaje->fecha->format('d/m/Y H:i') }}')">
+                                                onclick="showMensaje({{ $mensaje->id }}, '{{ $mensaje->numero }}', '{{ $mensaje->nombre }}', '{{ addslashes($mensaje->mensaje) }}', '{{ $mensaje->estado }}', '{{ $mensaje->fecha->format('d/m/Y H:i') }}')">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                         <form action="{{ route('mensajes.destroy', $mensaje->id) }}" method="POST" class="d-inline">
@@ -75,6 +77,10 @@
                         <input type="text" class="form-control" id="nombre" name="nombre">
                     </div>
                     <div class="mb-3">
+                        <label for="mensaje" class="form-label">Mensaje</label>
+                        <textarea class="form-control" id="mensaje" name="mensaje" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
                         <label for="estado" class="form-label">Estado</label>
                         <select class="form-select" id="estado" name="estado" required>
                             <option value="entrada">Entrada</option>
@@ -109,6 +115,10 @@
                     <p id="show_nombre"></p>
                 </div>
                 <div class="mb-3">
+                    <label class="fw-bold">Mensaje:</label>
+                    <p id="show_mensaje" style="white-space: pre-wrap;"></p>
+                </div>
+                <div class="mb-3">
                     <label class="fw-bold">Estado:</label>
                     <p id="show_estado"></p>
                 </div>
@@ -128,9 +138,10 @@
 
 @push('scripts')
 <script>
-    function showMensaje(id, numero, nombre, estado, fecha) {
+    function showMensaje(id, numero, nombre, mensaje, estado, fecha) {
         document.getElementById('show_numero').textContent = numero;
         document.getElementById('show_nombre').textContent = nombre || 'N/A';
+        document.getElementById('show_mensaje').textContent = mensaje;
         document.getElementById('show_estado').textContent = estado.charAt(0).toUpperCase() + estado.slice(1);
         document.getElementById('show_fecha').textContent = fecha;
     }
