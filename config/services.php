@@ -42,4 +42,8 @@ return [
         'to_number' => env('TWILIO_TO_NUMBER'),
     ],
 
+    'deepseek' => [
+        'api_key' => env('DEEPSEEK_API_KEY'),
+    ],
+
 ];

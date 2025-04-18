@@ -13,7 +13,8 @@ class ChatController extends Controller
 
     public function __construct()
     {
-        $this->apiKey = 'sk-ff89790bd6a6420e83784e9649e89f21';
+        $this->apiKey = config('services.deepseek.api_key', env('DEEPSEEK_API_KEY'));
+        Log::info('API Key configurada: ' . ($this->apiKey ? 'Presente' : 'No presente'));
     }
 
     public function chat(Request $request)
@@ -27,6 +28,8 @@ class ChatController extends Controller
                 ], 400);
             }
 
+            Log::info('Intentando conexión con DeepSeek API');
+            
             $response = Http::timeout(30)->withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
                 'Content-Type' => 'application/json',
@@ -49,6 +52,7 @@ class ChatController extends Controller
 
             if ($response->successful()) {
                 $responseData = $response->json();
+                Log::info('Respuesta exitosa de DeepSeek', ['response' => $responseData]);
                 
                 if (isset($responseData['choices'][0]['message']['content'])) {
                     return response()->json([
@@ -59,15 +63,23 @@ class ChatController extends Controller
                     throw new \Exception('Formato de respuesta inválido');
                 }
             } else {
-                Log::error('Error en la API: ' . $response->body());
+                $errorBody = $response->body();
+                Log::error('Error en la API', [
+                    'status' => $response->status(),
+                    'body' => $errorBody,
+                    'headers' => $response->headers()
+                ]);
                 return response()->json([
-                    'response' => 'Lo siento, ha ocurrido un error al procesar tu mensaje. Código: ' . $response->status()
-                ], 500);
+                    'response' => 'Error en la API: ' . $errorBody
+                ], $response->status());
             }
         } catch (\Exception $e) {
-            Log::error('Error en el chat: ' . $e->getMessage());
+            Log::error('Error en el chat: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
-                'response' => 'Lo siento, ha ocurrido un error en el servicio. Por favor, intenta de nuevo más tarde.'
+                'response' => 'Error: ' . $e->getMessage()
             ], 500);
         }
     }
