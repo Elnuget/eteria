@@ -245,6 +245,14 @@ https://templatemo.com/tm-534-parallo
             display: flex;
             align-items: center;
             gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .chat-header-content:hover {
+            background: rgba(255,255,255,0.1);
         }
 
         .chat-avatar {
@@ -483,6 +491,7 @@ https://templatemo.com/tm-534-parallo
             const minimizeButton = document.getElementById('minimize-chat');
             const chatWidget = document.getElementById('chat-widget');
             const chatInput = document.querySelector('.chat-input');
+            const chatHeader = document.querySelector('.chat-header-content');
 
             let isMinimized = true;
             let isTyping = false;
@@ -653,7 +662,17 @@ https://templatemo.com/tm-534-parallo
                 }
             });
 
-            minimizeButton.addEventListener('click', toggleChat);
+            chatHeader.addEventListener('click', function(e) {
+                if (isMinimized) {
+                    toggleChat();
+                }
+            });
+
+            minimizeButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleChat();
+            });
+            
             window.addEventListener('resize', adjustMobileView);
         });
     </script>

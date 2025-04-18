@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Models\Contexto;
 
 class ChatController extends Controller
 {
@@ -28,6 +29,20 @@ class ChatController extends Controller
                 ], 400);
             }
 
+            // Obtener todos los contextos de la base de datos
+            $contextos = Contexto::latest()->get();
+            $contextoCombinado = '';
+
+            // Combinar todos los contextos en uno solo
+            foreach ($contextos as $contexto) {
+                $contextoCombinado .= $contexto->contexto . "\n";
+            }
+
+            // Si no hay contextos, usar un contexto por defecto
+            if (empty($contextoCombinado)) {
+                $contextoCombinado = 'Eres un asistente virtual de Eteria, una empresa de desarrollo web.';
+            }
+
             Log::info('Intentando conexión con DeepSeek API');
             
             $response = Http::timeout(30)->withHeaders([
@@ -39,7 +54,7 @@ class ChatController extends Controller
                 'messages' => [
                     [
                         'role' => 'system',
-                        'content' => 'Eres un asistente virtual de Eteria, una empresa de desarrollo web. Proporciona respuestas útiles y profesionales relacionadas con desarrollo web y servicios de la empresa.'
+                        'content' => $contextoCombinado
                     ],
                     [
                         'role' => 'user',
