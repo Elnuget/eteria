@@ -66,6 +66,11 @@
                                     <i class="fab fa-whatsapp"></i> WhatsApp
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('contextos.index') }}">
+                                    <i class="fas fa-comments"></i> Contextos
+                                </a>
+                            </li>
                             @if(Auth::user()->is_admin)
                                 <li class="nav-item">
                                     <a class="nav-link" href="{{ route('users.index') }}">

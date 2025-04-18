@@ -9,6 +9,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\WhatsAppController;
+use App\Http\Controllers\ContextoController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -40,3 +41,4 @@ Route::post('/clientes/{cliente}/detach-project', [ClienteController::class, 'de
 Route::get('/projects/{project}/clients', [ProjectController::class, 'getClients'])->name('projects.clients.index');
 Route::post('/projects/{project}/clients/{client}', [ProjectController::class, 'attachClient'])->name('projects.clients.attach');
 Route::delete('/projects/{project}/clients/{client}', [ProjectController::class, 'detachClient'])->name('projects.clients.detach');
+Route::resource('contextos', ContextoController::class)->middleware('auth');
