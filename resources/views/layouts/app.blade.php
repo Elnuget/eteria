@@ -71,6 +71,11 @@
                                     <i class="fas fa-comments"></i> Contextos
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('mensajes.index') }}">
+                                    <i class="fas fa-envelope"></i> Mensajes
+                                </a>
+                            </li>
                             @if(Auth::user()->is_admin)
                                 <li class="nav-item">
                                     <a class="nav-link" href="{{ route('users.index') }}">
