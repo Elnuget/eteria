@@ -14,6 +14,13 @@ return [
     |
     */
 
+    'mailgun' => [
+        'domain' => env('MAILGUN_DOMAIN'),
+        'secret' => env('MAILGUN_SECRET'),
+        'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
+        'scheme' => 'https',
+    ],
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],
@@ -39,7 +46,8 @@ return [
         'sid' => env('TWILIO_SID'),
         'token' => env('TWILIO_TOKEN'),
         'from_number' => env('TWILIO_FROM_NUMBER'),
-        'to_number' => env('TWILIO_TO_NUMBER'),
+        'sandbox_mode' => env('TWILIO_SANDBOX_MODE', true),
+        'allowed_numbers' => env('TWILIO_ALLOWED_NUMBERS', ''),
     ],
 
     'deepseek' => [

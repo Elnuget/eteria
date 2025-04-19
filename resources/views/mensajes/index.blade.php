@@ -81,11 +81,9 @@
                         <textarea class="form-control" id="mensaje" name="mensaje" rows="4" required></textarea>
                     </div>
                     <div class="mb-3">
+                        <input type="hidden" name="estado" value="salida">
                         <label for="estado" class="form-label">Estado</label>
-                        <select class="form-select" id="estado" name="estado" required>
-                            <option value="entrada">Entrada</option>
-                            <option value="salida">Salida</option>
-                        </select>
+                        <input type="text" class="form-control" value="Salida" readonly>
                     </div>
                 </div>
                 <div class="modal-footer">

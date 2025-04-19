@@ -25,9 +25,15 @@
                     <form method="POST" action="{{ route('whatsapp.send') }}">
                         @csrf
                         <div class="mb-3">
-                            <label class="form-label">Número de Teléfono</label>
-                            <input type="text" class="form-control" value="{{ $toNumber }}" readonly>
-                            <small class="text-muted">Este número está configurado como destino fijo</small>
+                            <label for="phone_number" class="form-label">Número de WhatsApp</label>
+                            <div class="input-group">
+                                <span class="input-group-text">+593</span>
+                                <input type="text" class="form-control" id="phone_number" name="phone_number" 
+                                       placeholder="98 316 3609" required
+                                       pattern="[0-9 ]{9,}"
+                                       title="Ingrese un número válido sin el código de país">
+                            </div>
+                            <small class="text-muted">Ingrese el número sin el código de país (+593)</small>
                         </div>
                         <div class="mb-3">
                             <label for="message" class="form-label">Mensaje</label>
