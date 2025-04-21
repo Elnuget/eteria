@@ -10,7 +10,7 @@ php artisan config:clear
 php artisan config:cache 
 php artisan route:clear 
 php artisan route:cache
-php artisan migrate:fresh --seedms
+php artisan migrate:fresh --seed
 
 php artisan config:clear
 php artisan cache:clear

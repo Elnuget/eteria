@@ -37,10 +37,32 @@ class WebhookController extends Controller
                 'fecha' => now()
             ]);
 
+            // Obtener historial de mensajes para este número
+            $historialMensajes = Mensaje::where('numero', $cleanNumber)
+                ->orderBy('fecha', 'asc')
+                ->get();
+
+            // Preparar mensajes para la API
+            $messages = [];
+            
             // Obtener el contexto combinado
             $contextos = Contexto::latest()->get();
             $contextoCombinado = $contextos->pluck('contexto')->join("\n") ?: 
-                'Eres un asistente virtual de Eteria, una empresa de desarrollo web.';
+                'Eres un asistente virtual de Eteria, una empresa de desarrollo web. Brinda atención directa a los usuarios que te contactan. Si en algún momento necesitan hablar con un agente humano, pueden escribir al número de WhatsApp +593983468115.';
+
+            // Agregar el contexto del sistema
+            $messages[] = [
+                'role' => 'system',
+                'content' => $contextoCombinado
+            ];
+
+            // Agregar el historial de mensajes
+            foreach ($historialMensajes as $mensaje) {
+                $messages[] = [
+                    'role' => $mensaje->estado === 'entrada' ? 'user' : 'assistant',
+                    'content' => $mensaje->mensaje
+                ];
+            }
 
             // Obtener respuesta de DeepSeek
             $response = Http::timeout(30)->withHeaders([
@@ -48,16 +70,7 @@ class WebhookController extends Controller
                 'Content-Type' => 'application/json',
             ])->post($this->apiUrl, [
                 'model' => 'deepseek-chat',
-                'messages' => [
-                    [
-                        'role' => 'system',
-                        'content' => $contextoCombinado
-                    ],
-                    [
-                        'role' => 'user',
-                        'content' => $receivedMessage
-                    ]
-                ],
+                'messages' => $messages,
                 'temperature' => 0.7,
                 'max_tokens' => 150
             ]);
