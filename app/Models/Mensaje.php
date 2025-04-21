@@ -38,15 +38,8 @@ class Mensaje extends Model
             if ($mensaje->estado === 'salida') {
                 try {
                     $whatsapp = new WhatsAppController();
-                    // Usamos una plantilla predefinida de WhatsApp
-                    $mensaje_texto = "Nuevo mensaje de Eteria:\n\n";
-                    $mensaje_texto .= $mensaje->mensaje;
-                    
-                    // Información de contacto como pie de mensaje
-                    $mensaje_texto .= "\n\n";
-                    $mensaje_texto .= "Para más información:\n";
-                    $mensaje_texto .= "WhatsApp: +593 98 316 3609\n";
-                    $mensaje_texto .= "www.eteria.ec";
+                    // Enviamos solo el contenido del mensaje
+                    $mensaje_texto = $mensaje->mensaje;
                     
                     $whatsapp->sendMessage($mensaje->numero, $mensaje_texto);
                 } catch (\Exception $e) {
