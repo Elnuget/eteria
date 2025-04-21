@@ -25,10 +25,13 @@ class WebhookController extends Controller
             // Obtener el mensaje y número de WhatsApp
             $receivedMessage = $request->input('Body');
             $fromNumber = $request->input('From');
+            
+            // Limpiar el número de teléfono eliminando "whatsapp:" y "+"
+            $cleanNumber = str_replace(['whatsapp:', '+'], '', $fromNumber);
 
             // Guardar el mensaje recibido
             Mensaje::create([
-                'numero' => $fromNumber,
+                'numero' => $cleanNumber,
                 'mensaje' => $receivedMessage,
                 'estado' => 'entrada',
                 'fecha' => now()
@@ -64,29 +67,25 @@ class WebhookController extends Controller
 
                 // Guardar la respuesta enviada
                 Mensaje::create([
-                    'numero' => $fromNumber,
+                    'numero' => $cleanNumber,
                     'mensaje' => $aiResponse,
                     'estado' => 'salida',
                     'fecha' => now()
                 ]);
 
-                // Crear respuesta TwiML
-                $messagingResponse = new MessagingResponse();
-                $messagingResponse->message($aiResponse);
-
-                return response($messagingResponse, 200)
-                    ->header('Content-Type', 'text/xml');
+                // Crear y retornar respuesta TwiML
+                return (new MessagingResponse())
+                    ->message($aiResponse)
+                    ->__toString();
             } else {
                 throw new \Exception('Error en la API de DeepSeek');
             }
         } catch (\Exception $e) {
             Log::error('Error en webhook de Twilio: ' . $e->getMessage());
             
-            $messagingResponse = new MessagingResponse();
-            $messagingResponse->message('Lo siento, hubo un error al procesar tu mensaje.');
-            
-            return response($messagingResponse, 200)
-                ->header('Content-Type', 'text/xml');
+            return (new MessagingResponse())
+                ->message('Lo siento, hubo un error al procesar tu mensaje.')
+                ->__toString();
         }
     }
 } 
