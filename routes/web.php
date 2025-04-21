@@ -11,6 +11,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\WhatsAppController;
 use App\Http\Controllers\ContextoController;
 use App\Http\Controllers\MensajeController;
+use App\Http\Controllers\WebhookController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -44,3 +45,4 @@ Route::post('/projects/{project}/clients/{client}', [ProjectController::class, '
 Route::delete('/projects/{project}/clients/{client}', [ProjectController::class, 'detachClient'])->name('projects.clients.detach');
 Route::resource('contextos', ContextoController::class)->middleware('auth');
 Route::resource('mensajes', MensajeController::class)->middleware('auth');
+Route::post('/webhook/twilio', [WebhookController::class, 'handleTwilioWebhook'])->name('webhook.twilio');
