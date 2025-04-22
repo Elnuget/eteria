@@ -1,0 +1,161 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Gestión de Contactos</span>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createContactoModal">
+                        <i class="fas fa-plus"></i> Nuevo Contacto
+                    </button>
+                </div>
+
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Nombre</th>
+                                    <th>Estado</th>
+                                    <th>Fecha de Creación</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($contactos as $contacto)
+                                <tr>
+                                    <td>{{ $contacto->numero }}</td>
+                                    <td>{{ $contacto->nombre ?? 'N/A' }}</td>
+                                    <td>
+                                        <span class="badge {{ $contacto->estado === 'iniciado' ? 'bg-success' : 'bg-warning' }}">
+                                            {{ ucfirst($contacto->estado) }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $contacto->created_at->format('d/m/Y H:i') }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editContactoModal" 
+                                                onclick="editContacto({{ $contacto->id }}, '{{ $contacto->numero }}', '{{ $contacto->nombre }}', '{{ $contacto->estado }}')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <form action="{{ route('contactos.destroy', $contacto->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Está seguro de eliminar este contacto?')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear -->
+<div class="modal fade" id="createContactoModal" tabindex="-1" aria-labelledby="createContactoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('contactos.store') }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createContactoModalLabel">Crear Nuevo Contacto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="numero" class="form-label">Número</label>
+                        <input type="text" class="form-control" id="numero" name="numero" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre">
+                    </div>
+                    <div class="mb-3">
+                        <label for="estado" class="form-label">Estado</label>
+                        <select class="form-select" id="estado" name="estado" required>
+                            <option value="por iniciar">Por Iniciar</option>
+                            <option value="iniciado">Iniciado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar -->
+<div class="modal fade" id="editContactoModal" tabindex="-1" aria-labelledby="editContactoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editContactoForm" action="" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editContactoModalLabel">Editar Contacto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_numero" class="form-label">Número</label>
+                        <input type="text" class="form-control" id="edit_numero" name="numero" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_nombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="edit_nombre" name="nombre">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_estado" class="form-label">Estado</label>
+                        <select class="form-select" id="edit_estado" name="estado" required>
+                            <option value="por iniciar">Por Iniciar</option>
+                            <option value="iniciado">Iniciado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@endsection
+
+@push('scripts')
+<script>
+    function editContacto(id, numero, nombre, estado) {
+        const form = document.getElementById('editContactoForm');
+        form.action = `/contactos/${id}`;
+        document.getElementById('edit_numero').value = numero;
+        document.getElementById('edit_nombre').value = nombre || '';
+        document.getElementById('edit_estado').value = estado;
+    }
+
+    // Mostrar mensajes de error de validación
+    @if($errors->any())
+        let errorMessages = '';
+        @foreach($errors->all() as $error)
+            errorMessages += '{{ $error }}\n';
+        @endforeach
+        alert(errorMessages);
+    @endif
+
+    // Mostrar mensajes de éxito
+    @if(session('success'))
+        alert('{{ session('success') }}');
+    @endif
+</script>
+@endpush 

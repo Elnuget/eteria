@@ -76,6 +76,11 @@
                                     <i class="fas fa-envelope"></i> Mensajes
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('contactos.index') }}">
+                                    <i class="fas fa-address-book"></i> Contactos
+                                </a>
+                            </li>
                             @if(Auth::user()->is_admin)
                                 <li class="nav-item">
                                     <a class="nav-link" href="{{ route('users.index') }}">
