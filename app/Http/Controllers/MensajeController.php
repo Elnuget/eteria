@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Mensaje;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MensajeController extends Controller
 {
@@ -12,8 +13,16 @@ class MensajeController extends Controller
      */
     public function index()
     {
-        $mensajes = Mensaje::orderBy('fecha', 'desc')->get();
-        return view('mensajes.index', compact('mensajes'));
+        $mensajesAgrupados = Mensaje::orderBy('fecha', 'desc')
+            ->get()
+            ->groupBy('numero');
+            
+        $numerosUnicos = DB::table('mensajes')
+            ->select('numero', 'nombre')
+            ->distinct('numero')
+            ->get();
+
+        return view('mensajes.index', compact('mensajesAgrupados', 'numerosUnicos'));
     }
 
     /**
@@ -43,6 +52,10 @@ class MensajeController extends Controller
             'estado' => $request->estado,
             'fecha' => now()
         ]);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true], 200);
+        }
 
         return redirect()->route('mensajes.index')->with('success', 'Mensaje registrado exitosamente');
     }
