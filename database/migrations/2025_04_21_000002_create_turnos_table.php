@@ -11,15 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('contactos', function (Blueprint $table) {
+        Schema::create('turnos', function (Blueprint $table) {
             $table->id();
-            $table->string('numero');
-            $table->enum('estado', ['iniciado', 'por iniciar']);
+            $table->foreignId('contacto_id')->constrained('contactos')->onDelete('cascade');
+            $table->dateTime('fecha_turno');
+            $table->string('motivo');
             $table->timestamps();
 
-            // Índices para mejorar el rendimiento de las consultas
-            $table->index('numero');
-            $table->index('estado');
+            // Índices para mejorar el rendimiento
+            $table->index('fecha_turno');
+            $table->index('contacto_id');
         });
     }
 
@@ -28,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('contactos');
+        Schema::dropIfExists('turnos');
     }
 }; 

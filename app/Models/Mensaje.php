@@ -16,8 +16,7 @@ class Mensaje extends Model
      * @var array
      */
     protected $fillable = [
-        'numero',
-        'nombre',
+        'contacto_id',
         'mensaje',
         'estado',
         'fecha'
@@ -32,16 +31,24 @@ class Mensaje extends Model
         'fecha' => 'datetime'
     ];
 
+    /**
+     * Obtener el contacto asociado al mensaje.
+     */
+    public function contacto()
+    {
+        return $this->belongsTo(Contacto::class);
+    }
+
     protected static function booted()
     {
         static::created(function ($mensaje) {
             if ($mensaje->estado === 'salida') {
                 try {
                     $whatsapp = new WhatsAppController();
-                    // Enviamos solo el contenido del mensaje
                     $mensaje_texto = $mensaje->mensaje;
                     
-                    $whatsapp->sendMessage($mensaje->numero, $mensaje_texto);
+                    // Obtenemos el número del contacto asociado
+                    $whatsapp->sendMessage($mensaje->contacto->numero, $mensaje_texto);
                 } catch (\Exception $e) {
                     \Log::error('Error al enviar mensaje de WhatsApp: ' . $e->getMessage());
                 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Mensaje;
+use App\Models\Contacto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -13,16 +14,18 @@ class MensajeController extends Controller
      */
     public function index()
     {
-        $mensajesAgrupados = Mensaje::orderBy('fecha', 'desc')
+        $mensajesAgrupados = Mensaje::with('contacto')
+            ->orderBy('fecha', 'desc')
             ->get()
-            ->groupBy('numero');
+            ->groupBy(function($mensaje) {
+                return $mensaje->contacto->numero;
+            });
             
-        $numerosUnicos = DB::table('mensajes')
-            ->select('numero', 'nombre')
-            ->distinct('numero')
+        // Obtener los contactos únicos
+        $contactos = Contacto::orderBy('nombre')
             ->get();
 
-        return view('mensajes.index', compact('mensajesAgrupados', 'numerosUnicos'));
+        return view('mensajes.index', compact('mensajesAgrupados', 'contactos'));
     }
 
     /**
@@ -30,7 +33,8 @@ class MensajeController extends Controller
      */
     public function create()
     {
-        return view('mensajes.create');
+        $contactos = Contacto::orderBy('nombre')->get();
+        return view('mensajes.create', compact('contactos'));
     }
 
     /**
@@ -39,15 +43,13 @@ class MensajeController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'numero' => 'required|string',
-            'nombre' => 'nullable|string|max:255',
+            'contacto_id' => 'required|exists:contactos,id',
             'mensaje' => 'required|string',
             'estado' => 'required|in:entrada,salida'
         ]);
 
         $mensaje = Mensaje::create([
-            'numero' => $request->numero,
-            'nombre' => $request->nombre,
+            'contacto_id' => $request->contacto_id,
             'mensaje' => $request->mensaje,
             'estado' => $request->estado,
             'fecha' => now()
@@ -65,6 +67,7 @@ class MensajeController extends Controller
      */
     public function show(Mensaje $mensaje)
     {
+        $mensaje->load('contacto');
         return view('mensajes.show', compact('mensaje'));
     }
 
@@ -73,7 +76,8 @@ class MensajeController extends Controller
      */
     public function edit(Mensaje $mensaje)
     {
-        return view('mensajes.edit', compact('mensaje'));
+        $contactos = Contacto::orderBy('nombre')->get();
+        return view('mensajes.edit', compact('mensaje', 'contactos'));
     }
 
     /**
@@ -82,13 +86,12 @@ class MensajeController extends Controller
     public function update(Request $request, Mensaje $mensaje)
     {
         $request->validate([
-            'numero' => 'required|string',
-            'nombre' => 'nullable|string|max:255',
+            'contacto_id' => 'required|exists:contactos,id',
             'mensaje' => 'required|string',
             'estado' => 'required|in:entrada,salida'
         ]);
 
-        $mensaje->update($request->all());
+        $mensaje->update($request->only(['contacto_id', 'mensaje', 'estado']));
 
         return redirect()->route('mensajes.index')->with('success', 'Mensaje actualizado exitosamente');
     }
@@ -100,18 +103,5 @@ class MensajeController extends Controller
     {
         $mensaje->delete();
         return redirect()->route('mensajes.index')->with('success', 'Mensaje eliminado exitosamente');
-    }
-
-    public function updateNombre(Request $request)
-    {
-        $request->validate([
-            'numero' => 'required|string',
-            'nombre' => 'required|string|max:255',
-        ]);
-
-        Mensaje::where('numero', $request->numero)
-            ->update(['nombre' => $request->nombre]);
-
-        return redirect()->back()->with('success', 'Nombre actualizado correctamente para todos los mensajes con el número ' . $request->numero);
     }
 } 

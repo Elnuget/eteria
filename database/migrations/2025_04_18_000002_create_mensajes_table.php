@@ -13,15 +13,14 @@ return new class extends Migration
     {
         Schema::create('mensajes', function (Blueprint $table) {
             $table->id();
-            $table->string('numero');
-            $table->string('nombre')->nullable();
+            $table->foreignId('contacto_id')->constrained('contactos')->onDelete('cascade');
             $table->text('mensaje');
             $table->enum('estado', ['entrada', 'salida']);
             $table->timestamp('fecha')->useCurrent();
             $table->timestamps();
 
             // Índices para mejorar el rendimiento de las consultas
-            $table->index('numero');
+            $table->index('contacto_id');
             $table->index('estado');
             $table->index('fecha');
         });

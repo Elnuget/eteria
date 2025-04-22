@@ -77,6 +77,11 @@
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link" href="{{ route('turnos.index') }}">
+                                    <i class="fas fa-calendar-alt"></i> Turnos
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link" href="{{ route('contactos.index') }}">
                                     <i class="fas fa-address-book"></i> Contactos
                                 </a>

@@ -20,14 +20,15 @@
                                 $totalMensajes = $mensajes->count();
                                 $ultimoMensaje = $mensajes->first(); // El más reciente debido al orderBy
                                 $id = 'collapse' . str_replace(['+', ' '], '', $numero);
+                                $contacto = $primerMensaje->contacto;
                             @endphp
                             <div class="accordion-item mb-3">
-                                <div class="accordion-header w-100" role="button" onclick="toggleAccordion(this)">
-                                    <div class="accordion-button collapsed">
+                                <div class="accordion-header w-100" role="button">
+                                    <div class="accordion-button collapsed" onclick="toggleAccordion(this)">
                                         <div class="d-flex justify-content-between align-items-center w-100">
                                             <div>
                                                 <strong>{{ $numero }}</strong>
-                                                <span class="ms-3">{{ $primerMensaje->nombre ?? 'N/A' }}</span>
+                                                <span class="ms-3">{{ $contacto->nombre }}</span>
                                             </div>
                                             <div class="ms-auto me-3">
                                                 <span class="badge bg-primary">{{ $totalMensajes }} mensajes</span>
@@ -38,7 +39,7 @@
                                 </div>
                                 <div id="{{ $id }}" class="accordion-collapse collapse" data-bs-parent="#mensajesAccordion">
                                     <div class="accordion-body">
-                                        <form class="mb-3 mensaje-rapido-form" onsubmit="enviarMensajeRapido(event, '{{ $numero }}', '{{ $primerMensaje->nombre }}')">
+                                        <form class="mb-3 mensaje-rapido-form" onsubmit="enviarMensajeRapido(event, '{{ $contacto->id }}')">
                                             <div class="input-group">
                                                 <input type="text" class="form-control" placeholder="Escribir mensaje..." required>
                                                 <button class="btn btn-primary" type="submit">
@@ -72,7 +73,7 @@
                                                             <td>{{ $mensaje->fecha->format('d/m/Y H:i') }}</td>
                                                             <td>
                                                                 <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#showMensajeModal" 
-                                                                        onclick="showMensaje({{ $mensaje->id }}, '{{ $mensaje->numero }}', '{{ $mensaje->nombre }}', '{{ addslashes($mensaje->mensaje) }}', '{{ $mensaje->estado }}', '{{ $mensaje->fecha->format('d/m/Y H:i') }}')">
+                                                                        onclick="showMensaje({{ $mensaje->id }}, '{{ $mensaje->contacto->numero }}', '{{ $mensaje->contacto->nombre }}', '{{ addslashes($mensaje->mensaje) }}', '{{ $mensaje->estado }}', '{{ $mensaje->fecha->format('d/m/Y H:i') }}')">
                                                                     <i class="fas fa-eye"></i>
                                                                 </button>
                                                                 <form action="{{ route('mensajes.destroy', $mensaje->id) }}" method="POST" class="d-inline">
@@ -111,19 +112,15 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="numero" class="form-label">Número</label>
-                        <select class="form-select" id="numero" name="numero" required onchange="actualizarNombre(this.value)">
-                            <option value="">Seleccione un número</option>
-                            @foreach($numerosUnicos as $contacto)
-                                <option value="{{ $contacto->numero }}" data-nombre="{{ $contacto->nombre }}">
-                                    {{ $contacto->numero }}
+                        <label for="contacto_id" class="form-label">Contacto</label>
+                        <select class="form-select" id="contacto_id" name="contacto_id" required>
+                            <option value="">Seleccione un contacto</option>
+                            @foreach($contactos as $contacto)
+                                <option value="{{ $contacto->id }}">
+                                    {{ $contacto->nombre }} ({{ $contacto->numero }})
                                 </option>
                             @endforeach
                         </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="nombre" class="form-label">Nombre</label>
-                        <input type="text" class="form-control" id="nombre" name="nombre" readonly>
                     </div>
                     <div class="mb-3">
                         <label for="mensaje" class="form-label">Mensaje</label>
@@ -177,33 +174,6 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Actualizar Nombre -->
-<div class="modal fade" id="updateNombreModal" tabindex="-1" aria-labelledby="updateNombreModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form action="{{ route('mensajes.updateNombre') }}" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="modal-header">
-                    <h5 class="modal-title" id="updateNombreModalLabel">Actualizar Nombre</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="update_numero" name="numero">
-                    <div class="mb-3">
-                        <label for="update_nombre" class="form-label">Nombre para todos los mensajes con este número</label>
-                        <input type="text" class="form-control" id="update_nombre" name="nombre" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Actualizar</button>
-                </div>
-            </form>
         </div>
     </div>
 </div>
@@ -281,33 +251,20 @@ tr.mensaje-salida {
 <script>
     function showMensaje(id, numero, nombre, mensaje, estado, fecha) {
         document.getElementById('show_numero').textContent = numero;
-        document.getElementById('show_nombre').textContent = nombre || 'N/A';
+        document.getElementById('show_nombre').textContent = nombre;
         document.getElementById('show_mensaje').textContent = mensaje;
         document.getElementById('show_estado').textContent = estado.charAt(0).toUpperCase() + estado.slice(1);
         document.getElementById('show_fecha').textContent = fecha;
     }
 
-    function prepareUpdateNombre(numero, nombre) {
-        document.getElementById('update_numero').value = numero;
-        document.getElementById('update_nombre').value = nombre || '';
-    }
-
-    function actualizarNombre(numero) {
-        const select = document.getElementById('numero');
-        const option = select.options[select.selectedIndex];
-        const nombre = option.getAttribute('data-nombre') || 'N/A';
-        document.getElementById('nombre').value = nombre;
-    }
-
-    function enviarMensajeRapido(event, numero, nombre) {
+    function enviarMensajeRapido(event, contacto_id) {
         event.preventDefault();
         const form = event.target;
         const mensaje = form.querySelector('input').value;
         
         // Crear los datos para el envío
         const formData = new FormData();
-        formData.append('numero', numero);
-        formData.append('nombre', nombre || '');
+        formData.append('contacto_id', contacto_id);
         formData.append('mensaje', mensaje);
         formData.append('estado', 'salida');
         formData.append('_token', '{{ csrf_token() }}');
