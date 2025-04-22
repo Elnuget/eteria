@@ -48,7 +48,7 @@ class WebhookController extends Controller
                     $contacto->nombre = $profileName;
                 }
                 
-                // Si el primer mensaje parece ser una presentación con nombre, extraerlo
+                // Extraer nombre si se presenta
                 if (preg_match('/(?:me llamo|soy|hola[,]? soy|mi nombre es) ([A-Za-zÁáÉéÍíÓóÚúÑñ\s]+)/i', $receivedMessage, $matches)) {
                     $contacto->nombre = trim($matches[1]);
                 }
@@ -63,9 +63,32 @@ class WebhookController extends Controller
                     'fecha' => now()
                 ]);
 
-                // Mensaje de bienvenida personalizado que incluye la solicitud de información
+                // Analizar el mensaje para personalizar la respuesta
                 $nombreSaludo = $contacto->nombre ? " {$contacto->nombre}" : "";
-                $mensajeBienvenida = "¡Hola{$nombreSaludo}! 😊 Soy el asistente virtual de Eteria. Nos especializamos en soluciones digitales para hacer crecer tu negocio: 📱 apps web/móvil, 🛍️ tiendas online, 🤖 automatización y 📊 gestión. ¿Nos cuentas sobre tu negocio? 🚀";
+                $mensajeBienvenida = "";
+
+                // Patrones comunes en mensajes iniciales
+                $patrones = [
+                    'cotización|cotizar|precio|costo' => "¡Hola{$nombreSaludo}! 😊 Me alegra que quieras conocer nuestras soluciones. En Eteria creamos: 📱 apps, 🛍️ ecommerce y 🤖 sistemas a medida. ¿Nos cuentas más sobre el proyecto que tienes en mente? 💡",
+                    'página|pagina|web|sitio|website' => "¡Hola{$nombreSaludo}! 😊 ¡Genial que estés pensando en una web! Desarrollamos sitios que destacan y convierten. ¿Qué tipo de web necesitas: informativa, tienda online o sistema personalizado? 🎯",
+                    'app|aplicación|aplicacion|móvil|movil' => "¡Hola{$nombreSaludo}! 😊 ¡Excelente decisión apostar por una app! Creamos aplicaciones móviles y web que transforman negocios. ¿Nos cuentas qué funcionalidades necesitas? 📱",
+                    'sistema|software|programa|automatización|automatizacion' => "¡Hola{$nombreSaludo}! 😊 ¡Perfecto! Nos especializamos en crear sistemas que automatizan y optimizan procesos. ¿Qué procesos de tu negocio quieres mejorar? 🚀",
+                    'ecommerce|tienda|online|ventas' => "¡Hola{$nombreSaludo}! 😊 ¡Genial que quieras vender online! Creamos tiendas virtuales que impulsan las ventas. ¿Ya tienes un catálogo de productos definido? 🛍️"
+                ];
+
+                $mensajeEncontrado = false;
+                foreach ($patrones as $patron => $respuesta) {
+                    if (preg_match("/$patron/i", $receivedMessage)) {
+                        $mensajeBienvenida = $respuesta;
+                        $mensajeEncontrado = true;
+                        break;
+                    }
+                }
+
+                // Mensaje por defecto si no se detecta un patrón específico
+                if (!$mensajeEncontrado) {
+                    $mensajeBienvenida = "¡Hola{$nombreSaludo}! 😊 Soy el asistente virtual de Eteria. Creamos soluciones digitales: 📱 apps, 🛍️ ecommerce y 🤖 sistemas a medida. ¿Nos cuentas qué tipo de proyecto tienes en mente? 💡";
+                }
 
                 Mensaje::create([
                     'contacto_id' => $contacto->id,
@@ -195,25 +218,52 @@ class WebhookController extends Controller
     protected function procesarConfirmacionTurno($contacto, $fechaHora, $motivo)
     {
         try {
+            // Convertir la fecha y hora a objeto Carbon
+            $fechaTurno = Carbon::parse($fechaHora);
+            $ahora = Carbon::now();
+
+            // Validar que la fecha no sea en el pasado
+            if ($fechaTurno->isPast()) {
+                return (new MessagingResponse())
+                    ->message("Lo siento, la fecha seleccionada ya pasó. Por favor, elige una fecha futura. Horario: L-V, 9:00-17:00 📅")
+                    ->__toString();
+            }
+
+            // Validar que sea día laboral (Lunes a Viernes)
+            if ($fechaTurno->isWeekend()) {
+                return (new MessagingResponse())
+                    ->message("Solo agendamos de lunes a viernes. ¿Te gustaría elegir otro día? Horario: 9:00-17:00 📅")
+                    ->__toString();
+            }
+
+            // Validar horario laboral (9:00 a 17:00)
+            $hora = (int)$fechaTurno->format('H');
+            $minutos = (int)$fechaTurno->format('i');
+            if ($hora < 9 || ($hora == 17 && $minutos > 0) || $hora > 17) {
+                return (new MessagingResponse())
+                    ->message("Nuestro horario de atención es de 9:00 a 17:00. ¿Te gustaría elegir otra hora? 🕒")
+                    ->__toString();
+            }
+
             // Verificar si ya tiene un turno pendiente
             $turnoExistente = Turno::where('contacto_id', $contacto->id)
-                ->where('fecha_turno', '>=', now())
+                ->where('fecha_turno', '>=', $ahora)
                 ->first();
 
             if ($turnoExistente) {
-                $saludo = $contacto->nombre ? "Hola {$contacto->nombre}" : "Hola";
-                $mensaje = "{$saludo}, ya tienes una cita agendada para el " . 
+                $saludo = $contacto->nombre ? "{$contacto->nombre}" : "Estimado/a";
+                $mensaje = "¡Hola {$saludo}! Ya tienes una cita para el " . 
                           $turnoExistente->fecha_turno->format('d/m/Y H:i') . 
-                          ". Por favor, espera a que esta cita se complete antes de agendar una nueva. Si necesitas modificarla, contáctanos directamente. 🗓️";
+                          ". Contáctanos si necesitas modificarla 📅";
             } else {
-                // Convertir la fecha y hora a objeto Carbon
-                $fechaTurno = Carbon::parse($fechaHora);
-
                 // Verificar si ya existe un turno en esa fecha y hora
                 $turnoMismaFecha = Turno::where('fecha_turno', $fechaTurno)->first();
 
                 if ($turnoMismaFecha) {
-                    $mensaje = "Lo siento, el horario seleccionado ya está reservado. ¿Te gustaría agendar en otro horario? Tenemos disponibilidad de lunes a viernes, de 9:00 a 17:00. 📅";
+                    // Sugerir el siguiente horario disponible
+                    $siguienteHorario = $this->encontrarSiguienteHorarioDisponible($fechaTurno);
+                    $mensaje = "Ese horario ya está reservado. ¿Te gustaría agendar para el " . 
+                              $siguienteHorario->format('d/m/Y H:i') . "? 📅";
                 } else {
                     // Crear el nuevo turno
                     Turno::create([
@@ -222,14 +272,10 @@ class WebhookController extends Controller
                         'motivo' => $motivo
                     ]);
 
-                    $saludo = $contacto->nombre ? "{$contacto->nombre}" : "Estimado/a cliente";
-                    $mensaje = "¡Perfecto {$saludo}! Tu cita ha sido confirmada para el " . 
+                    $saludo = $contacto->nombre ? "{$contacto->nombre}" : "Estimado/a";
+                    $mensaje = "¡Listo {$saludo}! 😊 Tu cita está confirmada para el " . 
                               $fechaTurno->format('d/m/Y') . " a las " . 
-                              $fechaTurno->format('H:i') . ". \n\n" .
-                              "📋 Motivo: " . $motivo . "\n" .
-                              "📍 Ubicación: Quito, Ecuador\n" .
-                              "🌐 Más información sobre nosotros: https://eteriaecuador.com\n\n" .
-                              "Te esperamos para discutir tu proyecto. Si necesitas hacer algún cambio, no dudes en avisarnos.";
+                              $fechaTurno->format('H:i') . ". Recibirás una llamada para conocer más sobre tu proyecto y presentarte a nuestro equipo. 🤝";
                 }
             }
 
@@ -249,8 +295,37 @@ class WebhookController extends Controller
             Log::error('Error al procesar confirmación de turno: ' . $e->getMessage());
             
             return (new MessagingResponse())
-                ->message('Lo siento, hubo un error al procesar el turno.')
+                ->message('Lo siento, hubo un error al procesar el turno. Por favor, intenta nuevamente.')
                 ->__toString();
         }
+    }
+
+    /**
+     * Encuentra el siguiente horario disponible a partir de una fecha dada
+     */
+    protected function encontrarSiguienteHorarioDisponible(Carbon $fecha)
+    {
+        $horario = $fecha->copy();
+        
+        do {
+            // Avanzar 1 hora
+            $horario->addHour();
+            
+            // Si pasamos las 17:00, ir al siguiente día a las 9:00
+            if ($horario->hour >= 17) {
+                $horario->addDay()->setHour(9)->setMinute(0);
+            }
+            
+            // Si es fin de semana, ir al siguiente lunes
+            if ($horario->isWeekend()) {
+                $horario->next(Carbon::MONDAY)->setHour(9)->setMinute(0);
+            }
+            
+            // Verificar si el horario está disponible
+            $turnoExistente = Turno::where('fecha_turno', $horario)->first();
+            
+        } while ($turnoExistente);
+        
+        return $horario;
     }
 } 
