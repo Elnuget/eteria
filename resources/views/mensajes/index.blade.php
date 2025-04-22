@@ -29,7 +29,11 @@
                                 @foreach($mensajes as $mensaje)
                                 <tr>
                                     <td>{{ $mensaje->numero }}</td>
-                                    <td>{{ $mensaje->nombre ?? 'N/A' }}</td>
+                                    <td>
+                                        <a href="#" class="text-decoration-none" onclick="prepareUpdateNombre('{{ $mensaje->numero }}', '{{ $mensaje->nombre }}')" data-bs-toggle="modal" data-bs-target="#updateNombreModal">
+                                            {{ $mensaje->nombre ?? 'N/A' }}
+                                        </a>
+                                    </td>
                                     <td>{{ Str::limit($mensaje->mensaje, 50) }}</td>
                                     <td>{{ ucfirst($mensaje->estado) }}</td>
                                     <td>{{ $mensaje->fecha->format('d/m/Y H:i') }}</td>
@@ -132,6 +136,33 @@
     </div>
 </div>
 
+<!-- Modal Actualizar Nombre -->
+<div class="modal fade" id="updateNombreModal" tabindex="-1" aria-labelledby="updateNombreModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('mensajes.updateNombre') }}" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-header">
+                    <h5 class="modal-title" id="updateNombreModalLabel">Actualizar Nombre</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="update_numero" name="numero">
+                    <div class="mb-3">
+                        <label for="update_nombre" class="form-label">Nombre para todos los mensajes con este número</label>
+                        <input type="text" class="form-control" id="update_nombre" name="nombre" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -142,6 +173,11 @@
         document.getElementById('show_mensaje').textContent = mensaje;
         document.getElementById('show_estado').textContent = estado.charAt(0).toUpperCase() + estado.slice(1);
         document.getElementById('show_fecha').textContent = fecha;
+    }
+
+    function prepareUpdateNombre(numero, nombre) {
+        document.getElementById('update_numero').value = numero;
+        document.getElementById('update_nombre').value = nombre || '';
     }
 
     // Mostrar mensajes de error de validación

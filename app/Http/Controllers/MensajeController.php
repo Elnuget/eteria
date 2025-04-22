@@ -88,4 +88,17 @@ class MensajeController extends Controller
         $mensaje->delete();
         return redirect()->route('mensajes.index')->with('success', 'Mensaje eliminado exitosamente');
     }
+
+    public function updateNombre(Request $request)
+    {
+        $request->validate([
+            'numero' => 'required|string',
+            'nombre' => 'required|string|max:255',
+        ]);
+
+        Mensaje::where('numero', $request->numero)
+            ->update(['nombre' => $request->nombre]);
+
+        return redirect()->back()->with('success', 'Nombre actualizado correctamente para todos los mensajes con el número ' . $request->numero);
+    }
 } 
