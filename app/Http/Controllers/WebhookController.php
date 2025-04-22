@@ -64,13 +64,8 @@ class WebhookController extends Controller
                 ]);
 
                 // Mensaje de bienvenida personalizado que incluye la solicitud de información
-                $nombreSaludo = $contacto->nombre ? "{$contacto->nombre}" : "";
-                $mensajeBienvenida = "¡Hola{$nombreSaludo}! 😊 Para agilizar tu solicitud, ¿podrías compartirme estos detalles?\n\n" .
-                                   "1️⃣ *Tipo de proyecto/servicio* que necesitas (ej: desarrollo web, diseño gráfico, consultoría, etc.).\n" .
-                                   "2️⃣ *Fecha preferida* (días laborables de Lunes a Viernes).\n" .
-                                   "3️⃣ *Hora preferida* (entre 9:00 y 17:00).\n" .
-                                   "4️⃣ *Breve descripción* del proyecto o necesidad.\n\n" .
-                                   "Así puedo confirmarte el turno al instante. ¡Gracias! 🚀";
+                $nombreSaludo = $contacto->nombre ? " {$contacto->nombre}" : "";
+                $mensajeBienvenida = "¡Hola{$nombreSaludo}! 😊 Soy el asistente virtual de Eteria. Nos especializamos en soluciones digitales para hacer crecer tu negocio: 📱 apps web/móvil, 🛍️ tiendas online, 🤖 automatización y 📊 gestión. ¿Nos cuentas sobre tu negocio? 🚀";
 
                 Mensaje::create([
                     'contacto_id' => $contacto->id,
