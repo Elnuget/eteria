@@ -51,3 +51,4 @@ Route::resource('turnos', TurnoController::class)->middleware('auth');
 Route::put('/mensajes/update-nombre', [App\Http\Controllers\MensajeController::class, 'updateNombre'])->name('mensajes.updateNombre')->middleware('auth');
 Route::resource('mensajes', MensajeController::class)->middleware('auth');
 Route::post('/webhook/twilio', [WebhookController::class, 'handleTwilioWebhook'])->name('webhook.twilio');
+Route::post('/mensajes/eliminar-conversacion/{contactoId}', [MensajeController::class, 'eliminarConversacion'])->name('mensajes.eliminar-conversacion');

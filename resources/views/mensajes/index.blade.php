@@ -30,9 +30,15 @@
                                                 <strong>{{ $numero }}</strong>
                                                 <span class="ms-3">{{ $contacto->nombre }}</span>
                                             </div>
-                                            <div class="ms-auto me-3">
-                                                <span class="badge bg-primary">{{ $totalMensajes }} mensajes</span>
-                                                <span class="ms-2 text-muted">Último: {{ $ultimoMensaje->fecha->format('d/m/Y H:i') }}</span>
+                                            <div class="ms-auto me-3 d-flex align-items-center">
+                                                <span class="badge bg-primary me-2">{{ $totalMensajes }} mensajes</span>
+                                                <span class="text-muted me-3">Último: {{ $ultimoMensaje->fecha->format('d/m/Y H:i') }}</span>
+                                                <button type="button" 
+                                                        class="btn btn-danger btn-sm" 
+                                                        onclick="event.stopPropagation(); confirmarEliminarConversacion('{{ $contacto->id }}')"
+                                                        title="Eliminar toda la conversación">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -309,6 +315,29 @@ tr.mensaje-salida {
         
         // Toggle the button class
         button.classList.toggle('collapsed');
+    }
+
+    function confirmarEliminarConversacion(contactoId) {
+        if (confirm('¿Está seguro de eliminar toda la conversación? Esta acción no se puede deshacer.')) {
+            const formData = new FormData();
+            formData.append('_token', '{{ csrf_token() }}');
+
+            fetch(`/mensajes/eliminar-conversacion/${contactoId}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    throw new Error('Error al eliminar la conversación');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al eliminar la conversación');
+            });
+        }
     }
 
     // Mostrar mensajes de error de validación

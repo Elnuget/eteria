@@ -104,4 +104,16 @@ class MensajeController extends Controller
         $mensaje->delete();
         return redirect()->route('mensajes.index')->with('success', 'Mensaje eliminado exitosamente');
     }
+
+    public function eliminarConversacion($contactoId)
+    {
+        try {
+            // Eliminar todos los mensajes del contacto
+            Mensaje::where('contacto_id', $contactoId)->delete();
+            
+            return response()->json(['message' => 'Conversación eliminada con éxito'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error al eliminar la conversación'], 500);
+        }
+    }
 } 

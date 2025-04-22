@@ -29,28 +29,74 @@ class WebhookController extends Controller
             // Obtener el mensaje y número de WhatsApp
             $receivedMessage = $request->input('Body');
             $fromNumber = $request->input('From');
+            $profileName = $request->input('ProfileName');
             
             // Limpiar el número de teléfono eliminando "whatsapp:" y "+"
             $cleanNumber = str_replace(['whatsapp:', '+'], '', $fromNumber);
 
-            // Buscar o crear el contacto
-            $contacto = Contacto::firstOrCreate(
-                ['numero' => $cleanNumber],
-                ['estado' => 'iniciado']
-            );
+            // Buscar el contacto
+            $contacto = Contacto::where('numero', $cleanNumber)->first();
 
-            // Verificar si el mensaje es una confirmación de turno
-            if (preg_match($this->formatoTurno, $receivedMessage, $matches)) {
-                return $this->procesarConfirmacionTurno($contacto, $matches[1], $matches[2]);
+            if (!$contacto) {
+                // Crear nuevo contacto
+                $contacto = new Contacto();
+                $contacto->numero = $cleanNumber;
+                $contacto->estado = 'iniciado';
+                
+                // Si tenemos el nombre del perfil de WhatsApp, lo usamos
+                if ($profileName) {
+                    $contacto->nombre = $profileName;
+                }
+                
+                // Si el primer mensaje parece ser una presentación con nombre, extraerlo
+                if (preg_match('/(?:me llamo|soy|hola[,]? soy|mi nombre es) ([A-Za-zÁáÉéÍíÓóÚúÑñ\s]+)/i', $receivedMessage, $matches)) {
+                    $contacto->nombre = trim($matches[1]);
+                }
+                
+                $contacto->save();
+
+                // Guardar el mensaje recibido
+                Mensaje::create([
+                    'contacto_id' => $contacto->id,
+                    'mensaje' => $receivedMessage,
+                    'estado' => 'entrada',
+                    'fecha' => now()
+                ]);
+
+                // Mensaje de bienvenida personalizado que incluye la solicitud de información
+                $nombreSaludo = $contacto->nombre ? "{$contacto->nombre}" : "";
+                $mensajeBienvenida = "¡Hola{$nombreSaludo}! 😊 Para agilizar tu solicitud, ¿podrías compartirme estos detalles?\n\n" .
+                                   "1️⃣ *Tipo de proyecto/servicio* que necesitas (ej: desarrollo web, diseño gráfico, consultoría, etc.).\n" .
+                                   "2️⃣ *Fecha preferida* (días laborables de Lunes a Viernes).\n" .
+                                   "3️⃣ *Hora preferida* (entre 9:00 y 17:00).\n" .
+                                   "4️⃣ *Breve descripción* del proyecto o necesidad.\n\n" .
+                                   "Así puedo confirmarte el turno al instante. ¡Gracias! 🚀";
+
+                Mensaje::create([
+                    'contacto_id' => $contacto->id,
+                    'mensaje' => $mensajeBienvenida,
+                    'estado' => 'salida',
+                    'fecha' => now()
+                ]);
+
+                return (new MessagingResponse())
+                    ->message($mensajeBienvenida)
+                    ->__toString();
             }
 
-            // Guardar el mensaje recibido
+            // Para contactos existentes, solo guardar el mensaje recibido
             Mensaje::create([
                 'contacto_id' => $contacto->id,
                 'mensaje' => $receivedMessage,
                 'estado' => 'entrada',
                 'fecha' => now()
             ]);
+
+            // Si es un mensaje que contiene un nombre y el contacto no tiene nombre aún
+            if (!$contacto->nombre && preg_match('/(?:me llamo|soy|hola[,]? soy|mi nombre es) ([A-Za-zÁáÉéÍíÓóÚúÑñ\s]+)/i', $receivedMessage, $matches)) {
+                $contacto->nombre = trim($matches[1]);
+                $contacto->save();
+            }
 
             // Verificar si ya tiene un turno pendiente
             $turnoExistente = Turno::where('contacto_id', $contacto->id)
@@ -66,17 +112,22 @@ class WebhookController extends Controller
             $messages = [];
             
             // Obtener el contexto específico para este contacto
-            $contextBase = 'Eres un asistente virtual de Eteria, una empresa de desarrollo web. ' .
-                         'Para agendar un turno, debes responder con el formato exacto: ' .
-                         'TURNO_CONFIRMADO:YYYY-MM-DD HH:mm:MOTIVO ' .
-                         'Por ejemplo: TURNO_CONFIRMADO:2024-03-20 15:30:Consulta desarrollo web';
+            $contextBase = 'Eres un asistente virtual de Eteria. Guía la conversación para obtener la siguiente información: ' .
+                         '1) Tipo de proyecto/servicio que necesitan, ' .
+                         '2) Fecha preferida (días laborables L-V), ' .
+                         '3) Hora preferida (9:00 a 17:00), ' .
+                         '4) Breve descripción del proyecto. ' .
+                         'Solo cuando tengas TODA esta información, responde con el formato: ' .
+                         'TURNO_CONFIRMADO:YYYY-MM-DD HH:mm:MOTIVO. ' .
+                         'Si falta información, continúa preguntando amablemente. ' .
+                         'Mantén un tono profesional y cercano.';
 
             // Agregar información sobre turno existente si lo hay
             if ($turnoExistente) {
-                $contextBase .= "\nEste contacto ya tiene un turno agendado para el " . 
+                $contextBase .= "\nEste contacto ya tiene una cita agendada para el " . 
                               $turnoExistente->fecha_turno->format('d/m/Y H:i') . 
-                              " con motivo: " . $turnoExistente->motivo . 
-                              ". Debes informarle que no puede agendar otro turno hasta que este se complete.";
+                              ". Motivo: " . $turnoExistente->motivo . 
+                              ". Infórmale amablemente que debe esperar a que esta cita se complete antes de agendar una nueva.";
             }
 
             // Agregar el contexto del sistema
@@ -115,6 +166,18 @@ class WebhookController extends Controller
                     'fecha' => now()
                 ]);
 
+                // Verificar si hay un mensaje de confirmación de turno en los últimos mensajes
+                $ultimosMensajes = Mensaje::where('contacto_id', $contacto->id)
+                    ->orderBy('fecha', 'desc')
+                    ->take(5)
+                    ->get();
+
+                foreach ($ultimosMensajes as $mensaje) {
+                    if (preg_match($this->formatoTurno, $mensaje->mensaje, $matches)) {
+                        return $this->procesarConfirmacionTurno($contacto, $matches[1], $matches[2]);
+                    }
+                }
+
                 // Crear y retornar respuesta TwiML
                 return (new MessagingResponse())
                     ->message($aiResponse)
@@ -143,18 +206,36 @@ class WebhookController extends Controller
                 ->first();
 
             if ($turnoExistente) {
-                $mensaje = "Ya tienes un turno agendado para el " . 
+                $saludo = $contacto->nombre ? "Hola {$contacto->nombre}" : "Hola";
+                $mensaje = "{$saludo}, ya tienes una cita agendada para el " . 
                           $turnoExistente->fecha_turno->format('d/m/Y H:i') . 
-                          ". No puedes agendar otro turno hasta que este se complete.";
+                          ". Por favor, espera a que esta cita se complete antes de agendar una nueva. Si necesitas modificarla, contáctanos directamente. 🗓️";
             } else {
-                // Crear el nuevo turno
-                Turno::create([
-                    'contacto_id' => $contacto->id,
-                    'fecha_turno' => Carbon::parse($fechaHora),
-                    'motivo' => $motivo
-                ]);
+                // Convertir la fecha y hora a objeto Carbon
+                $fechaTurno = Carbon::parse($fechaHora);
 
-                $mensaje = "Turno registrado";
+                // Verificar si ya existe un turno en esa fecha y hora
+                $turnoMismaFecha = Turno::where('fecha_turno', $fechaTurno)->first();
+
+                if ($turnoMismaFecha) {
+                    $mensaje = "Lo siento, el horario seleccionado ya está reservado. ¿Te gustaría agendar en otro horario? Tenemos disponibilidad de lunes a viernes, de 9:00 a 17:00. 📅";
+                } else {
+                    // Crear el nuevo turno
+                    Turno::create([
+                        'contacto_id' => $contacto->id,
+                        'fecha_turno' => $fechaTurno,
+                        'motivo' => $motivo
+                    ]);
+
+                    $saludo = $contacto->nombre ? "{$contacto->nombre}" : "Estimado/a cliente";
+                    $mensaje = "¡Perfecto {$saludo}! Tu cita ha sido confirmada para el " . 
+                              $fechaTurno->format('d/m/Y') . " a las " . 
+                              $fechaTurno->format('H:i') . ". \n\n" .
+                              "📋 Motivo: " . $motivo . "\n" .
+                              "📍 Ubicación: Quito, Ecuador\n" .
+                              "🌐 Más información sobre nosotros: https://eteriaecuador.com\n\n" .
+                              "Te esperamos para discutir tu proyecto. Si necesitas hacer algún cambio, no dudes en avisarnos.";
+                }
             }
 
             // Guardar el mensaje de respuesta
