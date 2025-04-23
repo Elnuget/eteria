@@ -47,6 +47,7 @@ Route::post('/projects/{project}/clients/{client}', [ProjectController::class, '
 Route::delete('/projects/{project}/clients/{client}', [ProjectController::class, 'detachClient'])->name('projects.clients.detach');
 Route::resource('contextos', ContextoController::class)->middleware('auth');
 Route::resource('contactos', ContactoController::class)->middleware('auth');
+Route::post('/contactos/import', [ContactoController::class, 'import'])->name('contactos.import')->middleware('auth');
 Route::resource('turnos', TurnoController::class)->middleware('auth');
 Route::put('/mensajes/update-nombre', [App\Http\Controllers\MensajeController::class, 'updateNombre'])->name('mensajes.updateNombre')->middleware('auth');
 Route::resource('mensajes', MensajeController::class)->middleware('auth');

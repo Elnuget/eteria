@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Contacto;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\ContactosImport;
 
 class ContactoController extends Controller
 {
@@ -55,5 +57,43 @@ class ContactoController extends Controller
     {
         $contacto->delete();
         return redirect()->route('contactos.index')->with('success', 'Contacto eliminado exitosamente');
+    }
+
+    /**
+     * Importar contactos desde archivo Excel.
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'excel_file' => 'required|mimes:xlsx,xls',
+        ]);
+
+        try {
+            $import = new ContactosImport;
+            $import->import($request->file('excel_file'));
+            
+            $resultados = $import->getResultados();
+            
+            $mensaje = "Total de registros procesados: {$resultados['total']}\n";
+            $mensaje .= "Contactos importados exitosamente: {$resultados['importados']}\n";
+            if ($resultados['duplicados'] > 0) {
+                $mensaje .= "Contactos omitidos por duplicados: {$resultados['duplicados']}\n";
+            }
+            
+            if (!empty($resultados['errores'])) {
+                $mensaje .= "\nDetalles:\n";
+                foreach ($resultados['errores'] as $error) {
+                    $mensaje .= "- {$error}\n";
+                }
+                return redirect()->route('contactos.index')
+                    ->with('warning', nl2br($mensaje));
+            }
+            
+            return redirect()->route('contactos.index')
+                ->with('success', nl2br($mensaje));
+        } catch (\Exception $e) {
+            return redirect()->route('contactos.index')
+                ->with('error', 'Error al procesar el archivo: ' . $e->getMessage());
+        }
     }
 } 
