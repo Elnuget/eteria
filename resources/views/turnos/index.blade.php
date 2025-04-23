@@ -13,51 +13,70 @@
                 </div>
 
                 <div class="card-body">
-                    @foreach($turnos as $fecha => $turnosDia)
-                        <div class="mb-4">
-                            <h5 class="border-bottom pb-2">
-                                <i class="fas fa-calendar-day"></i>
-                                {{ \Carbon\Carbon::parse($fecha)->format('d/m/Y') }}
-                                <span class="badge bg-primary ms-2">{{ $turnosDia->count() }} turnos</span>
-                            </h5>
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Hora</th>
-                                            <th>Número</th>
-                                            <th>Nombre</th>
-                                            <th>Motivo</th>
-                                            <th>Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($turnosDia as $turno)
-                                            <tr>
-                                                <td>{{ $turno->fecha_turno->format('H:i') }}</td>
-                                                <td>{{ $turno->contacto->numero }}</td>
-                                                <td>{{ $turno->contacto->nombre }}</td>
-                                                <td>{{ $turno->motivo }}</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editTurnoModal" 
-                                                            onclick="editTurno({{ $turno->id }}, '{{ $turno->fecha_turno }}', '{{ $turno->motivo }}')">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <form action="{{ route('turnos.destroy', $turno->id) }}" method="POST" class="d-inline">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Está seguro de eliminar este turno?')">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                    <div class="row">
+                        <!-- Tabla de turnos (izquierda) -->
+                        <div class="col-md-6">
+                            @php
+                                // Ordenar las fechas en orden descendente (de mayor a menor)
+                                $fechasOrdenadas = $turnos->keys()->sort(function($a, $b) {
+                                    return strtotime($b) <=> strtotime($a);
+                                });
+                            @endphp
+                            
+                            @foreach($fechasOrdenadas as $fecha)
+                                <div class="mb-4">
+                                    <h5 class="border-bottom pb-2">
+                                        <i class="fas fa-calendar-day"></i>
+                                        {{ \Carbon\Carbon::parse($fecha)->format('d/m/Y') }}
+                                        <span class="badge bg-primary ms-2">{{ $turnos[$fecha]->count() }} turnos</span>
+                                    </h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Hora</th>
+                                                    <th>Número</th>
+                                                    <th>Nombre</th>
+                                                    <th>Motivo</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($turnos[$fecha] as $turno)
+                                                    <tr>
+                                                        <td>{{ $turno->fecha_turno->format('H:i') }}</td>
+                                                        <td>{{ $turno->contacto->numero }}</td>
+                                                        <td>{{ $turno->contacto->nombre }}</td>
+                                                        <td>{{ $turno->motivo }}</td>
+                                                        <td>
+                                                            <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editTurnoModal" 
+                                                                    onclick="editTurno({{ $turno->id }}, '{{ $turno->fecha_turno }}', '{{ $turno->motivo }}')">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <form action="{{ route('turnos.destroy', $turno->id) }}" method="POST" class="d-inline">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Está seguro de eliminar este turno?')">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        
+                        <!-- Calendario (derecha) -->
+                        <div class="col-md-6">
+                            <div class="calendario-container">
+                                <div id="calendario"></div>
                             </div>
                         </div>
-                    @endforeach
+                    </div>
                 </div>
             </div>
         </div>
@@ -137,7 +156,58 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css">
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendario');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'es',
+            height: 'auto',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            events: [
+                @foreach($turnos as $fecha => $turnosDia)
+                    @foreach($turnosDia as $turno)
+                    {
+                        title: '{{ $turno->contacto->nombre }} - {{ $turno->motivo }}',
+                        start: '{{ $turno->fecha_turno->format('Y-m-d\TH:i:s') }}',
+                        url: '#',
+                        extendedProps: {
+                            turnoId: {{ $turno->id }}
+                        }
+                    },
+                    @endforeach
+                @endforeach
+            ],
+            eventClick: function(info) {
+                // Prevenir navegación por defecto
+                info.jsEvent.preventDefault();
+                
+                // Obtener el ID del turno
+                const turnoId = info.event.extendedProps.turnoId;
+                
+                // Buscar el botón de editar correspondiente y hacer clic
+                document.querySelector(`button[onclick*="${turnoId}"]`).click();
+            },
+            eventTimeFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }
+        });
+        calendar.render();
+        
+        // Ajustar altura en cambio de tamaño de ventana
+        window.addEventListener('resize', function() {
+            calendar.updateSize();
+        });
+    });
+
     function editTurno(id, fecha_turno, motivo) {
         const form = document.getElementById('editTurnoForm');
         form.action = `/turnos/${id}`;
@@ -159,4 +229,28 @@
         alert('{{ session('success') }}');
     @endif
 </script>
+<style>
+    .calendario-container {
+        padding: 10px;
+        background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    
+    #calendario {
+        width: 100%;
+        height: 100%;
+    }
+    
+    /* Estilos responsivos */
+    @media (max-width: 768px) {
+        .row > .col-md-6 {
+            margin-bottom: 20px;
+        }
+    }
+    
+    .fc-event {
+        cursor: pointer;
+    }
+</style>
 @endpush 
