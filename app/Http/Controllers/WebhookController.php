@@ -71,11 +71,11 @@ class WebhookController extends Controller
 
                 // Patrones comunes en mensajes iniciales
                 $patrones = [
-                    'cotización|cotizar|precio|costo' => "¡Hola{$nombreSaludo}! 😊 Para darte la mejor orientación, ¿podrías contarme brevemente sobre tu negocio? 💡",
-                    'página|pagina|web|sitio|website' => "¡Hola{$nombreSaludo}! 😊 ¿Me cuentas a qué se dedica tu negocio y qué buscas lograr con tu web? 🎯",
-                    'app|aplicación|aplicacion|móvil|movil' => "¡Hola{$nombreSaludo}! 😊 ¿Me cuentas sobre tu negocio y qué procesos te gustaría mejorar? 📱",
-                    'sistema|software|programa|automatización|automatizacion' => "¡Hola{$nombreSaludo}! 😊 ¿Me cuentas a qué te dedicas y qué procesos quieres automatizar? 🚀",
-                    'ecommerce|tienda|online|ventas' => "¡Hola{$nombreSaludo}! 😊 ¿Me cuentas sobre tu negocio y qué productos o servicios ofreces? 🛍️"
+                    'cotización|cotizar|precio|costo' => "¡Hola{$nombreSaludo}! 💡 Para ofrecerte la mejor solución, ¿me cuentas a qué se dedica tu negocio y qué procesos quieres mejorar?",
+                    'página|pagina|web|sitio|website' => "¡Hola{$nombreSaludo}! 💡 ¿Me cuentas sobre tu negocio y qué objetivos tienes con tu presencia digital?",
+                    'app|aplicación|aplicacion|móvil|movil' => "¡Hola{$nombreSaludo}! 💡 ¿Qué procesos de tu negocio te gustaría automatizar con una app?",
+                    'sistema|software|programa|automatización|automatizacion' => "¡Hola{$nombreSaludo}! 💡 ¿Qué procesos de tu negocio necesitas optimizar?",
+                    'ecommerce|tienda|online|ventas' => "¡Hola{$nombreSaludo}! 💡 ¿Me cuentas qué productos o servicios vendes y cuál es tu objetivo de ventas?"
                 ];
 
                 $mensajeEncontrado = false;
@@ -89,7 +89,7 @@ class WebhookController extends Controller
 
                 // Mensaje por defecto si no se detecta un patrón específico
                 if (!$mensajeEncontrado) {
-                    $mensajeBienvenida = "¡Hola{$nombreSaludo}! 😊 Soy el asistente de Eteria. ¿Me cuentas a qué te dedicas? 💡";
+                    $mensajeBienvenida = "¡Hola{$nombreSaludo}! 💡 ¿Me cuentas a qué se dedica tu negocio y qué procesos te gustaría mejorar?";
                 }
 
                 Mensaje::create([
@@ -135,23 +135,26 @@ class WebhookController extends Controller
             $hoyGuayaquil = Carbon::now('America/Guayaquil');
             $manana = $hoyGuayaquil->copy()->addDay()->format('Y-m-d');
             
-            $contextBase = 'Eres un asistente virtual amigable y conciso de Eteria. ' .
+            $contextBase = 'Eres un asistente comercial estratégico de Eteria. ' .
                          'HOY es ' . $hoyGuayaquil->format('Y-m-d') . ' en Guayaquil. ' .
-                         'IMPORTANTE: Tus respuestas deben ser cortas y en una sola línea, sin saltos de línea. ' .
-                         'SOLO puedes agendar citas a partir de ' . $manana . '. ' .
-                         'Tu prioridad es entender el negocio y necesidades del cliente. ' .
-                         'Sigue este orden: 1) Pregunta sobre su negocio, 2) Indaga sus desafíos, 3) Explora qué solución necesitan, 4) Solo al final consulta disponibilidad. ' .
-                         'Para agendar necesitas: Fecha (L-V desde mañana) y hora (9:00-17:00). ' .
-                         'Solo cuando tengas TODA la información usa: TURNO_CONFIRMADO:YYYY-MM-DD HH:mm:MOTIVO. ' .
-                         'Mantén un tono amigable y profesional. No apresures la conversación. ' .
-                         'RECUERDA: Tus mensajes deben ser cortos, claros y en una sola línea.';
+                         'IMPORTANTE: Tus respuestas deben ser cortas y en una sola línea, sin saltos de línea. Usa máximo 2 emojis por mensaje. ' .
+                         'Sigue este flujo de conversación: ' .
+                         '1) Primero, entiende el negocio y sus desafíos actuales, ' .
+                         '2) Luego, identifica una oportunidad de mejora y presenta una propuesta de valor específica para su caso, ' .
+                         '3) Si muestra interés, sugiere agendar una reunión para presentar una solución detallada. ' .
+                         'Para agendar citas: Solo L-V desde ' . $manana . ', hora: 9:00-17:00. ' .
+                         'Cuando tengas fecha y hora, usa: TURNO_CONFIRMADO:YYYY-MM-DD HH:mm:MOTIVO. ' .
+                         'EJEMPLOS DE PROPUESTAS: ' .
+                         'Si mencionan ventas: "Con nuestra solución podrías aumentar tus ventas un 30% automatizando seguimiento de clientes 💡 ¿Te gustaría conocer cómo?" ' .
+                         'Si mencionan tiempo: "Podríamos ahorrarte 15 horas semanales automatizando esos procesos ⚡ ¿Te interesa ver cómo?" ' .
+                         'RECUERDA: Mensajes cortos, máximo 2 emojis, enfócate en beneficios específicos.';
 
             // Agregar información sobre turno existente si lo hay
             if ($turnoExistente) {
                 $contextBase .= ' Este contacto ya tiene cita para el ' . 
                               $turnoExistente->fecha_turno->format('d/m/Y H:i') . 
                               '. Motivo: ' . $turnoExistente->motivo . 
-                              '. Infórmale amablemente que debe esperar a que esta cita se complete.';
+                              '. Infórmale amablemente que debe esperar.';
             }
 
             // Agregar el contexto del sistema
