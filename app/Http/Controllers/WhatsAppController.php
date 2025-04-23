@@ -72,7 +72,7 @@ class WhatsAppController extends Controller
                     // Crear el mensaje en la base de datos
                     $mensaje = new \App\Models\Mensaje();
                     $mensaje->contacto_id = $contacto->id;
-                    $mensaje->mensaje = 'Cordial saludo, 👋 Tenemos algo que podría ser de su interés si busca optimizar la comunicación con sus clientes por WhatsApp y potenciar sus ventas con plataformas inteligentes. ¿Le gustaría saber más o conoce a alguien a quien le pueda interesar?';
+                    $mensaje->mensaje = '¡Cordial saludo! 👋 Creamos páginas web, plataformas de gestión de negocios y optimizamos la comunicación con sus clientes por WhatsApp, potenciando sus ventas con soluciones inteligentes. ¿Le gustaría saber más o conoce a alguien a quien le pueda interesar?';
                     $mensaje->estado = 'salida';
                     $mensaje->fecha = now();
                     $mensaje->save();
@@ -105,7 +105,7 @@ class WhatsAppController extends Controller
 
             $message = $this->twilio->messages->create($toNumber, [
                 "from" => $this->fromNumber,
-                "contentSid" => "HX16a66d9718a7a24bfde5217b70b28d8a",
+                "contentSid" => "HX013619f8b2780a9870975fd3eb6ca2dd",
                 "contentVariables" => json_encode([
                     "1" => "Bienvenido a Eteria"
                 ])
@@ -183,7 +183,7 @@ class WhatsAppController extends Controller
                         // Crear el mensaje en la base de datos
                         $mensaje = new \App\Models\Mensaje();
                         $mensaje->contacto_id = $contacto->id;
-                        $mensaje->mensaje = 'Cordial saludo, 👋 Tenemos algo que podría ser de su interés si busca optimizar la comunicación con sus clientes por WhatsApp y potenciar sus ventas con plataformas inteligentes. ¿Le gustaría saber más o conoce a alguien a quien le pueda interesar?';
+                        $mensaje->mensaje = '¡Cordial saludo! 👋 Creamos páginas web, plataformas de gestión de negocios y optimizamos la comunicación con sus clientes por WhatsApp, potenciando sus ventas con soluciones inteligentes. ¿Le gustaría saber más o conoce a alguien a quien le pueda interesar?';
                         $mensaje->estado = 'salida';
                         $mensaje->fecha = now();
                         $mensaje->save();
