@@ -32,6 +32,11 @@ class Mensaje extends Model
     ];
 
     /**
+     * Atributos que no se guardan en la base de datos
+     */
+    // protected $appends = ['_skip_twilio']; // Comentado o eliminado
+
+    /**
      * Obtener el contacto asociado al mensaje.
      */
     public function contacto()
@@ -41,16 +46,40 @@ class Mensaje extends Model
 
     protected static function booted()
     {
+        // Eliminar el evento 'creating' si existe
+        /*
+        static::creating(function ($mensaje) {
+            // ... lógica eliminada ...
+        });
+        */
+
         static::created(function ($mensaje) {
-            if ($mensaje->estado === 'salida') {
+            // Ya no necesitamos verificar _skip_twilio_flag
+            if ($mensaje->estado === 'salida') { 
                 try {
-                    $whatsapp = new WhatsAppController();
+                    $whatsapp = app(WhatsAppController::class);
                     $mensaje_texto = $mensaje->mensaje;
                     
-                    // Obtenemos el número del contacto asociado
-                    $whatsapp->sendMessage($mensaje->contacto->numero, $mensaje_texto);
+                    // Asegurarse de que el número tenga el formato correcto
+                    $numero = $mensaje->contacto->numero;
+                    if (!str_starts_with($numero, '593')) {
+                        $numero = '593' . $numero;
+                    }
+                    
+                    \Log::info('Intentando enviar mensaje de WhatsApp', [
+                        'numero' => $numero,
+                        'mensaje' => $mensaje_texto
+                    ]);
+                    
+                    $resultado = $whatsapp->sendMessage($numero, $mensaje_texto);
+                    
+                    \Log::info('Resultado del envío de mensaje', $resultado);
                 } catch (\Exception $e) {
-                    \Log::error('Error al enviar mensaje de WhatsApp: ' . $e->getMessage());
+                    \Log::error('Error al enviar mensaje de WhatsApp: ' . $e->getMessage(), [
+                        'trace' => $e->getTraceAsString(),
+                        'mensaje_id' => $mensaje->id,
+                        'contacto_id' => $mensaje->contacto_id
+                    ]);
                 }
             }
         });

@@ -71,11 +71,11 @@ class WebhookController extends Controller
 
                 // Patrones comunes en mensajes iniciales
                 $patrones = [
-                    'cotización|cotizar|precio|costo' => "¡Hola{$nombreSaludo}! 😊 Me alegra que quieras conocer nuestras soluciones. En Eteria creamos: 📱 apps, 🛍️ ecommerce y 🤖 sistemas a medida. ¿Nos cuentas más sobre el proyecto que tienes en mente? 💡",
-                    'página|pagina|web|sitio|website' => "¡Hola{$nombreSaludo}! 😊 ¡Genial que estés pensando en una web! Desarrollamos sitios que destacan y convierten. ¿Qué tipo de web necesitas: informativa, tienda online o sistema personalizado? 🎯",
-                    'app|aplicación|aplicacion|móvil|movil' => "¡Hola{$nombreSaludo}! 😊 ¡Excelente decisión apostar por una app! Creamos aplicaciones móviles y web que transforman negocios. ¿Nos cuentas qué funcionalidades necesitas? 📱",
-                    'sistema|software|programa|automatización|automatizacion' => "¡Hola{$nombreSaludo}! 😊 ¡Perfecto! Nos especializamos en crear sistemas que automatizan y optimizan procesos. ¿Qué procesos de tu negocio quieres mejorar? 🚀",
-                    'ecommerce|tienda|online|ventas' => "¡Hola{$nombreSaludo}! 😊 ¡Genial que quieras vender online! Creamos tiendas virtuales que impulsan las ventas. ¿Ya tienes un catálogo de productos definido? 🛍️"
+                    'cotización|cotizar|precio|costo' => "¡Hola{$nombreSaludo}! 😊 Para darte la mejor orientación, ¿podrías contarme brevemente sobre tu negocio? 💡",
+                    'página|pagina|web|sitio|website' => "¡Hola{$nombreSaludo}! 😊 ¿Me cuentas a qué se dedica tu negocio y qué buscas lograr con tu web? 🎯",
+                    'app|aplicación|aplicacion|móvil|movil' => "¡Hola{$nombreSaludo}! 😊 ¿Me cuentas sobre tu negocio y qué procesos te gustaría mejorar? 📱",
+                    'sistema|software|programa|automatización|automatizacion' => "¡Hola{$nombreSaludo}! 😊 ¿Me cuentas a qué te dedicas y qué procesos quieres automatizar? 🚀",
+                    'ecommerce|tienda|online|ventas' => "¡Hola{$nombreSaludo}! 😊 ¿Me cuentas sobre tu negocio y qué productos o servicios ofreces? 🛍️"
                 ];
 
                 $mensajeEncontrado = false;
@@ -89,7 +89,7 @@ class WebhookController extends Controller
 
                 // Mensaje por defecto si no se detecta un patrón específico
                 if (!$mensajeEncontrado) {
-                    $mensajeBienvenida = "¡Hola{$nombreSaludo}! 😊 Soy el asistente virtual de Eteria. Creamos soluciones digitales: 📱 apps, 🛍️ ecommerce y 🤖 sistemas a medida. ¿Nos cuentas qué tipo de proyecto tienes en mente? 💡";
+                    $mensajeBienvenida = "¡Hola{$nombreSaludo}! 😊 Soy el asistente de Eteria. ¿Me cuentas a qué te dedicas? 💡";
                 }
 
                 Mensaje::create([
@@ -135,26 +135,23 @@ class WebhookController extends Controller
             $hoyGuayaquil = Carbon::now('America/Guayaquil');
             $manana = $hoyGuayaquil->copy()->addDay()->format('Y-m-d');
             
-            $contextBase = 'Eres un asistente virtual de Eteria. ' .
+            $contextBase = 'Eres un asistente virtual amigable y conciso de Eteria. ' .
                          'HOY es ' . $hoyGuayaquil->format('Y-m-d') . ' en Guayaquil. ' .
+                         'IMPORTANTE: Tus respuestas deben ser cortas y en una sola línea, sin saltos de línea. ' .
                          'SOLO puedes agendar citas a partir de ' . $manana . '. ' .
-                         'Guía la conversación para obtener la siguiente información: ' .
-                         '1) Tipo de proyecto/servicio que necesitan, ' .
-                         '2) Fecha preferida (días laborables L-V, desde mañana en adelante), ' .
-                         '3) Hora preferida (9:00 a 17:00), ' .
-                         '4) Breve descripción del proyecto. ' .
-                         'Solo cuando tengas TODA esta información, responde con el formato: ' .
-                         'TURNO_CONFIRMADO:YYYY-MM-DD HH:mm:MOTIVO. ' .
-                         'Si falta información, continúa preguntando amablemente. ' .
-                         'Si intentan agendar para hoy, indícales amablemente que solo podemos agendar desde mañana. ' .
-                         'Mantén un tono profesional y cercano.';
+                         'Tu prioridad es entender el negocio y necesidades del cliente. ' .
+                         'Sigue este orden: 1) Pregunta sobre su negocio, 2) Indaga sus desafíos, 3) Explora qué solución necesitan, 4) Solo al final consulta disponibilidad. ' .
+                         'Para agendar necesitas: Fecha (L-V desde mañana) y hora (9:00-17:00). ' .
+                         'Solo cuando tengas TODA la información usa: TURNO_CONFIRMADO:YYYY-MM-DD HH:mm:MOTIVO. ' .
+                         'Mantén un tono amigable y profesional. No apresures la conversación. ' .
+                         'RECUERDA: Tus mensajes deben ser cortos, claros y en una sola línea.';
 
             // Agregar información sobre turno existente si lo hay
             if ($turnoExistente) {
-                $contextBase .= "\nEste contacto ya tiene una cita agendada para el " . 
+                $contextBase .= ' Este contacto ya tiene cita para el ' . 
                               $turnoExistente->fecha_turno->format('d/m/Y H:i') . 
-                              ". Motivo: " . $turnoExistente->motivo . 
-                              ". Infórmale amablemente que debe esperar a que esta cita se complete antes de agendar una nueva.";
+                              '. Motivo: ' . $turnoExistente->motivo . 
+                              '. Infórmale amablemente que debe esperar a que esta cita se complete.';
             }
 
             // Agregar el contexto del sistema

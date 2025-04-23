@@ -45,42 +45,53 @@ class WhatsAppController extends Controller
         ]);
 
         try {
-            // Limpiar el número de teléfono de espacios y formatear
-            $phoneNumber = '+593' . preg_replace('/\s+/', '', $request->phone_number);
+            // Limpiar el número de teléfono de espacios
+            $cleanNumber = preg_replace('/\s+/', '', $request->phone_number);
+            
+            // Número para guardar en la base de datos (sin +)
+            $dbNumber = '593' . $cleanNumber;
+            
+            // Número para enviar por WhatsApp (con +)
+            $whatsappNumber = '+' . $dbNumber;
             
             // Guardar o actualizar el contacto
             $contacto = \App\Models\Contacto::firstOrCreate(
-                ['numero' => $phoneNumber],
+                ['numero' => $dbNumber],
                 [
                     'nombre' => '',
                     'estado' => 'por iniciar'
                 ]
             );
 
-            // Crear el mensaje en la base de datos
-            $mensaje = new \App\Models\Mensaje([
-                'contacto_id' => $contacto->id,
-                'mensaje' => 'Saludo inicial de bienvenida',
-                'estado' => 'salida',
-                'fecha' => now()
-            ]);
-            $mensaje->save();
-            
             // Enviar el mensaje usando la plantilla
-            $result = $this->sendTemplateMessage($phoneNumber);
+            $result = $this->sendTemplateMessage($whatsappNumber);
 
             if ($result['success']) {
-                // Actualizar el estado del contacto a 'iniciado' después de enviar el mensaje
+                // Deshabilitar eventos temporalmente
+                \App\Models\Mensaje::withoutEvents(function () use ($contacto) {
+                    // Crear el mensaje en la base de datos
+                    $mensaje = new \App\Models\Mensaje();
+                    $mensaje->contacto_id = $contacto->id;
+                    $mensaje->mensaje = 'Saludo inicial de bienvenida';
+                    $mensaje->estado = 'salida';
+                    $mensaje->fecha = now();
+                    $mensaje->save();
+                });
+                
+                // Actualizar el estado del contacto a 'iniciado'
                 $contacto->estado = 'iniciado';
                 $contacto->save();
                 
                 return redirect()->route('whatsapp.index')
-                    ->with('success', 'Saludo enviado exitosamente a ' . $phoneNumber);
+                    ->with('success', 'Saludo enviado exitosamente a ' . $dbNumber);
             } else {
                 return redirect()->route('whatsapp.index')
                     ->with('error', 'Error al enviar el saludo: ' . $result['message']);
             }
         } catch (\Exception $e) {
+            \Log::error('Error en WhatsAppController::send: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->route('whatsapp.index')
                 ->with('error', 'Error al enviar el saludo: ' . $e->getMessage());
         }
@@ -89,6 +100,7 @@ class WhatsAppController extends Controller
     protected function sendTemplateMessage($to)
     {
         try {
+            // Asegurarse de que el número tenga el formato correcto para WhatsApp
             $toNumber = "whatsapp:" . ltrim($to, '+');
 
             $message = $this->twilio->messages->create($toNumber, [
@@ -97,6 +109,31 @@ class WhatsAppController extends Controller
                 "contentVariables" => json_encode([
                     "1" => "Bienvenido a Eteria"
                 ])
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Mensaje enviado exitosamente',
+                'sid' => $message->sid
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Error al enviar mensaje de WhatsApp: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function sendMessage($to, $message)
+    {
+        try {
+            // Asegurarse de que el número tenga el formato correcto para WhatsApp
+            if (!str_starts_with($to, '+')) {
+                $to = '+' . $to;
+            }
+            $toNumber = "whatsapp:" . $to;
+
+            $message = $this->twilio->messages->create($toNumber, [
+                "from" => $this->fromNumber,
+                "body" => $message
             ]);
 
             return [
