@@ -146,4 +146,71 @@ class WhatsAppController extends Controller
             throw $e;
         }
     }
+
+    public function sendBulk(Request $request)
+    {
+        $request->validate([
+            'numbers' => 'required|array',
+            'numbers.*' => 'required|string|regex:/^[0-9]{12}$/'
+        ]);
+
+        $results = [
+            'success' => true,
+            'total' => count($request->numbers),
+            'enviados' => 0,
+            'errores' => []
+        ];
+
+        foreach ($request->numbers as $number) {
+            try {
+                // Número para WhatsApp (con +)
+                $whatsappNumber = '+' . $number;
+                
+                // Obtener el contacto
+                $contacto = \App\Models\Contacto::where('numero', $number)->first();
+                
+                if (!$contacto) {
+                    $results['errores'][] = "No se encontró el contacto con número: {$number}";
+                    continue;
+                }
+
+                // Enviar el mensaje usando la plantilla
+                $sendResult = $this->sendTemplateMessage($whatsappNumber);
+
+                if ($sendResult['success']) {
+                    // Deshabilitar eventos temporalmente
+                    \App\Models\Mensaje::withoutEvents(function () use ($contacto) {
+                        // Crear el mensaje en la base de datos
+                        $mensaje = new \App\Models\Mensaje();
+                        $mensaje->contacto_id = $contacto->id;
+                        $mensaje->mensaje = 'Cordial saludo, 👋 Tenemos algo que podría ser de su interés si busca optimizar la comunicación con sus clientes por WhatsApp y potenciar sus ventas con plataformas inteligentes. ¿Le gustaría saber más o conoce a alguien a quien le pueda interesar?';
+                        $mensaje->estado = 'salida';
+                        $mensaje->fecha = now();
+                        $mensaje->save();
+                    });
+                    
+                    // Actualizar el estado del contacto a 'iniciado'
+                    $contacto->estado = 'iniciado';
+                    $contacto->save();
+                    
+                    $results['enviados']++;
+                } else {
+                    $results['errores'][] = "Error al enviar a {$number}: {$sendResult['message']}";
+                }
+            } catch (\Exception $e) {
+                \Log::error("Error al enviar saludo a {$number}: " . $e->getMessage());
+                $results['errores'][] = "Error al enviar a {$number}: " . $e->getMessage();
+            }
+        }
+
+        $results['success'] = $results['enviados'] > 0;
+        
+        if (!empty($results['errores'])) {
+            $results['message'] = "Se enviaron {$results['enviados']} de {$results['total']} mensajes. Hubo algunos errores.";
+        } else {
+            $results['message'] = "Se enviaron todos los mensajes exitosamente ({$results['enviados']}).";
+        }
+
+        return response()->json($results);
+    }
 } 

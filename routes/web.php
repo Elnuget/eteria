@@ -30,6 +30,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
     Route::get('/whatsapp', [WhatsAppController::class, 'index'])->name('whatsapp.index');
     Route::post('/whatsapp/send', [WhatsAppController::class, 'send'])->name('whatsapp.send');
+    Route::post('/whatsapp/send-bulk', [WhatsAppController::class, 'sendBulk'])->name('whatsapp.send-bulk');
 });
 
 Route::resource('projects', ProjectController::class)->middleware('auth');

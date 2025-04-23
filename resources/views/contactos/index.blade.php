@@ -29,6 +29,9 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Gestión de Contactos</span>
                     <div>
+                        <button type="button" class="btn btn-primary me-2" id="enviarSaludoBtn" disabled>
+                            <i class="fas fa-paper-plane"></i> Enviar Saludo
+                        </button>
                         <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#importExcelModal">
                             <i class="fas fa-file-excel"></i> Importar Excel
                         </button>
@@ -43,6 +46,11 @@
                         <table class="table table-striped">
                             <thead>
                                 <tr>
+                                    <th>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="selectAll">
+                                        </div>
+                                    </th>
                                     <th>Número</th>
                                     <th>Nombre</th>
                                     <th>Estado</th>
@@ -53,6 +61,14 @@
                             <tbody>
                                 @foreach($contactos as $contacto)
                                 <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input contacto-checkbox" type="checkbox" 
+                                                value="{{ $contacto->numero }}"
+                                                {{ $contacto->estado === 'iniciado' ? 'disabled' : '' }}
+                                                data-estado="{{ $contacto->estado }}">
+                                        </div>
+                                    </td>
                                     <td>{{ $contacto->numero }}</td>
                                     <td>{{ $contacto->nombre ?? 'N/A' }}</td>
                                     <td>
@@ -211,5 +227,62 @@
     @if(session('success'))
         alert('{{ session('success') }}');
     @endif
+
+    // Manejar selección de contactos
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const contactoCheckboxes = document.querySelectorAll('.contacto-checkbox:not([disabled])');
+        const enviarSaludoBtn = document.getElementById('enviarSaludoBtn');
+
+        function updateEnviarSaludoBtn() {
+            const checkedBoxes = document.querySelectorAll('.contacto-checkbox:checked').length;
+            enviarSaludoBtn.disabled = checkedBoxes === 0;
+        }
+
+        selectAllCheckbox.addEventListener('change', function() {
+            contactoCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateEnviarSaludoBtn();
+        });
+
+        contactoCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const allChecked = Array.from(contactoCheckboxes).every(cb => cb.checked);
+                selectAllCheckbox.checked = allChecked;
+                updateEnviarSaludoBtn();
+            });
+        });
+
+        enviarSaludoBtn.addEventListener('click', async function() {
+            const selectedNumbers = Array.from(document.querySelectorAll('.contacto-checkbox:checked'))
+                .map(cb => cb.value);
+
+            if (!selectedNumbers.length) return;
+
+            if (!confirm('¿Está seguro de enviar el saludo a los contactos seleccionados?')) return;
+
+            try {
+                const response = await fetch('/whatsapp/send-bulk', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ numbers: selectedNumbers })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error al enviar los saludos: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error al enviar los saludos: ' + error.message);
+            }
+        });
+    });
 </script>
 @endpush 
