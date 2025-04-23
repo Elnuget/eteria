@@ -17,13 +17,73 @@
                         <!-- Tabla de turnos (izquierda) -->
                         <div class="col-md-6">
                             @php
+                                // Obtener la fecha de hoy en formato Y-m-d
+                                $hoy = \Carbon\Carbon::today()->format('Y-m-d');
+                                
                                 // Ordenar las fechas en orden descendente (de mayor a menor)
                                 $fechasOrdenadas = $turnos->keys()->sort(function($a, $b) {
                                     return strtotime($b) <=> strtotime($a);
                                 });
+                                
+                                // Filtrar para excluir la fecha de hoy (evitar duplicados)
+                                $fechasOrdenadasSinHoy = $fechasOrdenadas->filter(function($fecha) use ($hoy) {
+                                    return $fecha != $hoy;
+                                });
                             @endphp
                             
-                            @foreach($fechasOrdenadas as $fecha)
+                            <!-- Turnos de hoy -->
+                            @if($turnos->has($hoy))
+                                <div class="mb-4">
+                                    <h5 class="border-bottom pb-2 bg-success text-white p-2 rounded">
+                                        <i class="fas fa-calendar-check"></i>
+                                        TURNOS PARA HOY ({{ \Carbon\Carbon::parse($hoy)->format('d/m/Y') }})
+                                        <span class="badge bg-light text-dark ms-2">{{ $turnos[$hoy]->count() }} turnos</span>
+                                    </h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Hora</th>
+                                                    <th>Número</th>
+                                                    <th>Nombre</th>
+                                                    <th>Motivo</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($turnos[$hoy] as $turno)
+                                                    <tr>
+                                                        <td>{{ $turno->fecha_turno->format('H:i') }}</td>
+                                                        <td>{{ $turno->contacto->numero }}</td>
+                                                        <td>{{ $turno->contacto->nombre }}</td>
+                                                        <td>{{ $turno->motivo }}</td>
+                                                        <td>
+                                                            <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editTurnoModal" 
+                                                                    onclick="editTurno({{ $turno->id }}, '{{ $turno->fecha_turno }}', '{{ $turno->motivo }}')">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <form action="{{ route('turnos.destroy', $turno->id) }}" method="POST" class="d-inline">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Está seguro de eliminar este turno?')">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="alert alert-info mb-4">
+                                    <i class="fas fa-info-circle"></i> No hay turnos programados para hoy.
+                                </div>
+                            @endif
+                            
+                            <!-- Resto de turnos (excluyendo hoy) -->
+                            @foreach($fechasOrdenadasSinHoy as $fecha)
                                 <div class="mb-4">
                                     <h5 class="border-bottom pb-2">
                                         <i class="fas fa-calendar-day"></i>
