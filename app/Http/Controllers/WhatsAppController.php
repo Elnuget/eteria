@@ -72,7 +72,7 @@ class WhatsAppController extends Controller
                     // Crear el mensaje en la base de datos
                     $mensaje = new \App\Models\Mensaje();
                     $mensaje->contacto_id = $contacto->id;
-                    $mensaje->mensaje = 'Saludo inicial de bienvenida';
+                    $mensaje->mensaje = 'Cordial saludo, 👋 Tenemos algo que podría ser de su interés si busca optimizar la comunicación con sus clientes por WhatsApp y potenciar sus ventas con plataformas inteligentes. ¿Le gustaría saber más o conoce a alguien a quien le pueda interesar?';
                     $mensaje->estado = 'salida';
                     $mensaje->fecha = now();
                     $mensaje->save();
