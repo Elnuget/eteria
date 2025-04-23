@@ -136,7 +136,7 @@ class WebhookController extends Controller
             $manana = $hoyGuayaquil->copy()->addDay()->format('Y-m-d');
             
             $contextBase = 'Eres un asistente comercial estratégico de Eteria. ' .
-                         'HOY es ' . $hoyGuayaquil->format('Y-m-d') . ' en Guayaquil. ' .
+                         'HOY es ' . $hoyGuayaquil->format('Y-m-d') . ' en Quito. ' .
                          'IMPORTANTE: Tus respuestas deben ser cortas y en una sola línea, sin saltos de línea. Usa máximo 2 emojis por mensaje. ' .
                          'Sigue este flujo de conversación: ' .
                          '1) Primero, entiende el negocio y sus desafíos actuales, ' .
