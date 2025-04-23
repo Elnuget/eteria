@@ -25,7 +25,7 @@ class WhatsAppController extends Controller
         
         $this->twilio = new Client($sid, $token);
         $this->fromNumber = "whatsapp:" . config('services.twilio.from_number');
-        $this->sandboxMode = config('services.twilio.sandbox_mode', true);
+        $this->sandboxMode = false;
         $this->allowedNumbers = explode(',', config('services.twilio.allowed_numbers', ''));
     }
 
@@ -42,69 +42,62 @@ class WhatsAppController extends Controller
     {
         $request->validate([
             'phone_number' => 'required|string|regex:/^[0-9 ]{9,}$/',
-            'message' => 'required|string',
         ]);
 
         try {
             // Limpiar el número de teléfono de espacios y formatear
             $phoneNumber = '+593' . preg_replace('/\s+/', '', $request->phone_number);
             
-            // Verificar si el número está permitido en modo sandbox
-            if ($this->sandboxMode) {
-                $cleanNumber = ltrim($phoneNumber, '+');
-                if (!in_array($cleanNumber, $this->allowedNumbers)) {
-                    return redirect()->route('whatsapp.index')
-                        ->with('error', 'En modo sandbox, solo se puede enviar mensajes a números verificados. Por favor, verifica el número en tu cuenta de Twilio.');
-                }
-            }
+            // Guardar o actualizar el contacto
+            $contacto = \App\Models\Contacto::firstOrCreate(
+                ['numero' => $phoneNumber],
+                [
+                    'nombre' => '',
+                    'estado' => 'por iniciar'
+                ]
+            );
+
+            // Crear el mensaje en la base de datos
+            $mensaje = new \App\Models\Mensaje([
+                'contacto_id' => $contacto->id,
+                'mensaje' => 'Saludo inicial de bienvenida',
+                'estado' => 'salida',
+                'fecha' => now()
+            ]);
+            $mensaje->save();
             
-            $result = $this->sendMessage($phoneNumber, $request->message);
+            // Enviar el mensaje usando la plantilla
+            $result = $this->sendTemplateMessage($phoneNumber);
 
             if ($result['success']) {
+                // Actualizar el estado del contacto a 'iniciado' después de enviar el mensaje
+                $contacto->estado = 'iniciado';
+                $contacto->save();
+                
                 return redirect()->route('whatsapp.index')
-                    ->with('success', 'Mensaje enviado exitosamente a ' . $phoneNumber);
+                    ->with('success', 'Saludo enviado exitosamente a ' . $phoneNumber);
             } else {
                 return redirect()->route('whatsapp.index')
-                    ->with('error', 'Error al enviar el mensaje: ' . $result['message']);
+                    ->with('error', 'Error al enviar el saludo: ' . $result['message']);
             }
         } catch (\Exception $e) {
             return redirect()->route('whatsapp.index')
-                ->with('error', 'Error al enviar el mensaje: ' . $e->getMessage());
+                ->with('error', 'Error al enviar el saludo: ' . $e->getMessage());
         }
     }
 
-    public function sendMessage($to, $messageBody)
+    protected function sendTemplateMessage($to)
     {
         try {
-            // Asegurarse de que el número tenga el formato correcto para WhatsApp
             $toNumber = "whatsapp:" . ltrim($to, '+');
 
-            // Usar una plantilla aprobada por WhatsApp
-            $message = $this->twilio->messages->create(
-                $toNumber,
-                [
-                    "from" => $this->fromNumber,
-                    "body" => $messageBody,
-                    // Usar una plantilla predefinida
-                    "template" => [
-                        "name" => "eteria_notification",
-                        "language" => [
-                            "code" => "es"
-                        ],
-                        "components" => [
-                            [
-                                "type" => "body",
-                                "parameters" => [
-                                    [
-                                        "type" => "text",
-                                        "text" => $messageBody
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            );
+            $message = $this->twilio->messages->create($toNumber, [
+                "from" => $this->fromNumber,
+                "contentSid" => "HX16a66d9718a7a24bfde5217b70b28d8a",
+                "contentVariables" => json_encode([
+                    "1" => "Bienvenido a Eteria"
+                ])
+            ]);
 
             return [
                 'success' => true,

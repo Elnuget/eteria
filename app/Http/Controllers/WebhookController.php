@@ -21,6 +21,8 @@ class WebhookController extends Controller
     public function __construct()
     {
         $this->apiKey = config('services.deepseek.api_key');
+        // Establecer zona horaria para Guayaquil
+        date_default_timezone_set('America/Guayaquil');
     }
 
     public function handleTwilioWebhook(Request $request)
@@ -130,14 +132,21 @@ class WebhookController extends Controller
             $messages = [];
             
             // Obtener el contexto específico para este contacto
-            $contextBase = 'Eres un asistente virtual de Eteria. Guía la conversación para obtener la siguiente información: ' .
+            $hoyGuayaquil = Carbon::now('America/Guayaquil');
+            $manana = $hoyGuayaquil->copy()->addDay()->format('Y-m-d');
+            
+            $contextBase = 'Eres un asistente virtual de Eteria. ' .
+                         'HOY es ' . $hoyGuayaquil->format('Y-m-d') . ' en Guayaquil. ' .
+                         'SOLO puedes agendar citas a partir de ' . $manana . '. ' .
+                         'Guía la conversación para obtener la siguiente información: ' .
                          '1) Tipo de proyecto/servicio que necesitan, ' .
-                         '2) Fecha preferida (días laborables L-V), ' .
+                         '2) Fecha preferida (días laborables L-V, desde mañana en adelante), ' .
                          '3) Hora preferida (9:00 a 17:00), ' .
                          '4) Breve descripción del proyecto. ' .
                          'Solo cuando tengas TODA esta información, responde con el formato: ' .
                          'TURNO_CONFIRMADO:YYYY-MM-DD HH:mm:MOTIVO. ' .
                          'Si falta información, continúa preguntando amablemente. ' .
+                         'Si intentan agendar para hoy, indícales amablemente que solo podemos agendar desde mañana. ' .
                          'Mantén un tono profesional y cercano.';
 
             // Agregar información sobre turno existente si lo hay
@@ -218,9 +227,17 @@ class WebhookController extends Controller
     protected function procesarConfirmacionTurno($contacto, $fechaHora, $motivo)
     {
         try {
-            // Convertir la fecha y hora a objeto Carbon
-            $fechaTurno = Carbon::parse($fechaHora);
-            $ahora = Carbon::now();
+            // Convertir la fecha y hora a objeto Carbon con zona horaria de Guayaquil
+            $fechaTurno = Carbon::parse($fechaHora)->setTimezone('America/Guayaquil');
+            $ahora = Carbon::now('America/Guayaquil');
+            $manana = $ahora->copy()->addDay()->startOfDay();
+
+            // Validar que la fecha sea desde mañana en adelante
+            if ($fechaTurno < $manana) {
+                return (new MessagingResponse())
+                    ->message("Lo siento, solo podemos agendar citas a partir de mañana " . $manana->format('d/m/Y') . ". Por favor, elige una fecha futura. Horario: L-V, 9:00-17:00 📅")
+                    ->__toString();
+            }
 
             // Validar que la fecha no sea en el pasado
             if ($fechaTurno->isPast()) {

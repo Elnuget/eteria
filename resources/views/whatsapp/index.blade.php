@@ -6,7 +6,7 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h4><i class="fab fa-whatsapp"></i> Enviar Mensaje de WhatsApp</h4>
+                    <h4><i class="fab fa-whatsapp"></i> Enviar Saludo de Bienvenida</h4>
                 </div>
 
                 <div class="card-body">
@@ -35,12 +35,8 @@
                             </div>
                             <small class="text-muted">Ingrese el número sin el código de país (+593)</small>
                         </div>
-                        <div class="mb-3">
-                            <label for="message" class="form-label">Mensaje</label>
-                            <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
-                        </div>
                         <button type="submit" class="btn btn-success">
-                            <i class="fab fa-whatsapp"></i> Enviar Mensaje
+                            <i class="fab fa-whatsapp"></i> Enviar Saludo
                         </button>
                     </form>
                 </div>
