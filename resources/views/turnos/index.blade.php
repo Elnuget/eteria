@@ -217,6 +217,7 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/locales/es.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css">
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -226,10 +227,14 @@
             locale: 'es',
             height: 'auto',
             headerToolbar: {
-                left: 'prev,next today',
+                left: 'prev',
                 center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                right: 'next today'
             },
+            buttonText: {
+                today: 'Hoy'
+            },
+            dayMaxEvents: true,
             events: [
                 @foreach($turnos as $fecha => $turnosDia)
                     @foreach($turnosDia as $turno)
@@ -239,7 +244,9 @@
                         url: '#',
                         extendedProps: {
                             turnoId: {{ $turno->id }}
-                        }
+                        },
+                        backgroundColor: '#4f6df5',
+                        borderColor: '#4f6df5'
                     },
                     @endforeach
                 @endforeach
@@ -258,6 +265,13 @@
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: false
+            },
+            // Personalizar las celdas de día
+            dayCellDidMount: function(info) {
+                // Si es hoy, añadir clase especial
+                if (info.isToday) {
+                    info.el.classList.add('fc-day-today-custom');
+                }
             }
         });
         calendar.render();
@@ -291,26 +305,147 @@
 </script>
 <style>
     .calendario-container {
-        padding: 10px;
+        padding: 15px;
         background-color: #fff;
-        border-radius: 5px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
     }
     
     #calendario {
         width: 100%;
         height: 100%;
+        font-family: inherit;
     }
     
-    /* Estilos responsivos */
+    /* Mejoras visuales para el calendario */
+    .fc-theme-standard .fc-scrollgrid {
+        border: none !important;
+    }
+    
+    .fc-theme-standard td, .fc-theme-standard th {
+        border-color: #eaeaea;
+    }
+    
+    .fc-header-toolbar {
+        margin-bottom: 1.5em !important;
+    }
+    
+    .fc-col-header-cell {
+        background-color: #f8f9fa;
+        padding: 10px 0 !important;
+    }
+    
+    .fc-daygrid-day-top {
+        justify-content: center;
+        margin-top: 5px;
+    }
+    
+    .fc-daygrid-day-number {
+        font-size: 0.9em;
+        color: #555;
+        text-decoration: none !important;
+    }
+    
+    .fc-day-today {
+        background-color: rgba(79, 109, 245, 0.08) !important;
+    }
+    
+    .fc-day-today-custom .fc-daygrid-day-number {
+        background-color: #4f6df5;
+        color: white;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .fc-event {
+        border-radius: 4px !important;
+        padding: 3px 4px !important;
+        font-size: 0.85em !important;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        border: none !important;
+        margin-bottom: 2px;
+    }
+    
+    .fc-event:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .fc-button-primary {
+        background-color: #4f6df5 !important;
+        border-color: #4f6df5 !important;
+        border-radius: 30px !important;
+        padding: 8px 16px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s !important;
+    }
+    
+    .fc-button-primary:hover {
+        background-color: #3a57d7 !important;
+        box-shadow: 0 4px 8px rgba(79, 109, 245, 0.3) !important;
+    }
+    
+    .fc-button-primary:focus {
+        box-shadow: 0 0 0 0.2rem rgba(79, 109, 245, 0.4) !important;
+    }
+    
+    .fc-toolbar-title {
+        font-size: 1.5em !important;
+        font-weight: 600 !important;
+        color: #333;
+    }
+    
+    /* Estilos responsivos mejorados */
     @media (max-width: 768px) {
         .row > .col-md-6 {
             margin-bottom: 20px;
         }
+        
+        .fc-header-toolbar {
+            flex-direction: row !important;
+            margin-bottom: 1em !important;
+        }
+        
+        .fc-toolbar-title {
+            font-size: 1.2em !important;
+        }
+        
+        .fc-col-header-cell {
+            padding: 5px 0 !important;
+        }
+        
+        .fc-daygrid-day-events {
+            min-height: auto !important;
+        }
+        
+        .fc-event {
+            margin-bottom: 1px;
+            padding: 2px 3px !important;
+            font-size: 0.8em !important;
+        }
     }
     
-    .fc-event {
-        cursor: pointer;
+    @media (max-width: 480px) {
+        .fc-header-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .fc-toolbar-chunk {
+            margin-bottom: 5px;
+        }
+        
+        .fc-button {
+            padding: 5px 10px !important;
+            font-size: 0.9em !important;
+        }
     }
 </style>
 @endpush 
