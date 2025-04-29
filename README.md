@@ -12,10 +12,10 @@ php artisan route:clear
 php artisan route:cache
 php artisan migrate:fresh --seed
 
-php artisan config:clear
-php artisan cache:clear
-php artisan view:clear
-php artisan route:clear
+sudo php artisan config:clear
+sudo php artisan cache:clear
+sudo php artisan view:clear
+sudo php artisan route:clear
 composer install
 npm run build 
 composer install --optimize-autoloader --no-dev 

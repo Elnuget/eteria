@@ -358,9 +358,6 @@
                         <label for="cliente_id" class="form-label">Cliente</label>
                         <select class="form-select" id="cliente_id" name="cliente_id">
                             <option value="">Seleccionar cliente</option>
-                            @foreach($project->clientes as $cliente)
-                                <option value="{{ $cliente->id }}">{{ $cliente->nombre }}</option>
-                            @endforeach
                         </select>
                     </div>
 
