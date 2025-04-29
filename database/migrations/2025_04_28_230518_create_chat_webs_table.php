@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::create('chat_webs', function (Blueprint $table) {
             $table->id();
-            $table->string('chat_id');  // Ya no es unique
-            $table->string('nombre')->nullable();
-            $table->string('email')->nullable();
+            $table->string('chat_id');
+            $table->foreignId('contacto_web_id')->constrained('contacto_webs')->onDelete('cascade'); // Clave foránea
             $table->text('mensaje');
-            $table->enum('tipo', ['usuario', 'bot']);
+            $table->enum('tipo', ['usuario', 'bot', 'admin']); // Añadir 'admin' si aún no está
             $table->timestamps();
 
-            // Índice compuesto para búsquedas eficientes
-            $table->index(['email', 'chat_id']);
+            // Índices para búsquedas eficientes
+            $table->index(['chat_id']);
+            $table->index(['contacto_web_id']);
         });
     }
 
@@ -30,6 +30,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('chat_webs', function (Blueprint $table) {
+            $table->dropForeign(['contacto_web_id']);
+        });
         Schema::dropIfExists('chat_webs');
     }
 };

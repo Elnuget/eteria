@@ -15,6 +15,7 @@ use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\ContactoController;
 use App\Http\Controllers\TurnoController;
 use App\Http\Controllers\ChatWebController;
+use App\Http\Controllers\ContactoWebController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -44,6 +45,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/chat-web', [ChatWebController::class, 'index'])->name('chat-web.index');
     Route::get('/chat-web/{chat_id}', [ChatWebController::class, 'show'])->name('chat-web.show');
     Route::delete('/chat-web/{chat_id}', [ChatWebController::class, 'destroy'])->name('chat-web.destroy');
+
+    // Ruta para ContactoWeb (dentro de auth middleware)
+    Route::resource('contacto-webs', ContactoWebController::class)->except(['create', 'store', 'show', 'edit', 'update']);
 });
 
 Route::resource('projects', ProjectController::class)->middleware('auth');

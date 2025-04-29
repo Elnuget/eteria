@@ -176,13 +176,13 @@ https://templatemo.com/tm-534-parallo
         </div>
         <div class="chat-messages" id="chat-messages">
             <!-- Los mensajes se cargarán dinámicamente -->
-        </div>
+                    </div>
         <div class="chat-user-info" id="chat-user-info" style="display: none;">
             <div class="user-info-form">
                 <h4>Para comenzar, por favor ingresa tus datos:</h4>
                 <div class="form-group">
                     <input type="text" id="user-name" placeholder="Tu nombre" required>
-                </div>
+                    </div>
                 <div class="form-group">
                     <input type="email" id="user-email" placeholder="Tu email" required>
                 </div>
@@ -531,26 +531,31 @@ https://templatemo.com/tm-534-parallo
 
             let isMinimized = true;
             let chatId = localStorage.getItem('eteriaChatId');
+            let contactoWebId = localStorage.getItem('eteriaContactoWebId');
             let userInfo = JSON.parse(localStorage.getItem('eteriaChatUser'));
 
             // --- Funciones de LocalStorage ---
-            function saveChatData(id, name, email) {
+            function saveChatData(id, contactoId, name, email) {
                 localStorage.setItem('eteriaChatId', id);
+                localStorage.setItem('eteriaContactoWebId', contactoId);
                 localStorage.setItem('eteriaChatUser', JSON.stringify({ nombre: name, email: email }));
                 chatId = id;
+                contactoWebId = contactoId;
                 userInfo = { nombre: name, email: email };
             }
 
             function clearChatData() {
                 localStorage.removeItem('eteriaChatId');
+                localStorage.removeItem('eteriaContactoWebId');
                 localStorage.removeItem('eteriaChatUser');
                 chatId = null;
+                contactoWebId = null;
                 userInfo = null;
             }
             // ----------------------------------
 
             function updateChatUI(showChat = false) {
-                if (showChat && chatId && userInfo) {
+                if (showChat && chatId && userInfo && contactoWebId) {
                     userInfoForm.style.display = 'none';
                     chatMessages.style.display = 'block';
                     chatInput.style.display = 'block';
@@ -582,7 +587,7 @@ https://templatemo.com/tm-534-parallo
                 }
             }
 
-            // Evento para iniciar chat (obtener/crear chatId)
+            // Evento para iniciar chat
             if (startChatButton) {
                 startChatButton.addEventListener('click', async function() {
                     const userName = userNameInput.value.trim();
@@ -613,13 +618,13 @@ https://templatemo.com/tm-534-parallo
                         }
 
                         const data = await response.json();
-                        if (!data.chat_id) {
-                             throw new Error('No se recibió chat_id del servidor');
+                        if (!data.chat_id || !data.contacto_web_id) {
+                             throw new Error('No se recibieron los IDs necesarios del servidor');
                         }
                         
-                        saveChatData(data.chat_id, userName, userEmail);
-                        updateChatUI(true); // Mostrar chat
-                        await loadChatHistory(); // Cargar historial
+                        saveChatData(data.chat_id, data.contacto_web_id, userName, userEmail);
+                        updateChatUI(true);
+                        await loadChatHistory();
                         
                     } catch (error) {
                         console.error('Error al iniciar chat:', error);
@@ -629,7 +634,7 @@ https://templatemo.com/tm-534-parallo
                     } finally {
                         startChatButton.disabled = false;
                         startChatButton.textContent = 'Comenzar Chat';
-                    } 
+                }
                 });
             }
             
@@ -665,7 +670,7 @@ https://templatemo.com/tm-534-parallo
                     console.error('Error al cargar historial:', error);
                     chatMessages.innerHTML = ''; // Limpiar indicador
                     addMessage('No se pudo cargar el historial. ¿En qué puedo ayudarte?', false);
-                }
+            }
             }
 
             // Función addMessage (sin cambios significativos)
@@ -698,16 +703,15 @@ https://templatemo.com/tm-534-parallo
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
 
-            // Función sendMessage (usar datos de localStorage)
+            // Función sendMessage
             async function sendMessage() {
                 const message = userInput.value.trim();
-                // Asegurarse que tenemos chatId y userInfo de localStorage
-                if (!message || !chatId || !userInfo) {
-                    alert('No se pudo enviar el mensaje. Falta información del chat.');
-                    // Podríamos intentar mostrar el formulario de nuevo si falta userInfo
-                    if (!userInfo) {
+                // Verificar todos los datos necesarios de localStorage
+                if (!message || !chatId || !userInfo || !contactoWebId) {
+                    alert('No se pudo enviar el mensaje. Falta información del chat. Por favor, recarga la página.');
+                    if (!userInfo || !contactoWebId) {
                          clearChatData();
-                         toggleChat(); // Esto debería mostrar el form
+                         toggleChat(); 
                     }
                     return;
                 }
@@ -716,8 +720,8 @@ https://templatemo.com/tm-534-parallo
                 sendButton.disabled = true;
 
                 // Mostrar mensaje del usuario inmediatamente
-                addMessage(message, true);
-                userInput.value = ''; 
+                    addMessage(message, true);
+                    userInput.value = '';
 
                 try {
                     const response = await fetch('/api/chat', {
@@ -730,8 +734,7 @@ https://templatemo.com/tm-534-parallo
                         body: JSON.stringify({
                             message: message,
                             chat_id: chatId,
-                            nombre: userInfo.nombre, // De localStorage
-                            email: userInfo.email   // De localStorage
+                            contacto_web_id: contactoWebId,
                         })
                     });
 
@@ -761,14 +764,12 @@ https://templatemo.com/tm-534-parallo
             }
 
             // --- Inicialización y Event Listeners --- 
-            // Configurar estado inicial basado en localStorage
-            if (chatId && userInfo) {
-                // Ya tenemos datos, el chat se mostrará al expandir
-                minimizeButton.innerHTML = '<i class="fas fa-plus"></i>'; // Empezar minimizado
+            // Configurar estado inicial basado en localStorage (incluyendo contactoWebId)
+            if (chatId && userInfo && contactoWebId) {
+                minimizeButton.innerHTML = '<i class="fas fa-plus"></i>';
                 isMinimized = true;
-                chatWidget.style.height = '80px'; // Asegurar tamaño minimizado
+                chatWidget.style.height = '80px';
             } else {
-                // No hay datos, necesita el formulario al expandir
                 minimizeButton.innerHTML = '<i class="fas fa-plus"></i>';
                 isMinimized = true;
                 chatWidget.style.height = '80px';

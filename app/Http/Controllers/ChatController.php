@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Contexto;
 use App\Models\Turno;
 use App\Models\ChatWeb;
+use App\Models\ContactoWeb;
 use Carbon\Carbon;
 
 class ChatController extends Controller
@@ -24,50 +25,45 @@ class ChatController extends Controller
         date_default_timezone_set('America/Guayaquil');
     }
 
+    /**
+     * Handles user messages, interacts with AI, and stores conversation.
+     */
     public function chat(Request $request)
     {
         try {
-            $userMessage = $request->input('message');
-            $chatId = $request->input('chat_id');
-            $nombre = $request->input('nombre');
-            $email = $request->input('email');
+            $validatedData = $request->validate([
+                'message' => 'required|string',
+                'chat_id' => 'required|string',
+                'contacto_web_id' => 'required|exists:contacto_webs,id' // Validar que el contacto exista
+            ]);
 
-            if (empty($userMessage)) {
-                return response()->json([
-                    'error' => 'El mensaje es requerido'
-                ], 400);
-            }
+            $userMessage = $validatedData['message'];
+            $chatId = $validatedData['chat_id'];
+            $contactoWebId = $validatedData['contacto_web_id'];
 
             // Guardar mensaje del usuario
             ChatWeb::create([
                 'chat_id' => $chatId,
+                'contacto_web_id' => $contactoWebId,
                 'mensaje' => $userMessage,
                 'tipo' => 'usuario',
-                'nombre' => $nombre,
-                'email' => $email
             ]);
 
-            // Obtener contexto base
+            // Obtener contexto base (simplificado)
             $hoyGuayaquil = Carbon::now('America/Guayaquil');
-            $manana = $hoyGuayaquil->copy()->addDay()->format('Y-m-d');
-            
             $contextBase = 'Eres un asistente comercial estratégico de Eteria. ' .
-                         'HOY es ' . $hoyGuayaquil->format('Y-m-d') . ' en Quito. ' .
-                         'IMPORTANTE: Tus respuestas deben ser cortas y en una sola línea, sin saltos de línea. Usa máximo 2 emojis por mensaje.';
+                         'HOY es ' . $hoyGuayaquil->format('Y-m-d') . '. ' .
+                         'IMPORTANTE: Respuestas cortas, 1 línea, max 2 emojis.';
 
-            // Obtener historial de mensajes
+            // Obtener historial de mensajes para este chat_id
             $historialMensajes = ChatWeb::where('chat_id', $chatId)
                 ->orderBy('created_at', 'asc')
                 ->get();
 
             // Preparar mensajes para la API
             $messages = [
-                [
-                    'role' => 'system',
-                    'content' => $contextBase
-                ]
+                ['role' => 'system', 'content' => $contextBase]
             ];
-
             foreach ($historialMensajes as $mensaje) {
                 $messages[] = [
                     'role' => $mensaje->tipo === 'usuario' ? 'user' : 'assistant',
@@ -75,7 +71,7 @@ class ChatController extends Controller
                 ];
             }
 
-            Log::info('Intentando conexión con DeepSeek API');
+            Log::info('Intentando conexión con DeepSeek API para chat_id: ' . $chatId);
             
             $response = Http::timeout(30)->withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
@@ -98,55 +94,150 @@ class ChatController extends Controller
                     // Guardar respuesta del bot
                     ChatWeb::create([
                         'chat_id' => $chatId,
+                        'contacto_web_id' => $contactoWebId, // Usar el mismo ID de contacto
                         'mensaje' => $aiResponse,
                         'tipo' => 'bot',
-                        'nombre' => 'Asistente',
-                        'email' => null
                     ]);
 
-                    return response()->json([
-                        'response' => $aiResponse
-                    ]);
+                    // Procesar turno si aplica (movido fuera de la lógica principal de respuesta)
+                    if (preg_match($this->formatoTurno, $aiResponse, $matches)) {
+                       $this->procesarConfirmacionTurno($chatId, $contactoWebId, $matches[1], $matches[2]);
+                       // Podríamos modificar la respuesta aquí si es necesario
+                    }
+
+                    return response()->json(['response' => $aiResponse]);
                 }
-            }
-
-            throw new \Exception('Error en la respuesta de la API');
-
-        } catch (\Exception $e) {
-            Log::error('Error en el chat: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Error al procesar el mensaje'
-            ], 500);
-        }
-    }
-
-    public function getChatHistory(Request $request)
-    {
-        try {
-            $chatId = $request->input('chat_id', 'chatweb1');
+            } 
             
-            $mensajes = ChatWeb::where('chat_id', $chatId)
-                ->orderBy('created_at', 'asc')
-                ->get();
+            // Si la respuesta no fue exitosa o no tuvo contenido
+            Log::error('Error en la respuesta de la API de DeepSeek', ['status' => $response->status(), 'body' => $response->body()]);
+            throw new \Exception('Error en la respuesta de la API: ' . $response->status());
 
-            return response()->json([
-                'mensajes' => $mensajes
-            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Error de validación en chat: ' . $e->getMessage(), ['errors' => $e->errors()]);
+            return response()->json(['error' => 'Datos inválidos.', 'details' => $e->errors()], 422);
         } catch (\Exception $e) {
-            Log::error('Error al obtener historial: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Error al obtener el historial de chat'
-            ], 500);
+            Log::error('Error general en el chat: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al procesar el mensaje'], 500);
         }
     }
 
     /**
-     * Procesa la confirmación de un turno
+     * Finds an existing ContactoWeb or creates a new one, 
+     * then finds the latest chat_id or creates a new one for that contact.
      */
-    protected function procesarConfirmacionTurno($chatId, $fechaHora, $motivo)
+    public function findOrCreateChat(Request $request)
     {
         try {
-            // Convertir la fecha y hora a objeto Carbon con zona horaria de Guayaquil
+            $validatedData = $request->validate([
+                'email' => 'required|email',
+                'nombre' => 'required|string|max:255',
+            ]);
+
+            $email = $validatedData['email'];
+            $nombre = $validatedData['nombre'];
+
+            // Buscar o crear el contacto web
+            $contactoWeb = ContactoWeb::firstOrCreate(
+                ['email' => $email], // Criterio de búsqueda
+                ['nombre' => $nombre]  // Datos para crear si no existe
+            );
+
+            // Si existe y el nombre es diferente, actualizarlo (opcional)
+            if ($contactoWeb->wasRecentlyCreated === false && $contactoWeb->nombre !== $nombre) {
+                $contactoWeb->nombre = $nombre;
+                $contactoWeb->save();
+            }
+
+            // Buscar el chat_id más reciente para este contacto
+            $lastChatMessage = ChatWeb::where('contacto_web_id', $contactoWeb->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $chatId = $lastChatMessage ? $lastChatMessage->chat_id : $this->generateNewUniqueId();
+
+            return response()->json([
+                'chat_id' => $chatId,
+                'contacto_web_id' => $contactoWeb->id
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Error de validación en findOrCreateChat: ' . $e->getMessage(), ['errors' => $e->errors()]);
+            return response()->json(['error' => 'Datos inválidos.', 'details' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error al buscar o crear chat: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al iniciar el chat'], 500);
+        }
+    }
+
+    /**
+     * Gets chat history for a specific chat_id.
+     */
+    public function getChatHistory(Request $request)
+    {
+        try {
+            $chatId = $request->input('chat_id');
+            if (!$chatId) {
+                return response()->json(['error' => 'chat_id es requerido'], 400);
+            }
+            
+            $mensajes = ChatWeb::where('chat_id', $chatId)
+                ->orderBy('created_at', 'asc') // Mantener ascendente para mostrar en orden cronológico
+                ->get();
+
+            return response()->json(['mensajes' => $mensajes]);
+        } catch (\Exception $e) {
+            Log::error('Error al obtener historial: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al obtener el historial de chat'], 500);
+        }
+    }
+
+    /**
+     * Handles admin replies.
+     */
+    public function adminReply(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'message' => 'required|string',
+                'chat_id' => 'required|string|exists:chat_webs,chat_id', // Asegurar que el chat exista
+            ]);
+
+            // Encontrar el contacto_web_id asociado a este chat_id
+            // Asumimos que todos los mensajes de un chat_id pertenecen al mismo contacto
+            $firstMessage = ChatWeb::where('chat_id', $validatedData['chat_id'])->first();
+            if (!$firstMessage) {
+                 return response()->json(['success' => false, 'message' => 'Chat ID no encontrado.'], 404);
+            }
+            $contactoWebId = $firstMessage->contacto_web_id;
+
+            // Guardar mensaje del administrador
+            ChatWeb::create([
+                'chat_id' => $validatedData['chat_id'],
+                'contacto_web_id' => $contactoWebId,
+                'mensaje' => $validatedData['message'],
+                'tipo' => 'admin',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Mensaje enviado correctamente'
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Error de validación en adminReply: ' . $e->getMessage(), ['errors' => $e->errors()]);
+            return response()->json(['success' => false, 'message' => 'Datos inválidos.', 'details' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error al enviar mensaje de administrador: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error al enviar el mensaje'], 500);
+        }
+    }
+    
+    // --- Métodos auxiliares (procesarConfirmacionTurno, encontrarSiguienteHorarioDisponible, generateNewUniqueId) ---
+
+    protected function procesarConfirmacionTurno($chatId, $contactoWebId, $fechaHora, $motivo)
+    {
+        try {
             $fechaTurno = Carbon::parse($fechaHora)->setTimezone('America/Guayaquil');
             $ahora = Carbon::now('America/Guayaquil');
             $manana = $ahora->copy()->addDay()->startOfDay();
@@ -197,17 +288,18 @@ class ChatController extends Controller
             // Crear el nuevo turno
             Turno::create([
                 'user_id' => $chatId,
+                'contacto_web_id' => $contactoWebId,
                 'fecha_turno' => $fechaTurno,
                 'motivo' => $motivo
             ]);
-
-            return "¡Listo! 😊 Tu cita está confirmada para el " . 
-                  $fechaTurno->format('d/m/Y') . " a las " . 
-                  $fechaTurno->format('H:i') . ". Recibirás una llamada para conocer más sobre tu proyecto y presentarte a nuestro equipo. 🤝";
+            
+            Log::info("Turno creado para chatId: {$chatId}, contactoId: {$contactoWebId}");
+            // No retornar mensaje aquí, ya que el mensaje del bot ya se envió.
+            // Esta función ahora solo procesa la lógica del turno.
 
         } catch (\Exception $e) {
             Log::error('Error al procesar confirmación de turno: ' . $e->getMessage());
-            return 'Lo siento, hubo un error al procesar el turno. Por favor, intenta nuevamente.';
+            // Quizás enviar un mensaje de error al chat? O solo loggear.
         }
     }
 
@@ -240,30 +332,30 @@ class ChatController extends Controller
         return $horario;
     }
 
-    public function generateNewId()
+    private function generateNewUniqueId()
     {
-        // Obtener el último ID de chat
-        $lastChat = ChatWeb::orderBy('id', 'desc')->first();
-        
+        // Obtener el último ID de chat numérico
+        $lastChat = ChatWeb::where('chat_id', 'like', 'chatweb%')
+                           ->orderByRaw('CAST(SUBSTRING(chat_id, 8) AS UNSIGNED) DESC')
+                           ->first();
+
+        $newNumber = 1;
         if ($lastChat) {
-            // Extraer el número del último chat_id
-            preg_match('/chatweb(\d+)/', $lastChat->chat_id, $matches);
+            preg_match('/chatweb(\d+)/i', $lastChat->chat_id, $matches);
             $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
             $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
         }
 
-        // Generar nuevo ID
-        $newChatId = 'chatweb' . $newNumber;
-
-        // Verificar que el ID sea único
-        while (ChatWeb::where('chat_id', $newChatId)->exists()) {
-            $newNumber++;
+        // Generar nuevo ID y verificar unicidad
+        do {
             $newChatId = 'chatweb' . $newNumber;
-        }
+            $exists = ChatWeb::where('chat_id', $newChatId)->exists();
+            if ($exists) {
+                $newNumber++;
+            }
+        } while ($exists);
 
-        return response()->json(['chat_id' => $newChatId]);
+        return $newChatId;
     }
 
     public function getUserChat(Request $request)
@@ -300,94 +392,29 @@ class ChatController extends Controller
         return uniqid('chat_', true);
     }
 
-    public function adminReply(Request $request)
+    public function generateNewId()
     {
-        try {
-            $request->validate([
-                'message' => 'required|string',
-                'chat_id' => 'required|string',
-            ]);
-
-            // Guardar mensaje del administrador
-            ChatWeb::create([
-                'chat_id' => $request->chat_id,
-                'mensaje' => $request->message,
-                'tipo' => 'admin',
-                'nombre' => 'Administrador',
-                'email' => null
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Mensaje enviado correctamente'
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Error al enviar mensaje de administrador: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al enviar el mensaje'
-            ], 500);
-        }
-    }
-
-    public function findOrCreateChat(Request $request)
-    {
-        try {
-            $request->validate([
-                'email' => 'required|email',
-                'nombre' => 'required|string',
-            ]);
-
-            $email = $request->email;
-            $nombre = $request->nombre;
-
-            // Buscar el chat más reciente para este usuario
-            $lastChat = ChatWeb::where('email', $email)
-                ->where('nombre', $nombre)
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            if ($lastChat) {
-                return response()->json(['chat_id' => $lastChat->chat_id]);
-            }
-
-            // Si no existe, generar un nuevo ID
-            $newChatId = $this->generateNewUniqueId();
-
-            return response()->json(['chat_id' => $newChatId]);
-
-        } catch (\Exception $e) {
-            Log::error('Error al buscar o crear chat: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Error al iniciar el chat'
-            ], 500);
-        }
-    }
-
-    private function generateNewUniqueId()
-    {
-        // Obtener el último ID de chat numérico
-        $lastChat = ChatWeb::where('chat_id', 'like', 'chatweb%')
-                           ->orderByRaw('CAST(SUBSTRING(chat_id, 8) AS UNSIGNED) DESC')
-                           ->first();
-
-        $newNumber = 1;
+        // Obtener el último ID de chat
+        $lastChat = ChatWeb::orderBy('id', 'desc')->first();
+        
         if ($lastChat) {
-            preg_match('/chatweb(\d+)/i', $lastChat->chat_id, $matches);
+            // Extraer el número del último chat_id
+            preg_match('/chatweb(\d+)/', $lastChat->chat_id, $matches);
             $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
             $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
         }
 
-        // Generar nuevo ID y verificar unicidad
-        do {
-            $newChatId = 'chatweb' . $newNumber;
-            $exists = ChatWeb::where('chat_id', $newChatId)->exists();
-            if ($exists) {
-                $newNumber++;
-            }
-        } while ($exists);
+        // Generar nuevo ID
+        $newChatId = 'chatweb' . $newNumber;
 
-        return $newChatId;
+        // Verificar que el ID sea único
+        while (ChatWeb::where('chat_id', $newChatId)->exists()) {
+            $newNumber++;
+            $newChatId = 'chatweb' . $newNumber;
+        }
+
+        return response()->json(['chat_id' => $newChatId]);
     }
 }

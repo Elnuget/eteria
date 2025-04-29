@@ -323,6 +323,11 @@
                                         </a>
                                     </li>
                                     <li>
+                                        <a class="dropdown-item" href="{{ route('contacto-webs.index') }}">
+                                            <i class="fas fa-id-card"></i> Contactos Web
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a class="dropdown-item" href="{{ route('contextos.index') }}">
                                             <i class="fas fa-robot"></i> Contextos IA
                                         </a>
