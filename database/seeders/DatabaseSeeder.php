@@ -37,5 +37,12 @@ class DatabaseSeeder extends Seeder
         Contexto::create([
             'contexto' => 'Eteria, una empresa de desarrollo de software ubicada en Quito, Ecuador. Nos especializamos en crear soluciones tecnológicas personalizadas para empresas. Puedes conocer nuestros proyectos en https://eteriaecuador.com/. 🤝'
         ]);
+
+        // Ejecutar los seeders en orden
+        $this->call([
+            ContactosSeeder::class,
+            MensajesSeeder::class,
+            TurnosSeeder::class,
+        ]);
     }
 }
