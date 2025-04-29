@@ -311,12 +311,12 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('mensajes.index') }}">
-                                            <i class="fas fa-envelope"></i> Mensajes
+                                            <i class="fas fa-inbox"></i> Mensajes
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('contextos.index') }}">
-                                            <i class="fas fa-comments"></i> Contextos
+                                            <i class="fas fa-robot"></i> Contextos IA
                                         </a>
                                     </li>
                                 </ul>
