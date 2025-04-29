@@ -29,13 +29,18 @@
                         <div class="accordion" id="chatsAccordion">
                             @foreach($chats as $chat_id => $messages)
                                 @php
-                                    $lastMessage = $messages->last();
-                                    $userName = $lastMessage->nombre ?? 'Usuario Anónimo';
-                                    $userEmail = $lastMessage->email ?? 'No disponible';
+                                    // Obtener el primer mensaje para acceder a la relación contactoWeb
+                                    $firstMessage = $messages->first();
+                                    $contactoWeb = $firstMessage->contactoWeb; // Acceder al contacto relacionado
+                                    $lastMessage = $messages->last(); // Último mensaje para la fecha
+
+                                    // Usar los datos del contacto relacionado
+                                    $userName = $contactoWeb ? $contactoWeb->nombre : 'Usuario Desconocido';
+                                    $userEmail = $contactoWeb ? $contactoWeb->email : 'Email Desconocido';
                                 @endphp
                                 <div class="accordion-item mb-3">
                                     <div class="accordion-header">
-                                        <div class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#chat{{ str_replace(['@', '.'], '', $chat_id) }}">
+                                        <div class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#chat{{ str_replace(['@', '.', '-'], '', $chat_id) }}">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div>
                                                     <strong>{{ $userName }}</strong>
@@ -58,7 +63,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div id="chat{{ str_replace(['@', '.'], '', $chat_id) }}" class="accordion-collapse collapse" data-bs-parent="#chatsAccordion">
+                                    <div id="chat{{ str_replace(['@', '.', '-'], '', $chat_id) }}" class="accordion-collapse collapse" data-bs-parent="#chatsAccordion">
                                         <div class="accordion-body">
                                             <div class="chat-messages mb-3">
                                                 @foreach($messages->sortByDesc('created_at') as $message)
@@ -67,7 +72,8 @@
                                                             <div class="message-header">
                                                                 <strong>
                                                                     @if($message->tipo === 'usuario')
-                                                                        {{ $message->nombre }}
+                                                                        {{-- Acceder al nombre desde la relación --}}
+                                                                        {{ $message->contactoWeb ? $message->contactoWeb->nombre : 'Usuario' }}
                                                                     @elseif($message->tipo === 'admin')
                                                                         <i class="fas fa-user-shield"></i> Administrador
                                                                     @else
@@ -83,14 +89,19 @@
                                                     </div>
                                                 @endforeach
                                             </div>
+                                            {{-- Asegurarse que el contactoWeb existe antes de pasar sus datos al JS --}}
+                                            @if($contactoWeb)
                                             <form class="chat-form" onsubmit="sendAdminMessage(event, '{{ $chat_id }}')">
                                                 <div class="input-group">
-                                                    <input type="text" class="form-control" placeholder="Responder al usuario..." required>
+                                                    <input type="text" class="form-control" placeholder="Responder a {{ $contactoWeb->nombre }}..." required>
                                                     <button class="btn btn-success" type="submit">
                                                         <i class="fas fa-reply"></i> Responder
                                                     </button>
                                                 </div>
                                             </form>
+                                            @else
+                                            <p class="text-danger">Error: No se pudo identificar al contacto para responder.</p>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
