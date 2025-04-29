@@ -13,6 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->validateCsrfTokens(except: [
             'webhook/twilio',
+            'api/chat',
+            'api/chat/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

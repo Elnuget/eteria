@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -312,6 +315,11 @@
                                     <li>
                                         <a class="dropdown-item" href="{{ route('mensajes.index') }}">
                                             <i class="fas fa-inbox"></i> Mensajes
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('chat-web.index') }}">
+                                            <i class="fas fa-comment-dots"></i> Chat Web
                                         </a>
                                     </li>
                                     <li>

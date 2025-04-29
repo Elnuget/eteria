@@ -13,10 +13,15 @@ return new class extends Migration
     {
         Schema::create('chat_webs', function (Blueprint $table) {
             $table->id();
-            $table->string('chat_id')->unique(); // chatweb1, chatweb2, etc.
+            $table->string('chat_id');  // Ya no es unique
+            $table->string('nombre')->nullable();
+            $table->string('email')->nullable();
             $table->text('mensaje');
             $table->enum('tipo', ['usuario', 'bot']);
             $table->timestamps();
+
+            // Índice compuesto para búsquedas eficientes
+            $table->index(['email', 'chat_id']);
         });
     }
 

@@ -175,19 +175,23 @@ https://templatemo.com/tm-534-parallo
             </button>
         </div>
         <div class="chat-messages" id="chat-messages">
-            <div class="message bot-message">
-                <div class="message-content">
-                    <div class="message-avatar">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <div class="message-bubble">
-                        ¡Bienvenido a Eteria! 👋 ¿En qué puedo ayudarte?
-                    </div>
+            <!-- Los mensajes se cargarán dinámicamente -->
+        </div>
+        <div class="chat-user-info" id="chat-user-info" style="display: none;">
+            <div class="user-info-form">
+                <h4>Para comenzar, por favor ingresa tus datos:</h4>
+                <div class="form-group">
+                    <input type="text" id="user-name" placeholder="Tu nombre" required>
                 </div>
-                <div class="message-time">ahora</div>
+                <div class="form-group">
+                    <input type="email" id="user-email" placeholder="Tu email" required>
+                </div>
+                <button id="start-chat" class="btn-start-chat">
+                    Comenzar Chat
+                </button>
             </div>
         </div>
-        <div class="chat-input">
+        <div class="chat-input" style="display: none;">
             <div class="input-wrapper">
                 <input type="text" id="user-input" placeholder="Escribe tu mensaje...">
                 <button id="send-message">
@@ -481,6 +485,34 @@ https://templatemo.com/tm-534-parallo
             opacity: 0.7;
             cursor: not-allowed;
         }
+
+        .chat-user-info {
+            padding: 20px;
+            background: white;
+        }
+
+        .user-info-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .user-info-form h4 {
+            margin: 0;
+            font-size: 16px;
+            color: #333;
+            text-align: center;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group input {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
     </style>
 
     <script>
@@ -492,20 +524,93 @@ https://templatemo.com/tm-534-parallo
             const chatWidget = document.getElementById('chat-widget');
             const chatInput = document.querySelector('.chat-input');
             const chatHeader = document.querySelector('.chat-header-content');
+            const userInfoForm = document.getElementById('chat-user-info');
 
             let isMinimized = true;
             let isTyping = false;
-            let chatId = 'chatweb1'; // ID del chat por defecto
+            let chatId = null;
 
             // Función para generar un nuevo chat_id
-            function generateNewChatId() {
-                const lastChat = localStorage.getItem('lastChatId');
-                if (lastChat) {
-                    const number = parseInt(lastChat.replace('chatweb', '')) + 1;
-                    return `chatweb${number}`;
+            async function generateNewChatId() {
+                try {
+                    const response = await fetch('/api/chat/new-id', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Error al generar nuevo ID');
+                    }
+
+                    const data = await response.json();
+                    return data.chat_id;
+                } catch (error) {
+                    console.error('Error:', error);
+                    return `chatweb_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
                 }
-                return 'chatweb1';
             }
+
+            function toggleChat() {
+                isMinimized = !isMinimized;
+                
+                if (isMinimized) {
+                    chatWidget.style.height = '80px';
+                    chatMessages.style.display = 'none';
+                    chatInput.style.display = 'none';
+                    userInfoForm.style.display = 'none';
+                    minimizeButton.innerHTML = '<i class="fas fa-plus"></i>';
+                } else {
+                    chatWidget.style.height = window.innerWidth <= 480 ? '100%' : '500px';
+                    if (!chatId) {
+                        userInfoForm.style.display = 'block';
+                        chatMessages.style.display = 'none';
+                        chatInput.style.display = 'none';
+                    } else {
+                        chatMessages.style.display = 'block';
+                        chatInput.style.display = 'block';
+                        userInfoForm.style.display = 'none';
+                    }
+                    minimizeButton.innerHTML = '<i class="fas fa-minus"></i>';
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            }
+
+            // Inicializar el formulario de usuario
+            const startChatButton = document.getElementById('start-chat');
+            if (startChatButton) {
+                startChatButton.addEventListener('click', async function() {
+                    const userName = document.getElementById('user-name').value.trim();
+                    const userEmail = document.getElementById('user-email').value.trim();
+
+                    if (!userName || !userEmail) {
+                        alert('Por favor, completa todos los campos');
+                        return;
+                    }
+
+                    chatId = await generateNewChatId();
+                    userInfoForm.style.display = 'none';
+                    chatMessages.style.display = 'block';
+                    chatInput.style.display = 'block';
+                    
+                    // Cargar el historial del chat
+                    loadChatHistory();
+                });
+            }
+
+            // Event Listeners
+            chatHeader.addEventListener('click', function() {
+                if (isMinimized) {
+                    toggleChat();
+                }
+            });
+
+            minimizeButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleChat();
+            });
 
             // Función para cargar el historial del chat
             async function loadChatHistory() {
@@ -523,20 +628,18 @@ https://templatemo.com/tm-534-parallo
                     }
 
                     const data = await response.json();
-                    
-                    // Limpiar mensajes existentes
                     chatMessages.innerHTML = '';
                     
-                    // Agregar mensaje de bienvenida
-                    addMessage('¡Bienvenido a Eteria! 👋 ¿En qué puedo ayudarte?', false);
-                    
-                    // Agregar mensajes del historial
-                    data.mensajes.forEach(mensaje => {
-                        addMessage(mensaje.mensaje, mensaje.tipo === 'usuario');
-                    });
+                    if (data.mensajes && data.mensajes.length > 0) {
+                        data.mensajes.forEach(mensaje => {
+                            addMessage(mensaje.mensaje, mensaje.tipo === 'usuario');
+                        });
+                    } else {
+                        addMessage('¡Bienvenido a Eteria! 👋 ¿En qué puedo ayudarte?', false);
+                    }
                 } catch (error) {
                     console.error('Error al cargar historial:', error);
-                    // Agregar mensaje de bienvenida por defecto
+                    chatMessages.innerHTML = '';
                     addMessage('¡Bienvenido a Eteria! 👋 ¿En qué puedo ayudarte?', false);
                 }
             }
@@ -578,8 +681,6 @@ https://templatemo.com/tm-534-parallo
             }
 
             function addMessage(message, isUser = false) {
-                removeTypingIndicator();
-                
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
                 
@@ -599,7 +700,7 @@ https://templatemo.com/tm-534-parallo
 
                 const timeDiv = document.createElement('div');
                 timeDiv.className = 'message-time';
-                timeDiv.textContent = getCurrentTime();
+                timeDiv.textContent = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
 
                 messageDiv.appendChild(messageContent);
                 messageDiv.appendChild(timeDiv);
@@ -610,19 +711,14 @@ https://templatemo.com/tm-534-parallo
 
             async function sendMessage() {
                 const message = userInput.value.trim();
-                if (!message) return;
+                if (!message || !chatId) return;
 
-                // Deshabilitar el input y botón mientras se envía el mensaje
                 userInput.disabled = true;
                 sendButton.disabled = true;
 
                 try {
-                    // Agregar el mensaje del usuario
-                    addMessage(message, true);
-                    userInput.value = '';
-
-                    // Mostrar indicador de escritura
-                    showTypingIndicator();
+                    const userName = document.getElementById('user-name').value.trim();
+                    const userEmail = document.getElementById('user-email').value.trim();
 
                     const response = await fetch('/api/chat', {
                         method: 'POST',
@@ -633,79 +729,38 @@ https://templatemo.com/tm-534-parallo
                         },
                         body: JSON.stringify({
                             message: message,
-                            chat_id: chatId
+                            chat_id: chatId,
+                            nombre: userName,
+                            email: userEmail
                         })
                     });
 
                     if (!response.ok) {
-                        throw new Error(`Error del servidor: ${response.status}`);
+                        throw new Error('Error al enviar mensaje');
                     }
 
                     const data = await response.json();
                     
-                    // Pequeña pausa para simular tiempo de respuesta natural
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    
-                    // Agregar la respuesta del bot
-                    addMessage(data.response);
+                    // Agregar mensaje del usuario
+                    addMessage(message, true);
+                    userInput.value = '';
+
+                    // Mostrar respuesta del bot
+                    if (data.response) {
+                        addMessage(data.response, false);
+                    }
+
                 } catch (error) {
                     console.error('Error:', error);
-                    addMessage('Lo siento, ha ocurrido un error. Por favor, intenta de nuevo más tarde.');
+                    addMessage('Lo siento, ha ocurrido un error. Por favor, intenta de nuevo más tarde.', false);
                 } finally {
-                    // Habilitar el input y botón nuevamente
                     userInput.disabled = false;
                     sendButton.disabled = false;
                     userInput.focus();
                 }
             }
 
-            function toggleChat() {
-                isMinimized = !isMinimized;
-                
-                if (isMinimized) {
-                    chatWidget.style.height = '80px';
-                    chatMessages.style.display = 'none';
-                    chatInput.style.display = 'none';
-                    minimizeButton.innerHTML = '<i class="fas fa-plus"></i>';
-                } else {
-                    chatWidget.style.height = window.innerWidth <= 480 ? '100%' : '500px';
-                    chatMessages.style.display = 'block';
-                    chatInput.style.display = 'block';
-                    minimizeButton.innerHTML = '<i class="fas fa-minus"></i>';
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }
-            }
-
-            // Ajuste para dispositivos móviles
-            function adjustMobileView() {
-                if (window.innerWidth <= 480) {
-                    chatWidget.style.height = isMinimized ? '80px' : '100%';
-                    chatWidget.style.width = '100%';
-                } else {
-                    chatWidget.style.height = isMinimized ? '80px' : '500px';
-                    chatWidget.style.width = '350px';
-                }
-            }
-
-            // Inicializar el chat
-            function initializeChat() {
-                // Generar nuevo chat_id si es necesario
-                chatId = generateNewChatId();
-                localStorage.setItem('lastChatId', chatId);
-                
-                chatWidget.style.height = '80px';
-                chatMessages.style.display = 'none';
-                chatInput.style.display = 'none';
-                minimizeButton.innerHTML = '<i class="fas fa-plus"></i>';
-                
-                // Cargar historial del chat
-                loadChatHistory();
-            }
-
-            initializeChat();
-            adjustMobileView();
-
-            // Event Listeners
+            // Event Listeners para el envío de mensajes
             sendButton.addEventListener('click', sendMessage);
             
             userInput.addEventListener('keypress', function(e) {
@@ -715,18 +770,15 @@ https://templatemo.com/tm-534-parallo
                 }
             });
 
-            chatHeader.addEventListener('click', function(e) {
-                if (isMinimized) {
-                    toggleChat();
+            window.addEventListener('resize', function() {
+                if (window.innerWidth <= 480) {
+                    chatWidget.style.height = isMinimized ? '80px' : '100%';
+                    chatWidget.style.width = '100%';
+                } else {
+                    chatWidget.style.height = isMinimized ? '80px' : '500px';
+                    chatWidget.style.width = '350px';
                 }
             });
-
-            minimizeButton.addEventListener('click', function(e) {
-                e.stopPropagation();
-                toggleChat();
-            });
-            
-            window.addEventListener('resize', adjustMobileView);
         });
     </script>
   </body>

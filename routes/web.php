@@ -14,13 +14,19 @@ use App\Http\Controllers\MensajeController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\ContactoController;
 use App\Http\Controllers\TurnoController;
+use App\Http\Controllers\ChatWebController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Ruta del chat
+// Rutas del chat
 Route::post('/api/chat', [ChatController::class, 'chat']);
+Route::get('/api/chat/history', [ChatController::class, 'getChatHistory']);
+Route::get('/api/chat/new-id', [ChatController::class, 'generateNewId']);
+Route::get('/api/chat/user', [ChatController::class, 'getUserChat']);
+Route::get('/get-user-chat', [ChatController::class, 'getUserChat'])->name('get.user.chat');
+Route::post('/chat', [ChatController::class, 'chat'])->name('chat.store');
 
 Auth::routes(['register' => false]);
 
@@ -31,6 +37,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/whatsapp', [WhatsAppController::class, 'index'])->name('whatsapp.index');
     Route::post('/whatsapp/send', [WhatsAppController::class, 'send'])->name('whatsapp.send');
     Route::post('/whatsapp/send-bulk', [WhatsAppController::class, 'sendBulk'])->name('whatsapp.send-bulk');
+    
+    // Rutas para ChatWeb
+    Route::get('/chat-web', [ChatWebController::class, 'index'])->name('chat-web.index');
+    Route::get('/chat-web/{chat_id}', [ChatWebController::class, 'show'])->name('chat-web.show');
+    Route::delete('/chat-web/{chat_id}', [ChatWebController::class, 'destroy'])->name('chat-web.destroy');
 });
 
 Route::resource('projects', ProjectController::class)->middleware('auth');

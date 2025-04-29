@@ -28,11 +28,13 @@ class ChatController extends Controller
     {
         try {
             $userMessage = $request->input('message');
-            $chatId = $request->input('chat_id', 'chatweb1'); // Por defecto chatweb1
+            $chatId = $request->input('chat_id');
+            $nombre = $request->input('nombre');
+            $email = $request->input('email');
 
             if (empty($userMessage)) {
                 return response()->json([
-                    'response' => 'Por favor, ingresa un mensaje.'
+                    'error' => 'El mensaje es requerido'
                 ], 400);
             }
 
@@ -40,42 +42,20 @@ class ChatController extends Controller
             ChatWeb::create([
                 'chat_id' => $chatId,
                 'mensaje' => $userMessage,
-                'tipo' => 'usuario'
+                'tipo' => 'usuario',
+                'nombre' => $nombre,
+                'email' => $email
             ]);
 
-            // Obtener todos los contextos de la base de datos
-            $contextos = Contexto::latest()->get();
-            $contextoCombinado = '';
-
-            // Combinar todos los contextos en uno solo
-            foreach ($contextos as $contexto) {
-                $contextoCombinado .= $contexto->contexto . "\n";
-            }
-
-            // Si no hay contextos, usar un contexto por defecto
-            if (empty($contextoCombinado)) {
-                $contextoCombinado = 'Eres un asistente virtual de Eteria, una empresa de desarrollo web.';
-            }
-
-            // Obtener el contexto específico para el chat
+            // Obtener contexto base
             $hoyGuayaquil = Carbon::now('America/Guayaquil');
             $manana = $hoyGuayaquil->copy()->addDay()->format('Y-m-d');
             
             $contextBase = 'Eres un asistente comercial estratégico de Eteria. ' .
                          'HOY es ' . $hoyGuayaquil->format('Y-m-d') . ' en Quito. ' .
-                         'IMPORTANTE: Tus respuestas deben ser cortas y en una sola línea, sin saltos de línea. Usa máximo 2 emojis por mensaje. ' .
-                         'Sigue este flujo de conversación: ' .
-                         '1) Primero, entiende el negocio y sus desafíos actuales, ' .
-                         '2) Luego, identifica una oportunidad de mejora y presenta una propuesta de valor específica para su caso, ' .
-                         '3) Si muestra interés, sugiere agendar una reunión para presentar una solución detallada. ' .
-                         'Para agendar citas: Solo L-V desde ' . $manana . ', hora: 9:00-17:00. ' .
-                         'Cuando tengas fecha y hora, usa: TURNO_CONFIRMADO:YYYY-MM-DD HH:mm:MOTIVO. ' .
-                         'EJEMPLOS DE PROPUESTAS: ' .
-                         'Si mencionan ventas: "Con nuestra solución podrías aumentar tus ventas un 30% automatizando seguimiento de clientes 💡 ¿Te gustaría conocer cómo?" ' .
-                         'Si mencionan tiempo: "Podríamos ahorrarte 15 horas semanales automatizando esos procesos ⚡ ¿Te interesa ver cómo?" ' .
-                         'RECUERDA: Mensajes cortos, máximo 2 emojis, enfócate en beneficios específicos.';
+                         'IMPORTANTE: Tus respuestas deben ser cortas y en una sola línea, sin saltos de línea. Usa máximo 2 emojis por mensaje.';
 
-            // Obtener historial de mensajes para este chat
+            // Obtener historial de mensajes
             $historialMensajes = ChatWeb::where('chat_id', $chatId)
                 ->orderBy('created_at', 'asc')
                 ->get();
@@ -88,7 +68,6 @@ class ChatController extends Controller
                 ]
             ];
 
-            // Agregar el historial de mensajes
             foreach ($historialMensajes as $mensaje) {
                 $messages[] = [
                     'role' => $mensaje->tipo === 'usuario' ? 'user' : 'assistant',
@@ -116,54 +95,27 @@ class ChatController extends Controller
                 if (isset($responseData['choices'][0]['message']['content'])) {
                     $aiResponse = $responseData['choices'][0]['message']['content'];
 
-                    // Verificar si la respuesta contiene un formato de turno
-                    if (preg_match($this->formatoTurno, $aiResponse, $matches)) {
-                        $turnoResponse = $this->procesarConfirmacionTurno($chatId, $matches[1], $matches[2]);
-                        
-                        // Guardar respuesta del bot
-                        ChatWeb::create([
-                            'chat_id' => $chatId,
-                            'mensaje' => $turnoResponse,
-                            'tipo' => 'bot'
-                        ]);
-
-                        return response()->json([
-                            'response' => $turnoResponse
-                        ]);
-                    }
-
                     // Guardar respuesta del bot
                     ChatWeb::create([
                         'chat_id' => $chatId,
                         'mensaje' => $aiResponse,
-                        'tipo' => 'bot'
+                        'tipo' => 'bot',
+                        'nombre' => 'Asistente',
+                        'email' => null
                     ]);
 
                     return response()->json([
                         'response' => $aiResponse
                     ]);
-                } else {
-                    Log::error('Respuesta de API inválida: ' . json_encode($responseData));
-                    throw new \Exception('Formato de respuesta inválido');
                 }
-            } else {
-                $errorBody = $response->body();
-                Log::error('Error en la API', [
-                    'status' => $response->status(),
-                    'body' => $errorBody,
-                    'headers' => $response->headers()
-                ]);
-                return response()->json([
-                    'response' => 'Error en la API: ' . $errorBody
-                ], $response->status());
             }
+
+            throw new \Exception('Error en la respuesta de la API');
+
         } catch (\Exception $e) {
-            Log::error('Error en el chat: ' . $e->getMessage(), [
-                'exception' => $e,
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error('Error en el chat: ' . $e->getMessage());
             return response()->json([
-                'response' => 'Error: ' . $e->getMessage()
+                'error' => 'Error al procesar el mensaje'
             ], 500);
         }
     }
@@ -286,5 +238,65 @@ class ChatController extends Controller
         } while ($turnoExistente);
         
         return $horario;
+    }
+
+    public function generateNewId()
+    {
+        // Obtener el último ID de chat
+        $lastChat = ChatWeb::orderBy('id', 'desc')->first();
+        
+        if ($lastChat) {
+            // Extraer el número del último chat_id
+            preg_match('/chatweb(\d+)/', $lastChat->chat_id, $matches);
+            $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
+        }
+
+        // Generar nuevo ID
+        $newChatId = 'chatweb' . $newNumber;
+
+        // Verificar que el ID sea único
+        while (ChatWeb::where('chat_id', $newChatId)->exists()) {
+            $newNumber++;
+            $newChatId = 'chatweb' . $newNumber;
+        }
+
+        return response()->json(['chat_id' => $newChatId]);
+    }
+
+    public function getUserChat(Request $request)
+    {
+        try {
+            $email = $request->input('email');
+            $nombre = $request->input('nombre');
+
+            if (empty($email) || empty($nombre)) {
+                return response()->json([
+                    'error' => 'El email y nombre son requeridos'
+                ], 400);
+            }
+
+            $mensajes = ChatWeb::where('email', $email)
+                ->where('nombre', $nombre)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'mensajes' => $mensajes
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener mensajes del usuario: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error al obtener los mensajes del chat'
+            ], 500);
+        }
+    }
+
+    private function generateUniqueId()
+    {
+        return uniqid('chat_', true);
     }
 }
