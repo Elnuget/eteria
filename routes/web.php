@@ -22,7 +22,9 @@ Route::get('/', function () {
 
 // Rutas del chat
 Route::post('/api/chat', [ChatController::class, 'chat']);
+Route::post('/api/chat/admin-reply', [ChatController::class, 'adminReply'])->middleware('auth');
 Route::get('/api/chat/history', [ChatController::class, 'getChatHistory']);
+Route::post('/api/chat/find-or-create', [ChatController::class, 'findOrCreateChat']);
 Route::get('/api/chat/new-id', [ChatController::class, 'generateNewId']);
 Route::get('/api/chat/user', [ChatController::class, 'getUserChat']);
 Route::get('/get-user-chat', [ChatController::class, 'getUserChat'])->name('get.user.chat');

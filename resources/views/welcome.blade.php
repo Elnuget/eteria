@@ -525,31 +525,39 @@ https://templatemo.com/tm-534-parallo
             const chatInput = document.querySelector('.chat-input');
             const chatHeader = document.querySelector('.chat-header-content');
             const userInfoForm = document.getElementById('chat-user-info');
+            const startChatButton = document.getElementById('start-chat');
+            const userNameInput = document.getElementById('user-name');
+            const userEmailInput = document.getElementById('user-email');
 
             let isMinimized = true;
-            let isTyping = false;
-            let chatId = null;
+            let chatId = localStorage.getItem('eteriaChatId');
+            let userInfo = JSON.parse(localStorage.getItem('eteriaChatUser'));
 
-            // Función para generar un nuevo chat_id
-            async function generateNewChatId() {
-                try {
-                    const response = await fetch('/api/chat/new-id', {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        }
-                    });
+            // --- Funciones de LocalStorage ---
+            function saveChatData(id, name, email) {
+                localStorage.setItem('eteriaChatId', id);
+                localStorage.setItem('eteriaChatUser', JSON.stringify({ nombre: name, email: email }));
+                chatId = id;
+                userInfo = { nombre: name, email: email };
+            }
 
-                    if (!response.ok) {
-                        throw new Error('Error al generar nuevo ID');
-                    }
+            function clearChatData() {
+                localStorage.removeItem('eteriaChatId');
+                localStorage.removeItem('eteriaChatUser');
+                chatId = null;
+                userInfo = null;
+            }
+            // ----------------------------------
 
-                    const data = await response.json();
-                    return data.chat_id;
-                } catch (error) {
-                    console.error('Error:', error);
-                    return `chatweb_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+            function updateChatUI(showChat = false) {
+                if (showChat && chatId && userInfo) {
+                    userInfoForm.style.display = 'none';
+                    chatMessages.style.display = 'block';
+                    chatInput.style.display = 'block';
+                } else {
+                    userInfoForm.style.display = 'block';
+                    chatMessages.style.display = 'none';
+                    chatInput.style.display = 'none';
                 }
             }
 
@@ -558,62 +566,77 @@ https://templatemo.com/tm-534-parallo
                 
                 if (isMinimized) {
                     chatWidget.style.height = '80px';
+                    // Ocultar todo al minimizar
                     chatMessages.style.display = 'none';
                     chatInput.style.display = 'none';
-                    userInfoForm.style.display = 'none';
+                    userInfoForm.style.display = 'none'; 
                     minimizeButton.innerHTML = '<i class="fas fa-plus"></i>';
                 } else {
                     chatWidget.style.height = window.innerWidth <= 480 ? '100%' : '500px';
-                    if (!chatId) {
-                        userInfoForm.style.display = 'block';
-                        chatMessages.style.display = 'none';
-                        chatInput.style.display = 'none';
-                    } else {
-                        chatMessages.style.display = 'block';
-                        chatInput.style.display = 'block';
-                        userInfoForm.style.display = 'none';
+                    // Mostrar formulario o chat al expandir
+                    updateChatUI(!!chatId);
+                    if (chatId) { // Si hay chat ID, cargar historial
+                       loadChatHistory();
                     }
                     minimizeButton.innerHTML = '<i class="fas fa-minus"></i>';
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
                 }
             }
 
-            // Inicializar el formulario de usuario
-            const startChatButton = document.getElementById('start-chat');
+            // Evento para iniciar chat (obtener/crear chatId)
             if (startChatButton) {
                 startChatButton.addEventListener('click', async function() {
-                    const userName = document.getElementById('user-name').value.trim();
-                    const userEmail = document.getElementById('user-email').value.trim();
+                    const userName = userNameInput.value.trim();
+                    const userEmail = userEmailInput.value.trim();
 
                     if (!userName || !userEmail) {
                         alert('Por favor, completa todos los campos');
                         return;
                     }
 
-                    chatId = await generateNewChatId();
-                    userInfoForm.style.display = 'none';
-                    chatMessages.style.display = 'block';
-                    chatInput.style.display = 'block';
-                    
-                    // Cargar el historial del chat
-                    loadChatHistory();
+                    startChatButton.disabled = true;
+                    startChatButton.textContent = 'Cargando...';
+
+                    try {
+                        const response = await fetch('/api/chat/find-or-create', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({ nombre: userName, email: userEmail })
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({}));
+                            throw new Error(errorData.message || 'Error al obtener ID del chat');
+                        }
+
+                        const data = await response.json();
+                        if (!data.chat_id) {
+                             throw new Error('No se recibió chat_id del servidor');
+                        }
+                        
+                        saveChatData(data.chat_id, userName, userEmail);
+                        updateChatUI(true); // Mostrar chat
+                        await loadChatHistory(); // Cargar historial
+                        
+                    } catch (error) {
+                        console.error('Error al iniciar chat:', error);
+                        alert(`No se pudo iniciar el chat: ${error.message}. Intenta de nuevo.`);
+                        clearChatData(); // Limpiar datos si falla
+                        updateChatUI(false); // Mostrar formulario de nuevo
+                    } finally {
+                        startChatButton.disabled = false;
+                        startChatButton.textContent = 'Comenzar Chat';
+                    } 
                 });
             }
-
-            // Event Listeners
-            chatHeader.addEventListener('click', function() {
-                if (isMinimized) {
-                    toggleChat();
-                }
-            });
-
-            minimizeButton.addEventListener('click', function(e) {
-                e.stopPropagation();
-                toggleChat();
-            });
-
-            // Función para cargar el historial del chat
+            
+            // Función para cargar historial (sin cambios, solo asegura que chatId exista)
             async function loadChatHistory() {
+                if (!chatId) return; // No cargar si no hay ID
+                chatMessages.innerHTML = '<div class="text-center p-3"><i class="fas fa-spinner fa-spin"></i> Cargando historial...</div>'; // Indicador
                 try {
                     const response = await fetch(`/api/chat/history?chat_id=${chatId}`, {
                         method: 'GET',
@@ -628,58 +651,24 @@ https://templatemo.com/tm-534-parallo
                     }
 
                     const data = await response.json();
-                    chatMessages.innerHTML = '';
+                    chatMessages.innerHTML = ''; // Limpiar indicador
                     
                     if (data.mensajes && data.mensajes.length > 0) {
                         data.mensajes.forEach(mensaje => {
                             addMessage(mensaje.mensaje, mensaje.tipo === 'usuario');
                         });
                     } else {
-                        addMessage('¡Bienvenido a Eteria! 👋 ¿En qué puedo ayudarte?', false);
+                        addMessage('¡Bienvenido de nuevo! 👋 ¿En qué puedo ayudarte hoy?', false);
                     }
+                    chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll al final
                 } catch (error) {
                     console.error('Error al cargar historial:', error);
-                    chatMessages.innerHTML = '';
-                    addMessage('¡Bienvenido a Eteria! 👋 ¿En qué puedo ayudarte?', false);
+                    chatMessages.innerHTML = ''; // Limpiar indicador
+                    addMessage('No se pudo cargar el historial. ¿En qué puedo ayudarte?', false);
                 }
             }
 
-            function getCurrentTime() {
-                const now = new Date();
-                return now.getHours().toString().padStart(2, '0') + ':' + 
-                       now.getMinutes().toString().padStart(2, '0');
-            }
-
-            function showTypingIndicator() {
-                if (!isTyping) {
-                    isTyping = true;
-                    const typingDiv = document.createElement('div');
-                    typingDiv.className = 'message bot-message typing-indicator';
-                    typingDiv.innerHTML = `
-                        <div class="message-content">
-                            <div class="message-avatar">
-                                <i class="fas fa-robot"></i>
-                            </div>
-                            <div class="message-bubble">
-                                <span class="typing-dot"></span>
-                                <span class="typing-dot"></span>
-                                <span class="typing-dot"></span>
-                            </div>
-                        </div>
-                    `;
-                    chatMessages.appendChild(typingDiv);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }
-            }
-
-            function removeTypingIndicator() {
-                const typingIndicator = document.querySelector('.typing-indicator');
-                if (typingIndicator) {
-                    typingIndicator.remove();
-                }
-                isTyping = false;
-            }
-
+            // Función addMessage (sin cambios significativos)
             function addMessage(message, isUser = false) {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
@@ -709,17 +698,28 @@ https://templatemo.com/tm-534-parallo
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
 
+            // Función sendMessage (usar datos de localStorage)
             async function sendMessage() {
                 const message = userInput.value.trim();
-                if (!message || !chatId) return;
+                // Asegurarse que tenemos chatId y userInfo de localStorage
+                if (!message || !chatId || !userInfo) {
+                    alert('No se pudo enviar el mensaje. Falta información del chat.');
+                    // Podríamos intentar mostrar el formulario de nuevo si falta userInfo
+                    if (!userInfo) {
+                         clearChatData();
+                         toggleChat(); // Esto debería mostrar el form
+                    }
+                    return;
+                }
 
                 userInput.disabled = true;
                 sendButton.disabled = true;
 
-                try {
-                    const userName = document.getElementById('user-name').value.trim();
-                    const userEmail = document.getElementById('user-email').value.trim();
+                // Mostrar mensaje del usuario inmediatamente
+                addMessage(message, true);
+                userInput.value = ''; 
 
+                try {
                     const response = await fetch('/api/chat', {
                         method: 'POST',
                         headers: {
@@ -730,29 +730,29 @@ https://templatemo.com/tm-534-parallo
                         body: JSON.stringify({
                             message: message,
                             chat_id: chatId,
-                            nombre: userName,
-                            email: userEmail
+                            nombre: userInfo.nombre, // De localStorage
+                            email: userInfo.email   // De localStorage
                         })
                     });
 
                     if (!response.ok) {
-                        throw new Error('Error al enviar mensaje');
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.message || 'Error al enviar mensaje al servidor');
                     }
 
                     const data = await response.json();
                     
-                    // Agregar mensaje del usuario
-                    addMessage(message, true);
-                    userInput.value = '';
-
                     // Mostrar respuesta del bot
                     if (data.response) {
                         addMessage(data.response, false);
+                    } else {
+                         // Si no hay respuesta específica, añadir mensaje genérico o nada
+                         console.warn('Respuesta del bot vacía o no encontrada.');
                     }
 
                 } catch (error) {
-                    console.error('Error:', error);
-                    addMessage('Lo siento, ha ocurrido un error. Por favor, intenta de nuevo más tarde.', false);
+                    console.error('Error al enviar mensaje:', error);
+                    addMessage(`Error al enviar: ${error.message}`, false); // Mostrar error específico
                 } finally {
                     userInput.disabled = false;
                     sendButton.disabled = false;
@@ -760,16 +760,32 @@ https://templatemo.com/tm-534-parallo
                 }
             }
 
-            // Event Listeners para el envío de mensajes
+            // --- Inicialización y Event Listeners --- 
+            // Configurar estado inicial basado en localStorage
+            if (chatId && userInfo) {
+                // Ya tenemos datos, el chat se mostrará al expandir
+                minimizeButton.innerHTML = '<i class="fas fa-plus"></i>'; // Empezar minimizado
+                isMinimized = true;
+                chatWidget.style.height = '80px'; // Asegurar tamaño minimizado
+            } else {
+                // No hay datos, necesita el formulario al expandir
+                minimizeButton.innerHTML = '<i class="fas fa-plus"></i>';
+                isMinimized = true;
+                chatWidget.style.height = '80px';
+            }
+
+            chatHeader.addEventListener('click', toggleChat); // Permitir clic en header para expandir
+            minimizeButton.addEventListener('click', (e) => {
+                 e.stopPropagation(); // Evitar que el clic se propague al header
+                 toggleChat();
+            });
             sendButton.addEventListener('click', sendMessage);
-            
             userInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     sendMessage();
                 }
             });
-
             window.addEventListener('resize', function() {
                 if (window.innerWidth <= 480) {
                     chatWidget.style.height = isMinimized ? '80px' : '100%';

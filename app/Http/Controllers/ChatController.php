@@ -299,4 +299,95 @@ class ChatController extends Controller
     {
         return uniqid('chat_', true);
     }
+
+    public function adminReply(Request $request)
+    {
+        try {
+            $request->validate([
+                'message' => 'required|string',
+                'chat_id' => 'required|string',
+            ]);
+
+            // Guardar mensaje del administrador
+            ChatWeb::create([
+                'chat_id' => $request->chat_id,
+                'mensaje' => $request->message,
+                'tipo' => 'admin',
+                'nombre' => 'Administrador',
+                'email' => null
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Mensaje enviado correctamente'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al enviar mensaje de administrador: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al enviar el mensaje'
+            ], 500);
+        }
+    }
+
+    public function findOrCreateChat(Request $request)
+    {
+        try {
+            $request->validate([
+                'email' => 'required|email',
+                'nombre' => 'required|string',
+            ]);
+
+            $email = $request->email;
+            $nombre = $request->nombre;
+
+            // Buscar el chat más reciente para este usuario
+            $lastChat = ChatWeb::where('email', $email)
+                ->where('nombre', $nombre)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if ($lastChat) {
+                return response()->json(['chat_id' => $lastChat->chat_id]);
+            }
+
+            // Si no existe, generar un nuevo ID
+            $newChatId = $this->generateNewUniqueId();
+
+            return response()->json(['chat_id' => $newChatId]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al buscar o crear chat: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error al iniciar el chat'
+            ], 500);
+        }
+    }
+
+    private function generateNewUniqueId()
+    {
+        // Obtener el último ID de chat numérico
+        $lastChat = ChatWeb::where('chat_id', 'like', 'chatweb%')
+                           ->orderByRaw('CAST(SUBSTRING(chat_id, 8) AS UNSIGNED) DESC')
+                           ->first();
+
+        $newNumber = 1;
+        if ($lastChat) {
+            preg_match('/chatweb(\d+)/i', $lastChat->chat_id, $matches);
+            $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+            $newNumber = $lastNumber + 1;
+        }
+
+        // Generar nuevo ID y verificar unicidad
+        do {
+            $newChatId = 'chatweb' . $newNumber;
+            $exists = ChatWeb::where('chat_id', $newChatId)->exists();
+            if ($exists) {
+                $newNumber++;
+            }
+        } while ($exists);
+
+        return $newChatId;
+    }
 }
