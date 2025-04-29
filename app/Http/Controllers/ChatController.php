@@ -164,16 +164,16 @@ class ChatController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'email' => 'required|email',
+                'celular' => 'required|string|regex:/^[0-9+ ]{9,}$/', // Cambiado de email a celular, ajustar regex según necesidad
                 'nombre' => 'required|string|max:255',
             ]);
 
-            $email = $validatedData['email'];
+            $celular = preg_replace('/\s+/', '', $validatedData['celular']); // Limpiar espacios si es necesario
             $nombre = $validatedData['nombre'];
 
-            // Buscar o crear el contacto web
+            // Buscar o crear el contacto web por celular
             $contactoWeb = ContactoWeb::firstOrCreate(
-                ['email' => $email], // Criterio de búsqueda
+                ['celular' => $celular], // Criterio de búsqueda por celular
                 ['nombre' => $nombre]  // Datos para crear si no existe
             );
 

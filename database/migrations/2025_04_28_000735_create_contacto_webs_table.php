@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('contacto_webs', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
-            $table->string('email')->unique();
+            $table->string('celular')->unique();
             $table->timestamps();
         });
     }

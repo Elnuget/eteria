@@ -136,7 +136,7 @@ https://templatemo.com/tm-534-parallo
                 Permítenos ayudarte a crear la presencia digital que tu negocio necesita. Diseñamos soluciones web adaptadas a tus necesidades específicas.
               </p>
               <form action="#" method="get" class="tm-call-to-action-form">                
-                <input name="email" type="email" class="tm-email-input" id="email" placeholder="Correo electrónico" />
+                <input name="celular" type="tel" class="tm-celular-input" id="celular" placeholder="Tu número de celular" />
                 <button type="submit" class="btn btn-secondary">Recibir Información</button>
               </form>
             </div>
@@ -184,7 +184,7 @@ https://templatemo.com/tm-534-parallo
                     <input type="text" id="user-name" placeholder="Tu nombre" required>
                     </div>
                 <div class="form-group">
-                    <input type="email" id="user-email" placeholder="Tu email" required>
+                    <input type="tel" id="user-celular" placeholder="Tu celular" required>
                 </div>
                 <button id="start-chat" class="btn-start-chat">
                     Comenzar Chat
@@ -513,6 +513,18 @@ https://templatemo.com/tm-534-parallo
             padding: 10px;
             border: 1px solid #ddd;
         }
+
+        .tm-call-to-action-form {
+            padding: 25px 25px 40px;
+        }
+
+        .tm-celular-input {
+            margin-bottom: 15px;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #c5c5c5;
+            border-radius: 3px;
+        }
     </style>
 
     <script>
@@ -527,7 +539,7 @@ https://templatemo.com/tm-534-parallo
             const userInfoForm = document.getElementById('chat-user-info');
             const startChatButton = document.getElementById('start-chat');
             const userNameInput = document.getElementById('user-name');
-            const userEmailInput = document.getElementById('user-email');
+            const userCelularInput = document.getElementById('user-celular');
 
             let isMinimized = true;
             let chatId = localStorage.getItem('eteriaChatId');
@@ -535,13 +547,13 @@ https://templatemo.com/tm-534-parallo
             let userInfo = JSON.parse(localStorage.getItem('eteriaChatUser'));
 
             // --- Funciones de LocalStorage ---
-            function saveChatData(id, contactoId, name, email) {
+            function saveChatData(id, contactoId, name, celular) {
                 localStorage.setItem('eteriaChatId', id);
                 localStorage.setItem('eteriaContactoWebId', contactoId);
-                localStorage.setItem('eteriaChatUser', JSON.stringify({ nombre: name, email: email }));
+                localStorage.setItem('eteriaChatUser', JSON.stringify({ nombre: name, celular: celular }));
                 chatId = id;
                 contactoWebId = contactoId;
-                userInfo = { nombre: name, email: email };
+                userInfo = { nombre: name, celular: celular };
             }
 
             function clearChatData() {
@@ -591,9 +603,9 @@ https://templatemo.com/tm-534-parallo
             if (startChatButton) {
                 startChatButton.addEventListener('click', async function() {
                     const userName = userNameInput.value.trim();
-                    const userEmail = userEmailInput.value.trim();
+                    const userCelular = userCelularInput.value.trim();
 
-                    if (!userName || !userEmail) {
+                    if (!userName || !userCelular) {
                         alert('Por favor, completa todos los campos');
                         return;
                     }
@@ -609,7 +621,7 @@ https://templatemo.com/tm-534-parallo
                                 'Accept': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                             },
-                            body: JSON.stringify({ nombre: userName, email: userEmail })
+                            body: JSON.stringify({ nombre: userName, celular: userCelular })
                         });
 
                         if (!response.ok) {
@@ -622,19 +634,19 @@ https://templatemo.com/tm-534-parallo
                              throw new Error('No se recibieron los IDs necesarios del servidor');
                         }
                         
-                        saveChatData(data.chat_id, data.contacto_web_id, userName, userEmail);
+                        saveChatData(data.chat_id, data.contacto_web_id, userName, userCelular);
                         updateChatUI(true);
                         await loadChatHistory();
                         
                     } catch (error) {
                         console.error('Error al iniciar chat:', error);
                         alert(`No se pudo iniciar el chat: ${error.message}. Intenta de nuevo.`);
-                        clearChatData(); // Limpiar datos si falla
-                        updateChatUI(false); // Mostrar formulario de nuevo
+                        clearChatData();
+                        updateChatUI(false);
                     } finally {
                         startChatButton.disabled = false;
                         startChatButton.textContent = 'Comenzar Chat';
-                }
+                    }
                 });
             }
             

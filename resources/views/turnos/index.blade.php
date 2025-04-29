@@ -54,7 +54,7 @@
                                                 @foreach($turnos[$hoy] as $turno)
                                                     <tr>
                                                         <td>{{ $turno->fecha_turno->format('H:i') }}</td>
-                                                        <td>{{ $turno->contacto ? $turno->contacto->numero : ($turno->contactoWeb ? $turno->contactoWeb->email : 'N/A') }}</td>
+                                                        <td>{{ $turno->contacto ? $turno->contacto->numero : ($turno->contactoWeb ? $turno->contactoWeb->celular : 'N/A') }}</td>
                                                         <td>{{ $turno->contacto ? $turno->contacto->nombre : ($turno->contactoWeb ? $turno->contactoWeb->nombre : 'Desconocido') }}</td>
                                                         <td>{{ $turno->motivo }}</td>
                                                         <td>
@@ -105,7 +105,7 @@
                                                 @foreach($turnos[$fecha] as $turno)
                                                     <tr>
                                                         <td>{{ $turno->fecha_turno->format('H:i') }}</td>
-                                                        <td>{{ $turno->contacto ? $turno->contacto->numero : ($turno->contactoWeb ? $turno->contactoWeb->email : 'N/A') }}</td>
+                                                        <td>{{ $turno->contacto ? $turno->contacto->numero : ($turno->contactoWeb ? $turno->contactoWeb->celular : 'N/A') }}</td>
                                                         <td>{{ $turno->contacto ? $turno->contacto->nombre : ($turno->contactoWeb ? $turno->contactoWeb->nombre : 'Desconocido') }}</td>
                                                         <td>{{ $turno->motivo }}</td>
                                                         <td>

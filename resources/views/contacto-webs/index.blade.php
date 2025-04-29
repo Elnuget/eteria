@@ -37,7 +37,7 @@
                                     <tr>
                                         <th>ID</th>
                                         <th>Nombre</th>
-                                        <th>Email</th>
+                                        <th>Celular</th>
                                         <th>Fecha de Creación</th>
                                         <th>Acciones</th>
                                     </tr>
@@ -47,7 +47,7 @@
                                         <tr>
                                             <td>{{ $contacto->id }}</td>
                                             <td>{{ $contacto->nombre }}</td>
-                                            <td>{{ $contacto->email }}</td>
+                                            <td>{{ $contacto->celular }}</td>
                                             <td>{{ $contacto->created_at->format('d/m/Y H:i') }}</td>
                                             <td>
                                                 <form action="{{ route('contacto-webs.destroy', $contacto->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este contacto? Se eliminarán también todos sus mensajes de chat.')">
