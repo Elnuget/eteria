@@ -290,7 +290,12 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('contactos.index') }}">
-                                            <i class="fas fa-address-book"></i> Contactos
+                                            <i class="fas fa-address-book"></i> Contactos WhatsApp
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('contacto-webs.index') }}">
+                                            <i class="fas fa-id-card"></i> Contactos Web
                                         </a>
                                     </li>
                                 </ul>
@@ -314,7 +319,7 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('mensajes.index') }}">
-                                            <i class="fas fa-inbox"></i> Mensajes
+                                            <i class="fas fa-inbox"></i> Mensajes WhatsApp
                                         </a>
                                     </li>
                                     <li>
@@ -322,11 +327,7 @@
                                             <i class="fas fa-comment-dots"></i> Chat Web
                                         </a>
                                     </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('contacto-webs.index') }}">
-                                            <i class="fas fa-id-card"></i> Contactos Web
-                                        </a>
-                                    </li>
+                                    
                                     <li>
                                         <a class="dropdown-item" href="{{ route('contextos.index') }}">
                                             <i class="fas fa-robot"></i> Contextos IA
