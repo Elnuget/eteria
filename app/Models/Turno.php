@@ -11,6 +11,7 @@ class Turno extends Model
 
     protected $fillable = [
         'contacto_id',
+        'contacto_web_id',
         'fecha_turno',
         'motivo'
     ];
@@ -27,5 +28,13 @@ class Turno extends Model
     public function contacto()
     {
         return $this->belongsTo(Contacto::class);
+    }
+
+    /**
+     * Obtener el contacto web asociado al turno.
+     */
+    public function contactoWeb()
+    {
+        return $this->belongsTo(ContactoWeb::class);
     }
 } 

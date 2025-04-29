@@ -90,7 +90,7 @@
                                                 @endforeach
                                             </div>
                                             {{-- Asegurarse que el contactoWeb existe antes de pasar sus datos al JS --}}
-                                            @if($contactoWeb)
+                                            {{-- @if($contactoWeb)
                                             <form class="chat-form" onsubmit="sendAdminMessage(event, '{{ $chat_id }}')">
                                                 <div class="input-group">
                                                     <input type="text" class="form-control" placeholder="Responder a {{ $contactoWeb->nombre }}..." required>
@@ -101,7 +101,7 @@
                                             </form>
                                             @else
                                             <p class="text-danger">Error: No se pudo identificar al contacto para responder.</p>
-                                            @endif
+                                            @endif --}}
                                         </div>
                                     </div>
                                 </div>
@@ -212,6 +212,7 @@
 
 @push('scripts')
 <script>
+/*
 async function sendAdminMessage(event, chatId) {
     event.preventDefault();
     const form = event.target;
@@ -254,6 +255,7 @@ async function sendAdminMessage(event, chatId) {
         input.value = '';
     }
 }
+*/
 
 // Mantener el scroll en la parte superior para cada chat
 document.querySelectorAll('.chat-messages').forEach(container => {

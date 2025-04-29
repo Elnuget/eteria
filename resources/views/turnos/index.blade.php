@@ -54,8 +54,8 @@
                                                 @foreach($turnos[$hoy] as $turno)
                                                     <tr>
                                                         <td>{{ $turno->fecha_turno->format('H:i') }}</td>
-                                                        <td>{{ $turno->contacto->numero }}</td>
-                                                        <td>{{ $turno->contacto->nombre }}</td>
+                                                        <td>{{ $turno->contacto ? $turno->contacto->numero : ($turno->contactoWeb ? $turno->contactoWeb->email : 'N/A') }}</td>
+                                                        <td>{{ $turno->contacto ? $turno->contacto->nombre : ($turno->contactoWeb ? $turno->contactoWeb->nombre : 'Desconocido') }}</td>
                                                         <td>{{ $turno->motivo }}</td>
                                                         <td>
                                                             <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editTurnoModal" 
@@ -105,8 +105,8 @@
                                                 @foreach($turnos[$fecha] as $turno)
                                                     <tr>
                                                         <td>{{ $turno->fecha_turno->format('H:i') }}</td>
-                                                        <td>{{ $turno->contacto->numero }}</td>
-                                                        <td>{{ $turno->contacto->nombre }}</td>
+                                                        <td>{{ $turno->contacto ? $turno->contacto->numero : ($turno->contactoWeb ? $turno->contactoWeb->email : 'N/A') }}</td>
+                                                        <td>{{ $turno->contacto ? $turno->contacto->nombre : ($turno->contactoWeb ? $turno->contactoWeb->nombre : 'Desconocido') }}</td>
                                                         <td>{{ $turno->motivo }}</td>
                                                         <td>
                                                             <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editTurnoModal" 
@@ -238,15 +238,19 @@
             events: [
                 @foreach($turnos as $fecha => $turnosDia)
                     @foreach($turnosDia as $turno)
+                    @php
+                        // Determinar el nombre a mostrar
+                        $nombreMostrar = $turno->contacto ? $turno->contacto->nombre : ($turno->contactoWeb ? $turno->contactoWeb->nombre : 'Desconocido');
+                    @endphp
                     {
-                        title: '{{ $turno->contacto->nombre }} - {{ $turno->motivo }}',
+                        title: '{{ addslashes($nombreMostrar) }} - {{ addslashes($turno->motivo) }}', // Usar nombre determinado y escapar caracteres
                         start: '{{ $turno->fecha_turno->format('Y-m-d\TH:i:s') }}',
                         url: '#',
                         extendedProps: {
                             turnoId: {{ $turno->id }}
                         },
-                        backgroundColor: '#4f6df5',
-                        borderColor: '#4f6df5'
+                        backgroundColor: '{{ $turno->contactoWeb ? "#28a745" : "#4f6df5" }}', // Verde para web, Azul para WhatsApp
+                        borderColor: '{{ $turno->contactoWeb ? "#28a745" : "#4f6df5" }}' // Verde para web, Azul para WhatsApp
                     },
                     @endforeach
                 @endforeach

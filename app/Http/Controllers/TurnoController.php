@@ -13,7 +13,7 @@ class TurnoController extends Controller
      */
     public function index()
     {
-        $turnos = Turno::with('contacto')
+        $turnos = Turno::with(['contacto', 'contactoWeb'])
             ->orderBy('fecha_turno', 'asc')
             ->get()
             ->groupBy(function($turno) {

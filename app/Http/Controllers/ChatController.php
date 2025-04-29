@@ -49,11 +49,41 @@ class ChatController extends Controller
                 'tipo' => 'usuario',
             ]);
 
-            // Obtener contexto base (simplificado)
+            // Obtener contexto base (adaptado de WebhookController)
             $hoyGuayaquil = Carbon::now('America/Guayaquil');
-            $contextBase = 'Eres un asistente comercial estratégico de Eteria. ' .
+            $manana = $hoyGuayaquil->copy()->addDay()->format('Y-m-d');
+            
+            $contextBase = 'Eres un asistente comercial estratégico de Eteria para nuestro chat web. ' .
                          'HOY es ' . $hoyGuayaquil->format('Y-m-d') . '. ' .
-                         'IMPORTANTE: Respuestas cortas, 1 línea, max 2 emojis.';
+                         'IMPORTANTE: Tus respuestas deben ser cortas y en una sola línea. Usa máximo 2 emojis por mensaje. ' .
+                         'Sigue este flujo de conversación: ' .
+                         '1) Primero, entiende el negocio y sus desafíos actuales, ' .
+                         '2) Luego, identifica una oportunidad de mejora y presenta una propuesta de valor específica para su caso, ' .
+                         '3) Si muestra interés, sugiere agendar una reunión virtual para presentar una solución detallada. ' .
+                         'Para agendar reuniones virtuales (turnos): Solo L-V desde ' . $manana . ', hora: 9:00-17:00. ' .
+                         'Cuando tengas fecha y hora confirmadas por el usuario, usa internamente el formato: TURNO_CONFIRMADO:YYYY-MM-DD HH:mm:MOTIVO para registrarlo. '. // Aclaración para el LLM
+                         'Al usuario confirma la cita de forma amigable sin mostrar el formato interno. Ejemplo: "¡Perfecto! Tu reunión está agendada para el..." ' .
+                         'EJEMPLOS DE PROPUESTAS: ' .
+                         'Si mencionan ventas: "Con nuestra solución podrías aumentar tus ventas un 30% automatizando seguimiento de clientes 💡 ¿Te gustaría conocer cómo en una breve reunión?" ' .
+                         'Si mencionan tiempo: "Podríamos ahorrarte 15 horas semanales automatizando esos procesos ⚡ ¿Te interesa ver cómo en una reunión virtual?" ' .
+                         'RECUERDA: Mensajes cortos, máximo 2 emojis, enfócate en beneficios específicos y en conseguir la reunión.';
+            
+            // Verificar si el contacto ya tiene un turno pendiente
+            $turnoExistente = Turno::where('contacto_web_id', $contactoWebId)
+                ->where('fecha_turno', '>=', $hoyGuayaquil)
+                ->first();
+
+            // Agregar información sobre turno existente si lo hay
+            if ($turnoExistente) {
+                 // Recuperar el nombre del contacto para un mensaje más personalizado
+                $contacto = ContactoWeb::find($contactoWebId);
+                $nombreContacto = $contacto ? $contacto->nombre : 'tú';
+                $contextBase .= ' IMPORTANTE: Este contacto ('.$nombreContacto.') ya tiene una reunión agendada para el ' . 
+                              $turnoExistente->fecha_turno->format('d/m/Y H:i') . 
+                              '. Motivo: ' . $turnoExistente->motivo . 
+                              '. Infórmale amablemente que ya tiene una cita y que contactaremos pronto, no intentes agendar otra.';
+            }
+            
 
             // Obtener historial de mensajes para este chat_id
             $historialMensajes = ChatWeb::where('chat_id', $chatId)
@@ -91,19 +121,23 @@ class ChatController extends Controller
                 if (isset($responseData['choices'][0]['message']['content'])) {
                     $aiResponse = $responseData['choices'][0]['message']['content'];
 
-                    // Guardar respuesta del bot
+                    // Procesar turno si aplica
+                    $turnoProcesadoResultado = null;
+                    if (preg_match($this->formatoTurno, $aiResponse, $matches)) {
+                       $turnoProcesadoResultado = $this->procesarConfirmacionTurno($chatId, $contactoWebId, $matches[1], $matches[2]);
+                       // Si la validación del turno falló, sobrescribir la respuesta del bot con el mensaje de error
+                       if (is_string($turnoProcesadoResultado) && !empty($turnoProcesadoResultado)) {
+                           $aiResponse = $turnoProcesadoResultado;
+                       }
+                    }
+
+                    // Guardar respuesta del bot (puede ser la original o el mensaje de error del turno)
                     ChatWeb::create([
                         'chat_id' => $chatId,
                         'contacto_web_id' => $contactoWebId, // Usar el mismo ID de contacto
                         'mensaje' => $aiResponse,
                         'tipo' => 'bot',
                     ]);
-
-                    // Procesar turno si aplica (movido fuera de la lógica principal de respuesta)
-                    if (preg_match($this->formatoTurno, $aiResponse, $matches)) {
-                       $this->procesarConfirmacionTurno($chatId, $contactoWebId, $matches[1], $matches[2]);
-                       // Podríamos modificar la respuesta aquí si es necesario
-                    }
 
                     return response()->json(['response' => $aiResponse]);
                 }
@@ -195,6 +229,7 @@ class ChatController extends Controller
     /**
      * Handles admin replies.
      */
+/*
     public function adminReply(Request $request)
     {
         try {
@@ -232,7 +267,7 @@ class ChatController extends Controller
             return response()->json(['success' => false, 'message' => 'Error al enviar el mensaje'], 500);
         }
     }
-    
+*/
     // --- Métodos auxiliares (procesarConfirmacionTurno, encontrarSiguienteHorarioDisponible, generateNewUniqueId) ---
 
     protected function procesarConfirmacionTurno($chatId, $contactoWebId, $fechaHora, $motivo)
@@ -265,12 +300,15 @@ class ChatController extends Controller
             }
 
             // Verificar si ya tiene un turno pendiente
-            $turnoExistente = Turno::where('user_id', $chatId)
+            $turnoExistente = Turno::where('contacto_web_id', $contactoWebId) // Cambiado de user_id a contacto_web_id
                 ->where('fecha_turno', '>=', $ahora)
                 ->first();
 
             if ($turnoExistente) {
-                return "Ya tienes una cita para el " . 
+                // Recuperar el nombre del contacto para un mensaje más personalizado
+                $contacto = ContactoWeb::find($contactoWebId);
+                $nombreContacto = $contacto ? $contacto->nombre : 'tú';
+                return "¡Hola {$nombreContacto}! Ya tienes una cita para el " . 
                       $turnoExistente->fecha_turno->format('d/m/Y H:i') . 
                       ". Contáctanos si necesitas modificarla 📅";
             }
@@ -287,19 +325,21 @@ class ChatController extends Controller
 
             // Crear el nuevo turno
             Turno::create([
-                'user_id' => $chatId,
+                // 'user_id' => $chatId, // Eliminado user_id
                 'contacto_web_id' => $contactoWebId,
                 'fecha_turno' => $fechaTurno,
                 'motivo' => $motivo
             ]);
             
             Log::info("Turno creado para chatId: {$chatId}, contactoId: {$contactoWebId}");
-            // No retornar mensaje aquí, ya que el mensaje del bot ya se envió.
-            // Esta función ahora solo procesa la lógica del turno.
+            // No retornar mensaje aquí, la respuesta original del bot ya es la confirmación.
+            // Devolver null indica éxito y que se debe usar la respuesta original del bot.
+            return null; 
 
         } catch (\Exception $e) {
-            Log::error('Error al procesar confirmación de turno: ' . $e->getMessage());
-            // Quizás enviar un mensaje de error al chat? O solo loggear.
+            Log::error('Error al procesar confirmación de turno para contacto web: ' . $e->getMessage());
+            // Devolver un mensaje de error genérico si algo sale mal
+            return 'Lo siento, hubo un problema interno al intentar agendar tu cita. Por favor, intenta de nuevo más tarde.';
         }
     }
 
