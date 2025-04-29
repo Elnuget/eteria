@@ -42,6 +42,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ContactosSeeder::class,
             MensajesSeeder::class,
+            ContactoWebsSeeder::class,
+            ChatWebsSeeder::class,
             TurnosSeeder::class,
         ]);
     }
