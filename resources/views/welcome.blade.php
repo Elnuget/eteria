@@ -495,6 +495,51 @@ https://templatemo.com/tm-534-parallo
 
             let isMinimized = true;
             let isTyping = false;
+            let chatId = 'chatweb1'; // ID del chat por defecto
+
+            // Función para generar un nuevo chat_id
+            function generateNewChatId() {
+                const lastChat = localStorage.getItem('lastChatId');
+                if (lastChat) {
+                    const number = parseInt(lastChat.replace('chatweb', '')) + 1;
+                    return `chatweb${number}`;
+                }
+                return 'chatweb1';
+            }
+
+            // Función para cargar el historial del chat
+            async function loadChatHistory() {
+                try {
+                    const response = await fetch(`/api/chat/history?chat_id=${chatId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Error del servidor: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    // Limpiar mensajes existentes
+                    chatMessages.innerHTML = '';
+                    
+                    // Agregar mensaje de bienvenida
+                    addMessage('¡Bienvenido a Eteria! 👋 ¿En qué puedo ayudarte?', false);
+                    
+                    // Agregar mensajes del historial
+                    data.mensajes.forEach(mensaje => {
+                        addMessage(mensaje.mensaje, mensaje.tipo === 'usuario');
+                    });
+                } catch (error) {
+                    console.error('Error al cargar historial:', error);
+                    // Agregar mensaje de bienvenida por defecto
+                    addMessage('¡Bienvenido a Eteria! 👋 ¿En qué puedo ayudarte?', false);
+                }
+            }
 
             function getCurrentTime() {
                 const now = new Date();
@@ -587,7 +632,8 @@ https://templatemo.com/tm-534-parallo
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                         },
                         body: JSON.stringify({
-                            message: message
+                            message: message,
+                            chat_id: chatId
                         })
                     });
 
@@ -643,10 +689,17 @@ https://templatemo.com/tm-534-parallo
 
             // Inicializar el chat
             function initializeChat() {
+                // Generar nuevo chat_id si es necesario
+                chatId = generateNewChatId();
+                localStorage.setItem('lastChatId', chatId);
+                
                 chatWidget.style.height = '80px';
                 chatMessages.style.display = 'none';
                 chatInput.style.display = 'none';
                 minimizeButton.innerHTML = '<i class="fas fa-plus"></i>';
+                
+                // Cargar historial del chat
+                loadChatHistory();
             }
 
             initializeChat();
