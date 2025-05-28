@@ -77,6 +77,94 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Asientos Contables de Compras -->
+                            <div class="card mt-3">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-balance-scale"></i>
+                                        Asientos Contables - Compras
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>Fecha</th>
+                                                    <th>Descripción</th>
+                                                    <th>Cuenta</th>
+                                                    <th class="text-end">Debe</th>
+                                                    <th class="text-end">Haber</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @php 
+                                                    $totalDebeCompras = 0;
+                                                    $totalHaberCompras = 0;
+                                                @endphp
+                                                @foreach($compras['compras'] as $compra)
+                                                    @php
+                                                        $totalValue = $compra['total_value'] ?? 0;
+                                                        $totalDebeCompras += $totalValue;
+                                                        $totalHaberCompras += $totalValue;
+                                                    @endphp
+                                                    <!-- Cuenta de Gasto (Debe) -->
+                                                    <tr>
+                                                        <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y', $compra['invoice_date'])->format('d/m/Y') }}</td>
+                                                        <td>Compra a {{ $compra['supplier_name'] }}</td>
+                                                        <td>Gastos de Operación</td>
+                                                        <td class="text-end text-success">
+                                                            <strong>${{ number_format($totalValue, 2) }}</strong>
+                                                        </td>
+                                                        <td class="text-end">-</td>
+                                                    </tr>
+                                                    <!-- Cuenta por Pagar (Haber) -->
+                                                    <tr>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td class="ps-4">Cuentas por Pagar</td>
+                                                        <td class="text-end">-</td>
+                                                        <td class="text-end text-danger">
+                                                            <strong>${{ number_format($totalValue, 2) }}</strong>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                            <tfoot class="table-light">
+                                                <tr>
+                                                    <th colspan="3" class="text-end">TOTALES:</th>
+                                                    <th class="text-end">
+                                                        <span class="badge bg-success">
+                                                            ${{ number_format($totalDebeCompras, 2) }}
+                                                        </span>
+                                                    </th>
+                                                    <th class="text-end">
+                                                        <span class="badge bg-danger">
+                                                            ${{ number_format($totalHaberCompras, 2) }}
+                                                        </span>
+                                                    </th>
+                                                </tr>
+                                                <tr>
+                                                    <th colspan="5" class="text-center">
+                                                        @if($totalDebeCompras == $totalHaberCompras)
+                                                            <span class="badge bg-success">
+                                                                <i class="fas fa-check"></i>
+                                                                Asiento Balanceado
+                                                            </span>
+                                                        @else
+                                                            <span class="badge bg-danger">
+                                                                <i class="fas fa-exclamation-triangle"></i>
+                                                                Asiento Desbalanceado
+                                                            </span>
+                                                        @endif
+                                                    </th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     @endif
 
@@ -150,9 +238,219 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Asientos Contables de Ventas -->
+                            <div class="card mt-3">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-balance-scale"></i>
+                                        Asientos Contables - Ventas
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>Fecha</th>
+                                                    <th>Descripción</th>
+                                                    <th>Cuenta</th>
+                                                    <th class="text-end">Debe</th>
+                                                    <th class="text-end">Haber</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @php 
+                                                    $totalDebeVentas = 0;
+                                                    $totalHaberVentas = 0;
+                                                @endphp
+                                                @foreach($ventas['ventas'] as $venta)
+                                                    @php
+                                                        $totalValue = $venta['total_value'] ?? 0;
+                                                        $totalDebeVentas += $totalValue;
+                                                        $totalHaberVentas += $totalValue;
+                                                    @endphp
+                                                    <!-- Cuenta por Cobrar (Debe) -->
+                                                    <tr>
+                                                        <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y', $venta['invoice_date'])->format('d/m/Y') }}</td>
+                                                        <td>Venta a {{ $venta['customer_name'] ?? 'Cliente' }}</td>
+                                                        <td>Cuentas por Cobrar</td>
+                                                        <td class="text-end text-success">
+                                                            <strong>${{ number_format($totalValue, 2) }}</strong>
+                                                        </td>
+                                                        <td class="text-end">-</td>
+                                                    </tr>
+                                                    <!-- Ingreso por Ventas (Haber) -->
+                                                    <tr>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td class="ps-4">Ingresos por Ventas</td>
+                                                        <td class="text-end">-</td>
+                                                        <td class="text-end text-danger">
+                                                            <strong>${{ number_format($totalValue, 2) }}</strong>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                            <tfoot class="table-light">
+                                                <tr>
+                                                    <th colspan="3" class="text-end">TOTALES:</th>
+                                                    <th class="text-end">
+                                                        <span class="badge bg-success">
+                                                            ${{ number_format($totalDebeVentas, 2) }}
+                                                        </span>
+                                                    </th>
+                                                    <th class="text-end">
+                                                        <span class="badge bg-danger">
+                                                            ${{ number_format($totalHaberVentas, 2) }}
+                                                        </span>
+                                                    </th>
+                                                </tr>
+                                                <tr>
+                                                    <th colspan="5" class="text-center">
+                                                        @if($totalDebeVentas == $totalHaberVentas)
+                                                            <span class="badge bg-success">
+                                                                <i class="fas fa-check"></i>
+                                                                Asiento Balanceado
+                                                            </span>
+                                                        @else
+                                                            <span class="badge bg-danger">
+                                                                <i class="fas fa-exclamation-triangle"></i>
+                                                                Asiento Desbalanceado
+                                                            </span>
+                                                        @endif
+                                                    </th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     @endif
                 </div>
+
+                <!-- Resumen General de Asientos Contables -->
+                @if((isset($compras['compras']) && count($compras['compras']) > 0) || (isset($ventas['ventas']) && count($ventas['ventas']) > 0))
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-chart-pie"></i>
+                                        Resumen General de Asientos Contables
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <!-- Resumen de Compras -->
+                                        @if(isset($compras['compras']) && count($compras['compras']) > 0)
+                                            <div class="col-md-6">
+                                                <div class="card border-danger">
+                                                    <div class="card-header bg-danger text-white">
+                                                        <h6 class="mb-0">Movimientos por Compras</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        @php
+                                                            $totalComprasGeneral = array_sum(array_column($compras['compras'], 'total_value'));
+                                                        @endphp
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                            <span>Gastos de Operación (Debe):</span>
+                                                            <span class="badge bg-success fs-6">${{ number_format($totalComprasGeneral, 2) }}</span>
+                                                        </div>
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <span>Cuentas por Pagar (Haber):</span>
+                                                            <span class="badge bg-danger fs-6">${{ number_format($totalComprasGeneral, 2) }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        <!-- Resumen de Ventas -->
+                                        @if(isset($ventas['ventas']) && count($ventas['ventas']) > 0)
+                                            <div class="col-md-6">
+                                                <div class="card border-success">
+                                                    <div class="card-header bg-success text-white">
+                                                        <h6 class="mb-0">Movimientos por Ventas</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        @php
+                                                            $totalVentasGeneral = array_sum(array_column($ventas['ventas'], 'total_value'));
+                                                        @endphp
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                            <span>Cuentas por Cobrar (Debe):</span>
+                                                            <span class="badge bg-success fs-6">${{ number_format($totalVentasGeneral, 2) }}</span>
+                                                        </div>
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <span>Ingresos por Ventas (Haber):</span>
+                                                            <span class="badge bg-danger fs-6">${{ number_format($totalVentasGeneral, 2) }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <!-- Balance General -->
+                                    <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    @php
+                                                        $totalDebeGeneral = 0;
+                                                        $totalHaberGeneral = 0;
+                                                        
+                                                        if(isset($compras['compras'])) {
+                                                            $totalCompras = array_sum(array_column($compras['compras'], 'total_value'));
+                                                            $totalDebeGeneral += $totalCompras;
+                                                            $totalHaberGeneral += $totalCompras;
+                                                        }
+                                                        
+                                                        if(isset($ventas['ventas'])) {
+                                                            $totalVentas = array_sum(array_column($ventas['ventas'], 'total_value'));
+                                                            $totalDebeGeneral += $totalVentas;
+                                                            $totalHaberGeneral += $totalVentas;
+                                                        }
+                                                    @endphp
+                                                    <h5 class="mb-3">Balance General de Asientos</h5>
+                                                    <div class="row">
+                                                        <div class="col-md-4">
+                                                            <h6>Total Debe:</h6>
+                                                            <span class="badge bg-success fs-5">
+                                                                ${{ number_format($totalDebeGeneral, 2) }}
+                                                            </span>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <h6>Total Haber:</h6>
+                                                            <span class="badge bg-danger fs-5">
+                                                                ${{ number_format($totalHaberGeneral, 2) }}
+                                                            </span>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <h6>Estado:</h6>
+                                                            @if($totalDebeGeneral == $totalHaberGeneral)
+                                                                <span class="badge bg-success fs-5">
+                                                                    <i class="fas fa-check"></i>
+                                                                    BALANCEADO
+                                                                </span>
+                                                            @else
+                                                                <span class="badge bg-danger fs-5">
+                                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                                    DESBALANCEADO
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             @endif
 
             <div class="card">
