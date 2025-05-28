@@ -6,6 +6,7 @@ use App\Models\Contabilidad;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class ContabilidadController extends Controller
 {
@@ -18,7 +19,24 @@ class ContabilidadController extends Controller
             ->orderBy('fecha', 'desc')
             ->paginate(15);
 
-        return view('contabilidad.index', compact('contabilidad'));
+        // Leer archivos JSON de compras y ventas
+        $compras = $this->readJsonFile(resource_path('views/contabilidad/compra/compras.txt'));
+        $ventas = $this->readJsonFile(resource_path('views/contabilidad/venta/ventas.txt'));
+
+        return view('contabilidad.index', compact('contabilidad', 'compras', 'ventas'));
+    }
+
+    /**
+     * Leer y decodificar archivo JSON
+     */
+    private function readJsonFile($filePath)
+    {
+        if (file_exists($filePath)) {
+            $content = file_get_contents($filePath);
+            $data = json_decode($content, true);
+            return $data ?? [];
+        }
+        return [];
     }
 
     /**
