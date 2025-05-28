@@ -1,0 +1,159 @@
+{
+  "ventas": [
+    {
+      "supplier_name": "JIMENEZ MONCAYO MAYRA ALEXANDRA",
+      "business_name": "Clinica Veterinaria del Sur",
+      "ruc": "1718875659001",
+      "invoice_number": "001-100-000001459",
+      "authorization_number": "2705202501171887565900120011000000014590000024014",
+      "authorization_date": "27/05/2025 20:31:39",
+      "environment": "PRODUCCIÓN",
+      "emission_type": "NORMAL",
+      "obligated_to_carry_accounting": "NO",
+      "customer_name": "Valentina Villamil",
+      "customer_id": "1723701163",
+      "customer_address": "Santo tomas 2",
+      "invoice_date": "27/05/2025",
+      "products": [
+        {
+          "code": "19552",
+          "quantity": 1.00,
+          "description": "Vacuna Multiple 5L",
+          "unit_price": 15.70,
+          "total_price": 15.70
+        }
+      ],
+      "subtotal_0_iva": 15.70,
+      "subtotal_no_iva": 0.00,
+      "subtotal_exempt_iva": 0.00,
+      "subtotal_without_taxes": 15.70,
+      "total_discount": 0.00,
+      "ice": 0.00,
+      "irbpnr": 0.00,
+      "tip": 0.00,
+      "total_value": 15.70,
+      "payment_method": "20-OTROS CON UTILIZACION DEL SISTEMA FINANCIERO",
+      "payment_value": 15.70,
+      "total_value_without_subsidy": 0.00,
+      "subsidy_savings": 0.00,
+      "additional_info": {
+        "address": "Santo tomas 2",
+        "phone": "0969251895",
+        "email": "emiliavillamil717@gmail.com"
+      },
+      "supplier_address": {
+        "matrix": "QUITO, TURUBAMBA, SANTO TOMAS II, CALLE S57C y E3G",
+        "branch": "QUITO, TURUBAMBA, SANTO TOMAS II, CALLE S57C y E3G"
+      }
+    },
+    {
+      "supplier_name": "JIMENEZ MONCAYO MAYRA ALEXANDRA",
+      "business_name": "Clinica Veterinaria del Sur",
+      "ruc": "1718875659001",
+      "invoice_number": "001-100-000001457",
+      "authorization_number": "2705202501171887565900120011000000014570000024013",
+      "authorization_date": "27/05/2025 16:15:35",
+      "environment": "PRODUCCIÓN",
+      "emission_type": "NORMAL",
+      "obligated_to_carry_accounting": "NO",
+      "customer_name": "Edgar Garcia",
+      "customer_id": "1713570073",
+      "customer_address": "Santo tomas 2",
+      "invoice_date": "27/05/2025",
+      "products": [
+        {
+          "code": "19903",
+          "quantity": 4.00,
+          "description": "Corte de uÃ as",
+          "unit_price": 1.00,
+          "total_price": 4.00
+        },
+        {
+          "code": "185083",
+          "quantity": 1.00,
+          "description": "ArnÃ©s policia",
+          "unit_price": 5.22,
+          "discount": 1.04,
+          "total_price": 4.18
+        }
+      ],
+      "subtotal_15_iva": 4.18,
+      "subtotal_0_iva": 4.00,
+      "subtotal_no_iva": 0.00,
+      "subtotal_exempt_iva": 0.00,
+      "subtotal_without_taxes": 8.18,
+      "total_discount": 1.04,
+      "ice": 0.00,
+      "iva_15": 0.63,
+      "irbpnr": 0.00,
+      "tip": 0.00,
+      "total_value": 8.80,
+      "payment_method": "20-OTROS CON UTILIZACION DEL SISTEMA FINANCIERO",
+      "payment_value": 8.80,
+      "total_value_without_subsidy": 0.00,
+      "subsidy_savings": 0.00,
+      "additional_info": {
+        "address": "Santo tomas 2",
+        "phone": "0998177565",
+        "email": "edgargarcia3038@gmail.com"
+      },
+      "supplier_address": {
+        "matrix": "QUITO, TURUBAMBA, SANTO TOMAS II, CALLE S57C y E3G",
+        "branch": "QUITO, TURUBAMBA, SANTO TOMAS II, CALLE S57C y E3G"
+      }
+    },
+    {
+      "supplier_name": "JIMENEZ MONCAYO MAYRA ALEXANDRA",
+      "business_name": "Clinica Veterinaria del Sur",
+      "ruc": "1718875659001",
+      "invoice_number": "001-100-000001460",
+      "authorization_number": "2705202501171887565900120011000000014600000024011",
+      "authorization_date": "27/05/2025 21:02:38",
+      "environment": "PRODUCCIÓN",
+      "emission_type": "NORMAL",
+      "obligated_to_carry_accounting": "NO",
+      "customer_name": "Lilian Pineda",
+      "customer_id": "1722615687",
+      "customer_address": "La Venecia",
+      "invoice_date": "27/05/2025",
+      "products": [
+        {
+          "code": "19518",
+          "quantity": 1.00,
+          "description": "Consulta general",
+          "unit_price": 15.70,
+          "total_price": 15.70
+        },
+        {
+          "code": "19702",
+          "quantity": 1.00,
+          "description": "InyecciÃ³n IM o SC hasta 9.9kg",
+          "unit_price": 4.89,
+          "total_price": 4.89
+        }
+      ],
+      "subtotal_0_iva": 20.59,
+      "subtotal_no_iva": 0.00,
+      "subtotal_exempt_iva": 0.00,
+      "subtotal_without_taxes": 20.59,
+      "total_discount": 0.00,
+      "ice": 0.00,
+      "irbpnr": 0.00,
+      "tip": 0.00,
+      "total_value": 20.59,
+      "payment_method": "20-OTROS CON UTILIZACION DEL SISTEMA FINANCIERO",
+      "payment_value": 20.59,
+      "total_value_without_subsidy": 0.00,
+      "subsidy_savings": 0.00,
+      "additional_info": {
+        "address": "La Venecia",
+        "phone": "0979253247",
+        "email": "lilianliz_2010@hotmail.com"
+      },
+      "supplier_address": {
+        "matrix": "QUITO, TURUBAMBA, SANTO TOMAS II, CALLE S57C y E3G",
+        "branch": "QUITO, TURUBAMBA, SANTO TOMAS II, CALLE S57C y E3G"
+      }
+    }
+  ]
+}

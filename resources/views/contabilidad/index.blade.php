@@ -23,10 +23,9 @@
                                             <thead class="table-dark">
                                                 <tr>
                                                     <th>Proveedor</th>
-                                                    <th>RUC</th>
-                                                    <th>Factura</th>
                                                     <th>Fecha</th>
                                                     <th>Total</th>
+                                                    <th>RIDE</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -38,20 +37,31 @@
                                                                 <br><small class="text-muted">{{ $compra['business_name'] }}</small>
                                                             @endif
                                                         </td>
-                                                        <td>{{ $compra['ruc'] }}</td>
-                                                        <td>{{ $compra['invoice_number'] }}</td>
                                                         <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y', $compra['invoice_date'])->format('d/m/Y') }}</td>
                                                         <td>
                                                             <span class="badge bg-danger">
                                                                 ${{ number_format($compra['total_value'] ?? 0, 2) }}
                                                             </span>
                                                         </td>
+                                                        <td class="text-center">
+                                                            @if(isset($compra['authorization_number']))
+                                                                <a href="{{ asset('compra/' . $compra['authorization_number'] . '.pdf') }}" 
+                                                                   target="_blank" 
+                                                                   class="btn btn-sm btn-outline-danger" 
+                                                                   title="Ver RIDE PDF">
+                                                                    <i class="fas fa-file-pdf"></i>
+                                                                    PDF
+                                                                </a>
+                                                            @else
+                                                                <span class="text-muted">N/A</span>
+                                                            @endif
+                                                        </td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>
                                             <tfoot class="table-light">
                                                 <tr>
-                                                    <th colspan="4" class="text-end">Total de Compras:</th>
+                                                    <th colspan="2" class="text-end">Total de Compras:</th>
                                                     <th>
                                                         <span class="badge bg-danger">
                                                             @php
@@ -60,6 +70,7 @@
                                                             ${{ number_format($totalComprasValue, 2) }}
                                                         </span>
                                                     </th>
+                                                    <th></th>
                                                 </tr>
                                             </tfoot>
                                         </table>
@@ -85,10 +96,9 @@
                                             <thead class="table-dark">
                                                 <tr>
                                                     <th>Empresa</th>
-                                                    <th>RUC</th>
-                                                    <th>Factura</th>
                                                     <th>Fecha</th>
                                                     <th>Total</th>
+                                                    <th>RIDE</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -100,20 +110,31 @@
                                                                 <br><small class="text-muted">{{ $venta['business_name'] }}</small>
                                                             @endif
                                                         </td>
-                                                        <td>{{ $venta['ruc'] }}</td>
-                                                        <td>{{ $venta['invoice_number'] }}</td>
                                                         <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y', $venta['invoice_date'])->format('d/m/Y') }}</td>
                                                         <td>
                                                             <span class="badge bg-success">
                                                                 ${{ number_format($venta['total_value'] ?? 0, 2) }}
                                                             </span>
                                                         </td>
+                                                        <td class="text-center">
+                                                            @if(isset($venta['authorization_number']))
+                                                                <a href="{{ asset('venta/' . $venta['authorization_number'] . '.pdf') }}" 
+                                                                   target="_blank" 
+                                                                   class="btn btn-sm btn-outline-success" 
+                                                                   title="Ver RIDE PDF">
+                                                                    <i class="fas fa-file-pdf"></i>
+                                                                    PDF
+                                                                </a>
+                                                            @else
+                                                                <span class="text-muted">N/A</span>
+                                                            @endif
+                                                        </td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>
                                             <tfoot class="table-light">
                                                 <tr>
-                                                    <th colspan="4" class="text-end">Total de Ventas:</th>
+                                                    <th colspan="2" class="text-end">Total de Ventas:</th>
                                                     <th>
                                                         <span class="badge bg-success">
                                                             @php
@@ -122,6 +143,7 @@
                                                             ${{ number_format($totalVentasValue, 2) }}
                                                         </span>
                                                     </th>
+                                                    <th></th>
                                                 </tr>
                                             </tfoot>
                                         </table>

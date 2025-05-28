@@ -1,0 +1,170 @@
+{
+  "compras": [
+    {
+      "supplier_name": "COBO ARIZAGA CRISTOBAL RAFAEL",
+      "ruc": "1705899704001",
+      "invoice_number": "001-001-000001019",
+      "authorization_number": "2505202501170589970400120010010000010192024582810",
+      "authorization_date": "25/05/2025 11:50:02",
+      "environment": "PRODUCCIÓN",
+      "emission_type": "NORMAL",
+      "obligated_to_carry_accounting": "NO",
+      "customer_name": "Mayra Jimenez",
+      "customer_id": "1718875659",
+      "customer_address": "Quito",
+      "invoice_date": "25/05/2025",
+      "products": [
+        {
+          "code": "001",
+          "quantity": 6.00,
+          "description": "Conferencia Museo Solar",
+          "unit_price": 5.00,
+          "total_price": 30.00
+        },
+        {
+          "code": "002",
+          "quantity": 3.00,
+          "description": "Conferencia Museo Solar",
+          "unit_price": 3.00,
+          "total_price": 9.00
+        }
+      ],
+      "subtotal_no_iva": 0.00,
+      "subtotal_exempt_iva": 39.00,
+      "subtotal_without_taxes": 39.00,
+      "total_discount": 0.00,
+      "ice": 0.00,
+      "irbpnr": 0.00,
+      "tip": 0.00,
+      "total_value": 39.00,
+      "payment_method": "01-SIN UTILIZACION DEL SISTEMA FINANCIERO",
+      "payment_value": 39.00,
+      "phone": "0993741158",
+      "email": "cvsclinicaveterinariadelsur@gmail.com",
+      "supplier_address": {
+        "matrix": "GUACHALA PRINCIPAL K7 JUNTO AL MONUMENTO MITAD DEL MUNDO",
+        "branch": "GUACHALA PRINCIPAL K7 JUNTO AL MONUMENTO MITAD DEL MUNDO"
+      }
+    },
+    {
+      "supplier_name": "SERENDIPIA CENTRO PSICOLOGICO S.A.S.",
+      "ruc": "1793192424001",
+      "invoice_number": "001-001-000010017",
+      "authorization_number": "2705202501179319242400120010010000100171234567812",
+      "authorization_date": "27/05/2025 15:13:27",
+      "environment": "PRODUCCIÓN",
+      "emission_type": "NORMAL",
+      "obligated_to_carry_accounting": "SI",
+      "customer_name": "JIMENEZ MONCAYO MAYRA ALEXANDRA",
+      "customer_id": "1718875659001",
+      "customer_address": "Quito, Turubamba, Santo Tomás 2 calles S57C y E3G",
+      "invoice_date": "27/05/2025",
+      "products": [
+        {
+          "code": "P00000000 8",
+          "auxiliary_code": "P00000000 8",
+          "quantity": 1.00,
+          "description": "Terapia Psicologica",
+          "unit_price": 25.00,
+          "total_price": 25.00
+        }
+      ],
+      "subtotal_0_iva": 25.00,
+      "subtotal_no_iva": 0.00,
+      "subtotal_exempt_iva": 0.00,
+      "subtotal_without_taxes": 25.00,
+      "total_discount": 0.00,
+      "ice": 0.00,
+      "irbpnr": 0.00,
+      "tip": 0.00,
+      "total_value": 25.00,
+      "payment_method": "20-OTROS CON UTILIZACION DEL SISTEMA FINANCIERO",
+      "payment_value": 25.00,
+      "additional_info": {
+        "seller": "Vendedor",
+        "email": "cvsclinicaveterinariadelsur@gmail.com",
+        "city": "QUITO",
+        "observation": "Venta"
+      },
+      "supplier_address": {
+        "matrix": "AV. COLON Y VERSALLES",
+        "branch": "AV. COLON Y VERSALLES"
+      }
+    },
+    {
+      "supplier_name": "FABIOLA QUINCHIGUANGO",
+      "business_name": "HORNADOS FABIOLITA",
+      "ruc": "1706805320001",
+      "invoice_number": "002-001-000000753",
+      "authorization_number": "2505202501170680532000120020010000007530000007211",
+      "authorization_date": "25/05/2025 15:20:15",
+      "environment": "PRODUCCIÓN",
+      "emission_type": "NORMAL",
+      "obligated_to_carry_accounting": "NO",
+      "contributor_regime": "RIMPE",
+      "customer_name": "Mayra Jimenez",
+      "customer_id": "1718875659",
+      "customer_address": "quito",
+      "invoice_date": "25/05/2025",
+      "products": [
+        {
+          "code": "P009",
+          "quantity": 2.00,
+          "description": "Caldo de gallina",
+          "unit_price": 4.00,
+          "total_price": 8.00
+        },
+        {
+          "code": "P002",
+          "quantity": 2.00,
+          "description": "Especial Fabiolita",
+          "unit_price": 5.00,
+          "total_price": 10.00
+        },
+        {
+          "code": "luehbedu0jp71mppktu24sevd",
+          "quantity": 1.00,
+          "description": "Promo 20",
+          "unit_price": 20.00,
+          "total_price": 20.00
+        },
+        {
+          "code": "lua9nh3wd",
+          "quantity": 1.00,
+          "description": "Hornado de 3",
+          "unit_price": 3.00,
+          "total_price": 3.00
+        },
+        {
+          "code": "nu1pf8hv2915v5hj",
+          "quantity": 1.00,
+          "description": "Mote con chicharron",
+          "unit_price": 2.00,
+          "total_price": 2.00
+        }
+      ],
+      "subtotal_15_iva": 43.00,
+      "subtotal_no_iva": 0.00,
+      "subtotal_exempt_iva": 0.00,
+      "subtotal_without_taxes": 43.00,
+      "total_discount": 0.00,
+      "ice": 0.00,
+      "iva_15": 6.45,
+      "irbpnr": 0.00,
+      "tip": 0.00,
+      "total_value": 49.45,
+      "payment_method": "01 SIN UTILIZACION DEL SISTEMA FINANCIERO",
+      "payment_value": 49.45,
+      "total_value_without_subsidy": 0.00,
+      "subsidy_savings": 0.00,
+      "additional_info": {
+        "phone": "0993741158",
+        "email": "cvsclinicaveterinariadelsur@gmail.com"
+      },
+      "supplier_address": {
+        "matrix": "28 DE JULIO Y KENNEDY",
+        "branch": "28 DE JULIO Y KENNEDY"
+      }
+    }
+  ]
+}
