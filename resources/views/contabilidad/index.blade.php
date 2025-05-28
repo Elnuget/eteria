@@ -4,6 +4,135 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
+            <!-- Sección de Compras y Ventas -->
+            @if((isset($compras['compras']) && count($compras['compras']) > 0) || (isset($ventas['ventas']) && count($ventas['ventas']) > 0))
+                <div class="row mb-4">
+                    <!-- Sección de Compras -->
+                    @if(isset($compras['compras']) && count($compras['compras']) > 0)
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-danger text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-shopping-cart"></i>
+                                        Registro de Compras
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>Proveedor</th>
+                                                    <th>RUC</th>
+                                                    <th>Factura</th>
+                                                    <th>Fecha</th>
+                                                    <th>Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($compras['compras'] as $compra)
+                                                    <tr>
+                                                        <td>
+                                                            <strong>{{ $compra['supplier_name'] }}</strong>
+                                                            @if(isset($compra['business_name']))
+                                                                <br><small class="text-muted">{{ $compra['business_name'] }}</small>
+                                                            @endif
+                                                        </td>
+                                                        <td>{{ $compra['ruc'] }}</td>
+                                                        <td>{{ $compra['invoice_number'] }}</td>
+                                                        <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y', $compra['invoice_date'])->format('d/m/Y') }}</td>
+                                                        <td>
+                                                            <span class="badge bg-danger">
+                                                                ${{ number_format($compra['total_value'] ?? 0, 2) }}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                            <tfoot class="table-light">
+                                                <tr>
+                                                    <th colspan="4" class="text-end">Total de Compras:</th>
+                                                    <th>
+                                                        <span class="badge bg-danger">
+                                                            @php
+                                                                $totalComprasValue = array_sum(array_column($compras['compras'], 'total_value'));
+                                                            @endphp
+                                                            ${{ number_format($totalComprasValue, 2) }}
+                                                        </span>
+                                                    </th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Sección de Ventas -->
+                    @if(isset($ventas['ventas']) && count($ventas['ventas']) > 0)
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-cash-register"></i>
+                                        Registro de Ventas
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>Empresa</th>
+                                                    <th>RUC</th>
+                                                    <th>Factura</th>
+                                                    <th>Fecha</th>
+                                                    <th>Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($ventas['ventas'] as $venta)
+                                                    <tr>
+                                                        <td>
+                                                            <strong>{{ $venta['supplier_name'] }}</strong>
+                                                            @if(isset($venta['business_name']))
+                                                                <br><small class="text-muted">{{ $venta['business_name'] }}</small>
+                                                            @endif
+                                                        </td>
+                                                        <td>{{ $venta['ruc'] }}</td>
+                                                        <td>{{ $venta['invoice_number'] }}</td>
+                                                        <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y', $venta['invoice_date'])->format('d/m/Y') }}</td>
+                                                        <td>
+                                                            <span class="badge bg-success">
+                                                                ${{ number_format($venta['total_value'] ?? 0, 2) }}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                            <tfoot class="table-light">
+                                                <tr>
+                                                    <th colspan="4" class="text-end">Total de Ventas:</th>
+                                                    <th>
+                                                        <span class="badge bg-success">
+                                                            @php
+                                                                $totalVentasValue = array_sum(array_column($ventas['ventas'], 'total_value'));
+                                                            @endphp
+                                                            ${{ number_format($totalVentasValue, 2) }}
+                                                        </span>
+                                                    </th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            @endif
+
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="mb-0">
@@ -95,31 +224,6 @@
                         <div class="d-flex justify-content-center mt-4">
                             {{ $contabilidad->links() }}
                         </div>
-
-                        <!-- Resumen -->
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <div class="card bg-light">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Total de Registros</h5>
-                                        <h3 class="text-primary">{{ $contabilidad->total() }}</h3>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card bg-light">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Suma Total</h5>
-                                        @php
-                                            $total = \App\Models\Contabilidad::sum('valor');
-                                        @endphp
-                                        <h3 class="text-{{ $total >= 0 ? 'success' : 'danger' }}">
-                                            ${{ number_format($total, 2) }}
-                                        </h3>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     @else
                         <div class="text-center py-5">
                             <i class="fas fa-calculator fa-3x text-muted mb-3"></i>
@@ -129,195 +233,6 @@
                                 <i class="fas fa-plus"></i>
                                 Crear Primer Registro
                             </a>
-                        </div>
-                    @endif
-
-                    <!-- Sección de Compras -->
-                    @if(isset($compras['compras']) && count($compras['compras']) > 0)
-                        <div class="mt-5">
-                            <div class="card">
-                                <div class="card-header bg-danger text-white">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-shopping-cart"></i>
-                                        Registro de Compras
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-hover">
-                                            <thead class="table-dark">
-                                                <tr>
-                                                    <th>Proveedor</th>
-                                                    <th>RUC</th>
-                                                    <th>Factura</th>
-                                                    <th>Fecha</th>
-                                                    <th>Cliente</th>
-                                                    <th>Productos</th>
-                                                    <th>Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach($compras['compras'] as $compra)
-                                                    <tr>
-                                                        <td>
-                                                            <strong>{{ $compra['supplier_name'] }}</strong>
-                                                            @if(isset($compra['business_name']))
-                                                                <br><small class="text-muted">{{ $compra['business_name'] }}</small>
-                                                            @endif
-                                                        </td>
-                                                        <td>{{ $compra['ruc'] }}</td>
-                                                        <td>{{ $compra['invoice_number'] }}</td>
-                                                        <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y', $compra['invoice_date'])->format('d/m/Y') }}</td>
-                                                        <td>{{ $compra['customer_name'] }}</td>
-                                                        <td>
-                                                            @foreach($compra['products'] as $product)
-                                                                <div class="mb-1">
-                                                                    <span class="badge bg-secondary">{{ $product['quantity'] }}x</span>
-                                                                    {{ $product['description'] }}
-                                                                    <small class="text-muted">(${{ number_format($product['unit_price'], 2) }})</small>
-                                                                </div>
-                                                            @endforeach
-                                                        </td>
-                                                        <td>
-                                                            <span class="badge bg-danger fs-6">
-                                                                ${{ number_format($compra['total_value'], 2) }}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                            <tfoot class="table-light">
-                                                <tr>
-                                                    <th colspan="6" class="text-end">Total de Compras:</th>
-                                                    <th>
-                                                        @php
-                                                            $totalCompras = array_sum(array_column($compras['compras'], 'total_value'));
-                                                        @endphp
-                                                        <span class="badge bg-danger fs-6">
-                                                            ${{ number_format($totalCompras, 2) }}
-                                                        </span>
-                                                    </th>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Sección de Ventas -->
-                    @if(isset($ventas['ventas']) && count($ventas['ventas']) > 0)
-                        <div class="mt-4">
-                            <div class="card">
-                                <div class="card-header bg-success text-white">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-cash-register"></i>
-                                        Registro de Ventas
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-hover">
-                                            <thead class="table-dark">
-                                                <tr>
-                                                    <th>Empresa</th>
-                                                    <th>RUC</th>
-                                                    <th>Factura</th>
-                                                    <th>Fecha</th>
-                                                    <th>Cliente</th>
-                                                    <th>Productos</th>
-                                                    <th>Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach($ventas['ventas'] as $venta)
-                                                    <tr>
-                                                        <td>
-                                                            <strong>{{ $venta['supplier_name'] }}</strong>
-                                                            @if(isset($venta['business_name']))
-                                                                <br><small class="text-muted">{{ $venta['business_name'] }}</small>
-                                                            @endif
-                                                        </td>
-                                                        <td>{{ $venta['ruc'] }}</td>
-                                                        <td>{{ $venta['invoice_number'] }}</td>
-                                                        <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y', $venta['invoice_date'])->format('d/m/Y') }}</td>
-                                                        <td>{{ $venta['customer_name'] }}</td>
-                                                        <td>
-                                                            @foreach($venta['products'] as $product)
-                                                                <div class="mb-1">
-                                                                    <span class="badge bg-secondary">{{ $product['quantity'] }}x</span>
-                                                                    {{ $product['description'] }}
-                                                                    <small class="text-muted">(${{ number_format($product['unit_price'], 2) }})</small>
-                                                                </div>
-                                                            @endforeach
-                                                        </td>
-                                                        <td>
-                                                            <span class="badge bg-success fs-6">
-                                                                ${{ number_format($venta['total_value'], 2) }}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                            <tfoot class="table-light">
-                                                <tr>
-                                                    <th colspan="6" class="text-end">Total de Ventas:</th>
-                                                    <th>
-                                                        @php
-                                                            $totalVentas = array_sum(array_column($ventas['ventas'], 'total_value'));
-                                                        @endphp
-                                                        <span class="badge bg-success fs-6">
-                                                            ${{ number_format($totalVentas, 2) }}
-                                                        </span>
-                                                    </th>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Resumen General -->
-                    @if((isset($compras['compras']) && count($compras['compras']) > 0) || (isset($ventas['ventas']) && count($ventas['ventas']) > 0))
-                        <div class="mt-4">
-                            <div class="row">
-                                @if(isset($compras['compras']) && count($compras['compras']) > 0)
-                                    <div class="col-md-4">
-                                        <div class="card bg-danger text-white">
-                                            <div class="card-body text-center">
-                                                <h5 class="card-title">Total Compras</h5>
-                                                <h3>${{ number_format($totalCompras ?? 0, 2) }}</h3>
-                                                <small>{{ count($compras['compras']) }} facturas</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                                @if(isset($ventas['ventas']) && count($ventas['ventas']) > 0)
-                                    <div class="col-md-4">
-                                        <div class="card bg-success text-white">
-                                            <div class="card-body text-center">
-                                                <h5 class="card-title">Total Ventas</h5>
-                                                <h3>${{ number_format($totalVentas ?? 0, 2) }}</h3>
-                                                <small>{{ count($ventas['ventas']) }} facturas</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                                @if(isset($totalCompras) && isset($totalVentas))
-                                    <div class="col-md-4">
-                                        <div class="card bg-{{ ($totalVentas - $totalCompras) >= 0 ? 'primary' : 'warning' }} text-white">
-                                            <div class="card-body text-center">
-                                                <h5 class="card-title">Balance</h5>
-                                                <h3>${{ number_format($totalVentas - $totalCompras, 2) }}</h3>
-                                                <small>{{ ($totalVentas - $totalCompras) >= 0 ? 'Ganancia' : 'Pérdida' }}</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
                         </div>
                     @endif
                 </div>
