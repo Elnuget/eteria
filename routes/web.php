@@ -16,6 +16,7 @@ use App\Http\Controllers\ContactoController;
 use App\Http\Controllers\TurnoController;
 use App\Http\Controllers\ChatWebController;
 use App\Http\Controllers\ContactoWebController;
+use App\Http\Controllers\ContabilidadController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -67,6 +68,7 @@ Route::resource('contextos', ContextoController::class)->middleware('auth');
 Route::resource('contactos', ContactoController::class)->middleware('auth');
 Route::post('/contactos/import', [ContactoController::class, 'import'])->name('contactos.import')->middleware('auth');
 Route::resource('turnos', TurnoController::class)->middleware('auth');
+Route::resource('contabilidad', ContabilidadController::class)->middleware('auth');
 Route::put('/mensajes/update-nombre', [App\Http\Controllers\MensajeController::class, 'updateNombre'])->name('mensajes.updateNombre')->middleware('auth');
 Route::resource('mensajes', MensajeController::class)->middleware('auth');
 Route::post('/webhook/twilio', [WebhookController::class, 'handleTwilioWebhook'])->name('webhook.twilio');

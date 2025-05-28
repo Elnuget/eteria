@@ -89,6 +89,11 @@
                                             <i class="fas fa-money-bill-wave"></i> Pagos
                                         </a>
                                     </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('contabilidad.index') }}">
+                                            <i class="fas fa-calculator"></i> Contabilidad
+                                        </a>
+                                    </li>
                                 </ul>
                             </li>
 
