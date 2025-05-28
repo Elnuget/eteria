@@ -43,15 +43,16 @@
                     <ul class="navbar-nav me-auto">
                         @auth
                             <!-- Gestión de Proyectos -->
-                            <li class="nav-item dropdown menu-section">
-                                <button class="menu-dropdown dropdown-toggle" 
-                                        type="button" 
-                                        id="proyectosDropdown" 
-                                        data-bs-toggle="dropdown" 
-                                        aria-expanded="false">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" 
+                                   href="#" 
+                                   id="proyectosDropdown" 
+                                   role="button" 
+                                   data-bs-toggle="dropdown" 
+                                   aria-expanded="false">
                                     <i class="fas fa-project-diagram"></i>
                                     <span class="menu-title">Proyectos</span>
-                                </button>
+                                </a>
                                 <ul class="dropdown-menu" aria-labelledby="proyectosDropdown">
                                     <li>
                                         <a class="dropdown-item" href="{{ route('projects.index') }}">
@@ -67,15 +68,16 @@
                             </li>
 
                             <!-- Finanzas -->
-                            <li class="nav-item dropdown menu-section">
-                                <button class="menu-dropdown dropdown-toggle" 
-                                        type="button" 
-                                        id="finanzasDropdown" 
-                                        data-bs-toggle="dropdown" 
-                                        aria-expanded="false">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" 
+                                   href="#" 
+                                   id="finanzasDropdown" 
+                                   role="button" 
+                                   data-bs-toggle="dropdown" 
+                                   aria-expanded="false">
                                     <i class="fas fa-money-bill-wave"></i>
                                     <span class="menu-title">Finanzas</span>
-                                </button>
+                                </a>
                                 <ul class="dropdown-menu" aria-labelledby="finanzasDropdown">
                                     <li>
                                         <a class="dropdown-item" href="{{ route('balances.index') }}">
@@ -91,15 +93,16 @@
                             </li>
 
                             <!-- Clientes -->
-                            <li class="nav-item dropdown menu-section">
-                                <button class="menu-dropdown dropdown-toggle" 
-                                        type="button" 
-                                        id="clientesDropdown" 
-                                        data-bs-toggle="dropdown" 
-                                        aria-expanded="false">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" 
+                                   href="#" 
+                                   id="clientesDropdown" 
+                                   role="button" 
+                                   data-bs-toggle="dropdown" 
+                                   aria-expanded="false">
                                     <i class="fas fa-users"></i>
                                     <span class="menu-title">Clientes</span>
-                                </button>
+                                </a>
                                 <ul class="dropdown-menu" aria-labelledby="clientesDropdown">
                                     <li>
                                         <a class="dropdown-item" href="{{ route('clientes.index') }}">
@@ -120,15 +123,16 @@
                             </li>
 
                             <!-- Comunicación -->
-                            <li class="nav-item dropdown menu-section">
-                                <button class="menu-dropdown dropdown-toggle" 
-                                        type="button" 
-                                        id="comunicacionDropdown" 
-                                        data-bs-toggle="dropdown" 
-                                        aria-expanded="false">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" 
+                                   href="#" 
+                                   id="comunicacionDropdown" 
+                                   role="button" 
+                                   data-bs-toggle="dropdown" 
+                                   aria-expanded="false">
                                     <i class="fas fa-comments"></i>
                                     <span class="menu-title">Comunicación</span>
-                                </button>
+                                </a>
                                 <ul class="dropdown-menu" aria-labelledby="comunicacionDropdown">
                                     <li>
                                         <a class="dropdown-item" href="{{ route('whatsapp.index') }}">
@@ -145,7 +149,6 @@
                                             <i class="fas fa-comment-dots"></i> Chat Web
                                         </a>
                                     </li>
-                                    
                                     <li>
                                         <a class="dropdown-item" href="{{ route('contextos.index') }}">
                                             <i class="fas fa-robot"></i> Contextos IA
@@ -155,15 +158,16 @@
                             </li>
 
                             <!-- Agenda -->
-                            <li class="nav-item dropdown menu-section">
-                                <button class="menu-dropdown dropdown-toggle" 
-                                        type="button" 
-                                        id="agendaDropdown" 
-                                        data-bs-toggle="dropdown" 
-                                        aria-expanded="false">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" 
+                                   href="#" 
+                                   id="agendaDropdown" 
+                                   role="button" 
+                                   data-bs-toggle="dropdown" 
+                                   aria-expanded="false">
                                     <i class="fas fa-calendar-alt"></i>
                                     <span class="menu-title">Agenda</span>
-                                </button>
+                                </a>
                                 <ul class="dropdown-menu" aria-labelledby="agendaDropdown">
                                     <li>
                                         <a class="dropdown-item" href="{{ route('turnos.index') }}">
@@ -175,15 +179,16 @@
 
                             @if(Auth::user()->is_admin)
                                 <!-- Administración -->
-                                <li class="nav-item dropdown menu-section">
-                                    <button class="menu-dropdown dropdown-toggle" 
-                                            type="button" 
-                                            id="adminDropdown" 
-                                            data-bs-toggle="dropdown" 
-                                            aria-expanded="false">
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" 
+                                       href="#" 
+                                       id="adminDropdown" 
+                                       role="button" 
+                                       data-bs-toggle="dropdown" 
+                                       aria-expanded="false">
                                         <i class="fas fa-users-cog"></i>
                                         <span class="menu-title">Administración</span>
-                                    </button>
+                                    </a>
                                     <ul class="dropdown-menu" aria-labelledby="adminDropdown">
                                         <li>
                                             <a class="dropdown-item" href="{{ route('users.index') }}">
@@ -207,14 +212,15 @@
                             @endif
                         @else
                             <li class="nav-item dropdown">
-                                <button class="user-dropdown dropdown-toggle" 
-                                        type="button"
-                                        id="navbarDropdown" 
-                                        data-bs-toggle="dropdown" 
-                                        aria-expanded="false">
+                                <a class="nav-link dropdown-toggle" 
+                                   href="#" 
+                                   id="navbarDropdown" 
+                                   role="button" 
+                                   data-bs-toggle="dropdown" 
+                                   aria-expanded="false">
                                     <i class="fas fa-user-circle"></i>
                                     {{ Auth::user()->name }}
-                                </button>
+                                </a>
 
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                                     @if(Auth::user()->is_admin)
