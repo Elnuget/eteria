@@ -42,148 +42,148 @@
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav me-auto">
                         @auth
-                            <!-- Gestión de Proyectos -->
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" 
-                                   href="#" 
-                                   id="proyectosDropdown" 
-                                   role="button" 
-                                   data-bs-toggle="dropdown" 
-                                   aria-expanded="false">
-                                    <i class="fas fa-project-diagram"></i>
-                                    <span class="menu-title">Proyectos</span>
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="proyectosDropdown">
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('projects.index') }}">
-                                            <i class="fas fa-project-diagram"></i> Proyectos
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('tasks.index') }}">
-                                            <i class="fas fa-tasks"></i> Tareas
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-
-                            <!-- Finanzas -->
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" 
-                                   href="#" 
-                                   id="finanzasDropdown" 
-                                   role="button" 
-                                   data-bs-toggle="dropdown" 
-                                   aria-expanded="false">
-                                    <i class="fas fa-money-bill-wave"></i>
-                                    <span class="menu-title">Finanzas</span>
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="finanzasDropdown">
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('balances.index') }}">
-                                            <i class="fas fa-balance-scale"></i> Saldos
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('payments.index') }}">
-                                            <i class="fas fa-money-bill-wave"></i> Pagos
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('contabilidad.index') }}">
-                                            <i class="fas fa-calculator"></i> Contabilidad
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-
-                            <!-- Clientes -->
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" 
-                                   href="#" 
-                                   id="clientesDropdown" 
-                                   role="button" 
-                                   data-bs-toggle="dropdown" 
-                                   aria-expanded="false">
-                                    <i class="fas fa-users"></i>
-                                    <span class="menu-title">Clientes</span>
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="clientesDropdown">
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('clientes.index') }}">
-                                            <i class="fas fa-users"></i> Clientes
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('contactos.index') }}">
-                                            <i class="fas fa-address-book"></i> Contactos WhatsApp
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('contacto-webs.index') }}">
-                                            <i class="fas fa-id-card"></i> Contactos Web
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-
-                            <!-- Comunicación -->
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" 
-                                   href="#" 
-                                   id="comunicacionDropdown" 
-                                   role="button" 
-                                   data-bs-toggle="dropdown" 
-                                   aria-expanded="false">
-                                    <i class="fas fa-comments"></i>
-                                    <span class="menu-title">Comunicación</span>
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="comunicacionDropdown">
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('whatsapp.index') }}">
-                                            <i class="fab fa-whatsapp"></i> WhatsApp
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('mensajes.index') }}">
-                                            <i class="fas fa-inbox"></i> Mensajes WhatsApp
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('chat-web.index') }}">
-                                            <i class="fas fa-comment-dots"></i> Chat Web
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('contextos.index') }}">
-                                            <i class="fas fa-robot"></i> Contextos IA
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-
-                            <!-- Agenda -->
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" 
-                                   href="#" 
-                                   id="agendaDropdown" 
-                                   role="button" 
-                                   data-bs-toggle="dropdown" 
-                                   aria-expanded="false">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    <span class="menu-title">Agenda</span>
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="agendaDropdown">
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('turnos.index') }}">
-                                            <i class="fas fa-calendar-alt"></i> Turnos
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-
                             @if(Auth::user()->is_admin)
-                                <!-- Administración -->
+                                <!-- Gestión de Proyectos - Solo Admin -->
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" 
+                                       href="#" 
+                                       id="proyectosDropdown" 
+                                       role="button" 
+                                       data-bs-toggle="dropdown" 
+                                       aria-expanded="false">
+                                        <i class="fas fa-project-diagram"></i>
+                                        <span class="menu-title">Proyectos</span>
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="proyectosDropdown">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('projects.index') }}">
+                                                <i class="fas fa-project-diagram"></i> Proyectos
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('tasks.index') }}">
+                                                <i class="fas fa-tasks"></i> Tareas
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+
+                                <!-- Finanzas - Solo Admin -->
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" 
+                                       href="#" 
+                                       id="finanzasDropdown" 
+                                       role="button" 
+                                       data-bs-toggle="dropdown" 
+                                       aria-expanded="false">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                        <span class="menu-title">Finanzas</span>
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="finanzasDropdown">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('balances.index') }}">
+                                                <i class="fas fa-balance-scale"></i> Saldos
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('payments.index') }}">
+                                                <i class="fas fa-money-bill-wave"></i> Pagos
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('contabilidad.index') }}">
+                                                <i class="fas fa-calculator"></i> Contabilidad
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+
+                                <!-- Clientes - Solo Admin -->
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" 
+                                       href="#" 
+                                       id="clientesDropdown" 
+                                       role="button" 
+                                       data-bs-toggle="dropdown" 
+                                       aria-expanded="false">
+                                        <i class="fas fa-users"></i>
+                                        <span class="menu-title">Clientes</span>
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="clientesDropdown">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('clientes.index') }}">
+                                                <i class="fas fa-users"></i> Clientes
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('contactos.index') }}">
+                                                <i class="fas fa-address-book"></i> Contactos WhatsApp
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('contacto-webs.index') }}">
+                                                <i class="fas fa-id-card"></i> Contactos Web
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+
+                                <!-- Comunicación - Solo Admin -->
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" 
+                                       href="#" 
+                                       id="comunicacionDropdown" 
+                                       role="button" 
+                                       data-bs-toggle="dropdown" 
+                                       aria-expanded="false">
+                                        <i class="fas fa-comments"></i>
+                                        <span class="menu-title">Comunicación</span>
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="comunicacionDropdown">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('whatsapp.index') }}">
+                                                <i class="fab fa-whatsapp"></i> WhatsApp
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('mensajes.index') }}">
+                                                <i class="fas fa-inbox"></i> Mensajes WhatsApp
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('chat-web.index') }}">
+                                                <i class="fas fa-comment-dots"></i> Chat Web
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('contextos.index') }}">
+                                                <i class="fas fa-robot"></i> Contextos IA
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+
+                                <!-- Agenda - Solo Admin -->
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" 
+                                       href="#" 
+                                       id="agendaDropdown" 
+                                       role="button" 
+                                       data-bs-toggle="dropdown" 
+                                       aria-expanded="false">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <span class="menu-title">Agenda</span>
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="agendaDropdown">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('turnos.index') }}">
+                                                <i class="fas fa-calendar-alt"></i> Turnos
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+
+                                <!-- Administración - Solo Admin -->
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" 
                                        href="#" 
@@ -201,6 +201,14 @@
                                             </a>
                                         </li>
                                     </ul>
+                                </li>
+                            @else
+                                <!-- Contabilidad - Solo para usuarios NO admin -->
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('contabilidad.index') }}">
+                                        <i class="fas fa-calculator"></i>
+                                        <span class="menu-title">Contabilidad</span>
+                                    </a>
                                 </li>
                             @endif
                         @endauth

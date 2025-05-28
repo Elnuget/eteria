@@ -46,4 +46,12 @@ class User extends Authenticatable
         'password' => 'hashed',
         'is_admin' => 'boolean',
     ];
+
+    /**
+     * Get the contabilidad records for the user.
+     */
+    public function contabilidad()
+    {
+        return $this->hasMany(\App\Models\Contabilidad::class, 'usuario_id');
+    }
 }
