@@ -13,6 +13,7 @@
                         <th>Cliente</th>
                         <th>Fecha</th>
                         <th>Productos/Servicios</th>
+                        <th>Tipo Tarifa</th>
                         <th>Subtotal</th>
                         <th>IVA</th>
                         <th>Total</th>
@@ -24,18 +25,45 @@
                             $products = $venta['products'] ?? [];
                             $subtotalSinIva = $venta['subtotal_without_taxes'] ?? 0;
                             $iva = ($venta['total_value'] ?? 0) - $subtotalSinIva;
+                            
+                            // Determinar tipo de tarifa basado en los subtotales
+                            $tipoTarifa = 'Normal (0%)';
+                            if (($venta['subtotal_15_iva'] ?? 0) > 0) {
+                                $tipoTarifa = 'IVA 15%';
+                            } elseif (($venta['iva_15'] ?? 0) > 0) {
+                                $tipoTarifa = 'IVA 15%';
+                            } elseif (($venta['subtotal_0_iva'] ?? 0) > 0) {
+                                $tipoTarifa = 'IVA 0%';
+                            } elseif (($venta['subtotal_exempt_iva'] ?? 0) > 0) {
+                                $tipoTarifa = 'Exento';
+                            }
+                            
                             $isService = ($venta['subtotal_0_iva'] ?? 0) > 0 || ($venta['subtotal_exempt_iva'] ?? 0) > 0;
                         @endphp
                         <tr>                            <td>{{ $venta['customer_name'] ?? 'Cliente General' }}</td>
-                            <td>{{ $venta['invoice_date'] ?? 'N/A' }}</td>
-                            <td>
+                            <td>{{ $venta['invoice_date'] ?? 'N/A' }}</td>                            <td>
                                 @if(count($products) > 0)
                                     @foreach($products as $product)
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <small class="text-dark">{{ $product['description'] ?? 'Producto' }}</small>
-                                            <span class="badge bg-success ms-2" style="font-size: 0.7em;">
-                                                {{ $venta['emission_type'] ?? 'Normal' }}
-                                            </span>
+                                        <div class="mb-1">
+                                            <small class="text-dark d-block">
+                                                <strong>{{ $product['description'] ?? 'Producto/Servicio' }}</strong>
+                                            </small>
+                                            <small class="text-muted">
+                                                Cant: {{ number_format($product['quantity'] ?? 0, 2) }} |
+                                                P.Unit: ${{ number_format($product['unit_price'] ?? 0, 2) }} |
+                                                Total: ${{ number_format($product['total_price'] ?? 0, 2) }}
+                                            </small>
+                                            <div class="mt-1">
+                                                @php
+                                                    $tarifaProducto = 'IVA 0%';
+                                                    if (($venta['subtotal_15_iva'] ?? 0) > 0 || ($venta['iva_15'] ?? 0) > 0) {
+                                                        $tarifaProducto = 'IVA 15%';
+                                                    }
+                                                @endphp
+                                                <span class="badge @if($tarifaProducto == 'IVA 15%') bg-warning text-dark @else bg-info @endif" style="font-size: 0.7em;">
+                                                    {{ $tarifaProducto }}
+                                                </span>
+                                            </div>
                                         </div>
                                     @endforeach
                                 @else
@@ -45,11 +73,13 @@
                                         @else
                                             <span class="badge bg-primary">Productos</span>
                                         @endif
-                                        <span class="badge bg-success ms-2" style="font-size: 0.7em;">
-                                            {{ $venta['emission_type'] ?? 'Normal' }}
-                                        </span>
                                     </div>
                                 @endif
+                            </td>
+                            <td>
+                                <span class="badge @if($tipoTarifa == 'IVA 15%') bg-warning @elseif($tipoTarifa == 'IVA 0%') bg-info @else bg-secondary @endif">
+                                    {{ $tipoTarifa }}
+                                </span>
                             </td>
                             <td>${{ number_format($subtotalSinIva, 2) }}</td>
                             <td>${{ number_format($iva, 2) }}</td>
@@ -84,7 +114,7 @@
                     @endforeach
                 </tbody>                <tfoot class="table-light">
                     <tr>
-                        <th colspan="3" class="text-end">Totales de Ventas:</th>
+                        <th colspan="4" class="text-end">Totales de Ventas:</th>
                         <th>${{ number_format(collect($ventas['ventas'])->sum('subtotal_without_taxes'), 2) }}</th>
                         <th>${{ number_format(collect($ventas['ventas'])->sum(function($venta) { return ($venta['total_value'] ?? 0) - ($venta['subtotal_without_taxes'] ?? 0); }), 2) }}</th>
                         <th>${{ number_format(collect($ventas['ventas'])->sum('total_value'), 2) }}</th>
