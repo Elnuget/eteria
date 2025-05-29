@@ -107,7 +107,8 @@
                                                 <tr>
                                                     <th>Proveedor</th>
                                                     <th>Fecha</th>
-                                                    <th>Tipo</th>
+                                                    <th>Productos</th>
+                                                    <th>Tipo Tarifa</th>
                                                     <th>Subtotal</th>
                                                     <th>IVA</th>
                                                     <th>Total</th>
@@ -120,7 +121,8 @@
                                                         $totalValue = $compra['total_value'] ?? 0;
                                                         $subtotalValue = $compra['subtotal_value'] ?? ($totalValue / 1.15);
                                                         $ivaValue = $totalValue - $subtotalValue;
-                                                        $tipoTarifa = $compra['tipo_tarifa'] ?? 'servicio'; // Por defecto servicio
+                                                        $tipoTarifa = $compra['tipo_tarifa'] ?? 'servicio';
+                                                        $products = $compra['products'] ?? [];
                                                     @endphp
                                                     <tr>
                                                         <td>
@@ -128,17 +130,67 @@
                                                             @if(isset($compra['business_name']))
                                                                 <br><small class="text-muted">{{ $compra['business_name'] }}</small>
                                                             @endif
+                                                            <br><small class="text-info">{{ $compra['invoice_number'] ?? 'N/A' }}</small>
                                                         </td>
                                                         <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y', $compra['invoice_date'])->format('d/m/Y') }}</td>
                                                         <td>
-                                                            @if(strtolower($tipoTarifa) === 'producto')
+                                                            @if(count($products) > 0)
+                                                                <div class="accordion" id="productos{{ $loop->index }}">
+                                                                    <div class="accordion-item">
+                                                                        <h6 class="accordion-header">
+                                                                            <button class="accordion-button collapsed btn-sm" type="button" 
+                                                                                    data-bs-toggle="collapse" 
+                                                                                    data-bs-target="#collapseProductos{{ $loop->index }}"
+                                                                                    aria-expanded="false">
+                                                                                <i class="fas fa-boxes"></i>
+                                                                                &nbsp;{{ count($products) }} producto(s)
+                                                                            </button>
+                                                                        </h6>
+                                                                        <div id="collapseProductos{{ $loop->index }}" 
+                                                                             class="accordion-collapse collapse" 
+                                                                             data-bs-parent="#productos{{ $loop->index }}">
+                                                                            <div class="accordion-body p-2">
+                                                                                @foreach($products as $product)
+                                                                                    <div class="border-bottom pb-1 mb-2">
+                                                                                        <small>
+                                                                                            <strong>{{ $product['description'] ?? 'Sin descripción' }}</strong><br>
+                                                                                            <span class="text-muted">Código: {{ $product['code'] ?? 'N/A' }}</span><br>
+                                                                                            <span class="text-primary">Cant: {{ number_format($product['quantity'] ?? 0, 2) }}</span> |
+                                                                                            <span class="text-success">P.Unit: ${{ number_format($product['unit_price'] ?? 0, 2) }}</span> |
+                                                                                            <span class="text-danger">Total: ${{ number_format($product['total_price'] ?? 0, 2) }}</span>
+                                                                                        </small>
+                                                                                    </div>
+                                                                                @endforeach
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            @else
+                                                                <span class="text-muted">Sin detalle</span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            @php
+                                                                // Determinar tipo de tarifa basado en subtotales
+                                                                $isProduct = ($compra['subtotal_15_iva'] ?? 0) > 0;
+                                                                $isService = ($compra['subtotal_0_iva'] ?? 0) > 0 || ($compra['subtotal_exempt_iva'] ?? 0) > 0;
+                                                            @endphp
+                                                            
+                                                            @if($isProduct && $isService)
+                                                                <span class="badge bg-warning">
+                                                                    <i class="fas fa-layer-group"></i> Mixto
+                                                                </span>
+                                                                <br><small class="text-muted">Prod. + Serv.</small>
+                                                            @elseif($isProduct)
                                                                 <span class="badge bg-primary">
                                                                     <i class="fas fa-box"></i> Producto
                                                                 </span>
+                                                                <br><small class="text-muted">Con IVA 15%</small>
                                                             @else
                                                                 <span class="badge bg-info">
                                                                     <i class="fas fa-cogs"></i> Servicio
                                                                 </span>
+                                                                <br><small class="text-muted">0% / Exento</small>
                                                             @endif
                                                         </td>
                                                         <td>
@@ -259,12 +311,21 @@
                                                         <small class="text-muted">
                                                             Fecha: {{ \Carbon\Carbon::createFromFormat('d/m/Y', $compra['invoice_date'])->format('d/m/Y') }} 
                                                             | Total: ${{ number_format($totalValue, 2) }}
-                                                            | Tipo: 
-                                                            @php $tipoTarifa = $compra['tipo_tarifa'] ?? 'servicio'; @endphp
-                                                            @if(strtolower($tipoTarifa) === 'producto')
-                                                                <span class="badge bg-primary">Producto</span>
+                                                            | Fact: {{ $compra['invoice_number'] ?? 'N/A' }}
+                                                            @php 
+                                                                $products = $compra['products'] ?? [];
+                                                                $isProduct = ($compra['subtotal_15_iva'] ?? 0) > 0;
+                                                                $isService = ($compra['subtotal_0_iva'] ?? 0) > 0 || ($compra['subtotal_exempt_iva'] ?? 0) > 0;
+                                                            @endphp
+                                                            @if($isProduct && $isService)
+                                                                | <span class="badge bg-warning">Mixto</span>
+                                                            @elseif($isProduct)
+                                                                | <span class="badge bg-primary">Producto</span>
                                                             @else
-                                                                <span class="badge bg-info">Servicio</span>
+                                                                | <span class="badge bg-info">Servicio</span>
+                                                            @endif
+                                                            @if(count($products) > 0)
+                                                                | <i class="fas fa-boxes"></i> {{ count($products) }} ítem(s)
                                                             @endif
                                                         </small>
                                                     </div>
@@ -283,6 +344,29 @@
                                             </div>
                                             <div class="collapse" id="asientoCompra{{ $compraIndex }}">
                                                 <div class="card-body p-2">
+                                                    <!-- Información de Productos si existe -->
+                                                    @if(count($products) > 0)
+                                                        <div class="alert alert-light border p-2 mb-3">
+                                                            <h6 class="mb-2">
+                                                                <i class="fas fa-boxes text-primary"></i>
+                                                                Detalle de productos/servicios:
+                                                            </h6>
+                                                            <div class="row">
+                                                                @foreach($products as $product)
+                                                                    <div class="col-md-6 mb-1">
+                                                                        <small>
+                                                                            <span class="badge bg-secondary">{{ $product['code'] ?? 'N/A' }}</span>
+                                                                            <strong>{{ $product['description'] ?? 'Sin descripción' }}</strong><br>
+                                                                            <span class="text-primary">Cant: {{ number_format($product['quantity'] ?? 0, 2) }}</span> |
+                                                                            <span class="text-success">P.Unit: ${{ number_format($product['unit_price'] ?? 0, 2) }}</span> |
+                                                                            <span class="text-danger">Total: ${{ number_format($product['total_price'] ?? 0, 2) }}</span>
+                                                                        </small>
+                                                                    </div>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                    
                                                     <div class="table-responsive">
                                                         <table class="table table-sm table-striped mb-0">
                                                             <thead class="table-dark">
@@ -298,18 +382,23 @@
                                                                 <tr>
                                                                     <td><strong>5101</strong></td>
                                                                     <td>
-                                                                        @php $tipoTarifa = $compra['tipo_tarifa'] ?? 'servicio'; @endphp
-                                                                        @if(strtolower($tipoTarifa) === 'producto')
+                                                                        @if($isProduct && $isService)
+                                                                            Gastos Mixtos (Productos y Servicios) - {{ $compra['supplier_name'] }}
+                                                                        @elseif($isProduct)
                                                                             Gastos en Compra de Productos - {{ $compra['supplier_name'] }}
                                                                         @else
                                                                             Gastos de Servicios - {{ $compra['supplier_name'] }}
                                                                         @endif
                                                                         <br><small class="text-muted">
-                                                                            Tipo: 
-                                                                            @if(strtolower($tipoTarifa) === 'producto')
+                                                                            @if($isProduct && $isService)
+                                                                                <span class="badge bg-warning">Mixto</span>
+                                                                            @elseif($isProduct)
                                                                                 <span class="badge bg-primary">Producto</span>
                                                                             @else
                                                                                 <span class="badge bg-info">Servicio</span>
+                                                                            @endif
+                                                                            @if(count($products) > 0)
+                                                                                - {{ count($products) }} ítem(s)
                                                                             @endif
                                                                         </small>
                                                                     </td>
@@ -326,6 +415,9 @@
                                                                         <br><small class="text-success">
                                                                             <i class="fas fa-hand-holding-usd"></i>
                                                                             <strong>CRÉDITO TRIBUTARIO</strong>
+                                                                            @if($isProduct)
+                                                                                (15% sobre productos)
+                                                                            @endif
                                                                         </small>
                                                                     </td>
                                                                     <td class="text-end text-success">
@@ -338,7 +430,12 @@
                                                                 <!-- Cuentas por Pagar (Haber) -->
                                                                 <tr>
                                                                     <td><strong>2101</strong></td>
-                                                                    <td>Cuentas por Pagar - {{ $compra['supplier_name'] }}</td>
+                                                                    <td>
+                                                                        Cuentas por Pagar - {{ $compra['supplier_name'] }}
+                                                                        <br><small class="text-muted">
+                                                                            Factura: {{ $compra['invoice_number'] ?? 'N/A' }}
+                                                                        </small>
+                                                                    </td>
                                                                     <td class="text-end">-</td>
                                                                     <td class="text-end text-danger">
                                                                         <strong>${{ number_format($totalValue, 2) }}</strong>
@@ -430,7 +527,8 @@
                                                 <tr>
                                                     <th>Cliente</th>
                                                     <th>Fecha</th>
-                                                    <th>Tipo</th>
+                                                    <th>Productos/Servicios</th>
+                                                    <th>Tipo Tarifa</th>
                                                     <th>Subtotal</th>
                                                     <th>IVA</th>
                                                     <th>Total</th>
@@ -443,7 +541,12 @@
                                                         $totalValue = $venta['total_value'] ?? 0;
                                                         $subtotalValue = $venta['subtotal_value'] ?? ($totalValue / 1.15);
                                                         $ivaValue = $totalValue - $subtotalValue;
-                                                        $tipoTarifa = $venta['tipo_tarifa'] ?? 'servicio'; // Por defecto servicio
+                                                        $tipoTarifa = $venta['tipo_tarifa'] ?? 'servicio';
+                                                        $products = $venta['products'] ?? [];
+                                                        
+                                                        // Determinar tipo de tarifa basado en subtotales
+                                                        $isProduct = ($venta['subtotal_15_iva'] ?? 0) > 0;
+                                                        $isService = ($venta['subtotal_0_iva'] ?? 0) > 0 || ($venta['subtotal_exempt_iva'] ?? 0) > 0;
                                                     @endphp
                                                     <tr>
                                                         <td>
@@ -451,17 +554,61 @@
                                                             @if(isset($venta['business_name']))
                                                                 <br><small class="text-muted">{{ $venta['business_name'] }}</small>
                                                             @endif
+                                                            <br><small class="text-info">{{ $venta['invoice_number'] ?? 'N/A' }}</small>
                                                         </td>
                                                         <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y', $venta['invoice_date'])->format('d/m/Y') }}</td>
                                                         <td>
-                                                            @if(strtolower($tipoTarifa) === 'producto')
+                                                            @if(count($products) > 0)
+                                                                <div class="accordion" id="productosVenta{{ $loop->index }}">
+                                                                    <div class="accordion-item">
+                                                                        <h6 class="accordion-header">
+                                                                            <button class="accordion-button collapsed btn-sm" type="button" 
+                                                                                    data-bs-toggle="collapse" 
+                                                                                    data-bs-target="#collapseProductosVenta{{ $loop->index }}"
+                                                                                    aria-expanded="false">
+                                                                                <i class="fas fa-shopping-bag"></i>
+                                                                                &nbsp;{{ count($products) }} ítem(s)
+                                                                            </button>
+                                                                        </h6>
+                                                                        <div id="collapseProductosVenta{{ $loop->index }}" 
+                                                                             class="accordion-collapse collapse" 
+                                                                             data-bs-parent="#productosVenta{{ $loop->index }}">
+                                                                            <div class="accordion-body p-2">
+                                                                                @foreach($products as $product)
+                                                                                    <div class="border-bottom pb-1 mb-2">
+                                                                                        <small>
+                                                                                            <strong>{{ $product['description'] ?? 'Sin descripción' }}</strong><br>
+                                                                                            <span class="text-muted">Código: {{ $product['code'] ?? 'N/A' }}</span><br>
+                                                                                            <span class="text-primary">Cant: {{ number_format($product['quantity'] ?? 0, 2) }}</span> |
+                                                                                            <span class="text-success">P.Unit: ${{ number_format($product['unit_price'] ?? 0, 2) }}</span> |
+                                                                                            <span class="text-danger">Total: ${{ number_format($product['total_price'] ?? 0, 2) }}</span>
+                                                                                        </small>
+                                                                                    </div>
+                                                                                @endforeach
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            @else
+                                                                <span class="text-muted">Sin detalle</span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            @if($isProduct && $isService)
+                                                                <span class="badge bg-warning">
+                                                                    <i class="fas fa-layer-group"></i> Mixto
+                                                                </span>
+                                                                <br><small class="text-muted">Prod. + Serv.</small>
+                                                            @elseif($isProduct)
                                                                 <span class="badge bg-primary">
                                                                     <i class="fas fa-box"></i> Producto
                                                                 </span>
+                                                                <br><small class="text-muted">Con IVA 15%</small>
                                                             @else
                                                                 <span class="badge bg-info">
                                                                     <i class="fas fa-cogs"></i> Servicio
                                                                 </span>
+                                                                <br><small class="text-muted">0% / Exento</small>
                                                             @endif
                                                         </td>
                                                         <td>
@@ -582,12 +729,21 @@
                                                         <small class="text-muted">
                                                             Fecha: {{ \Carbon\Carbon::createFromFormat('d/m/Y', $venta['invoice_date'])->format('d/m/Y') }} 
                                                             | Total: ${{ number_format($totalValue, 2) }}
-                                                            | Tipo: 
-                                                            @php $tipoTarifa = $venta['tipo_tarifa'] ?? 'servicio'; @endphp
-                                                            @if(strtolower($tipoTarifa) === 'producto')
-                                                                <span class="badge bg-primary">Producto</span>
+                                                            | Fact: {{ $venta['invoice_number'] ?? 'N/A' }}
+                                                            @php 
+                                                                $products = $venta['products'] ?? [];
+                                                                $isProduct = ($venta['subtotal_15_iva'] ?? 0) > 0;
+                                                                $isService = ($venta['subtotal_0_iva'] ?? 0) > 0 || ($venta['subtotal_exempt_iva'] ?? 0) > 0;
+                                                            @endphp
+                                                            @if($isProduct && $isService)
+                                                                | <span class="badge bg-warning">Mixto</span>
+                                                            @elseif($isProduct)
+                                                                | <span class="badge bg-primary">Producto</span>
                                                             @else
-                                                                <span class="badge bg-info">Servicio</span>
+                                                                | <span class="badge bg-info">Servicio</span>
+                                                            @endif
+                                                            @if(count($products) > 0)
+                                                                | <i class="fas fa-shopping-bag"></i> {{ count($products) }} ítem(s)
                                                             @endif
                                                         </small>
                                                     </div>
@@ -606,6 +762,29 @@
                                             </div>
                                             <div class="collapse" id="asientoVenta{{ $ventaIndex }}">
                                                 <div class="card-body p-2">
+                                                    <!-- Información de Productos si existe -->
+                                                    @if(count($products) > 0)
+                                                        <div class="alert alert-light border p-2 mb-3">
+                                                            <h6 class="mb-2">
+                                                                <i class="fas fa-shopping-bag text-success"></i>
+                                                                Detalle de productos/servicios vendidos:
+                                                            </h6>
+                                                            <div class="row">
+                                                                @foreach($products as $product)
+                                                                    <div class="col-md-6 mb-1">
+                                                                        <small>
+                                                                            <span class="badge bg-secondary">{{ $product['code'] ?? 'N/A' }}</span>
+                                                                            <strong>{{ $product['description'] ?? 'Sin descripción' }}</strong><br>
+                                                                            <span class="text-primary">Cant: {{ number_format($product['quantity'] ?? 0, 2) }}</span> |
+                                                                            <span class="text-success">P.Unit: ${{ number_format($product['unit_price'] ?? 0, 2) }}</span> |
+                                                                            <span class="text-danger">Total: ${{ number_format($product['total_price'] ?? 0, 2) }}</span>
+                                                                        </small>
+                                                                    </div>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                    
                                                     <div class="table-responsive">
                                                         <table class="table table-sm table-striped mb-0">
                                                             <thead class="table-dark">
@@ -623,13 +802,17 @@
                                                                     <td>
                                                                         Cuentas por Cobrar - {{ $venta['customer_name'] ?? 'Cliente' }}
                                                                         <br><small class="text-muted">
-                                                                            Tipo: 
-                                                                            @php $tipoTarifa = $venta['tipo_tarifa'] ?? 'servicio'; @endphp
-                                                                            @if(strtolower($tipoTarifa) === 'producto')
+                                                                            @if($isProduct && $isService)
+                                                                                <span class="badge bg-warning">Mixto</span>
+                                                                            @elseif($isProduct)
                                                                                 <span class="badge bg-primary">Producto</span>
                                                                             @else
                                                                                 <span class="badge bg-info">Servicio</span>
                                                                             @endif
+                                                                            @if(count($products) > 0)
+                                                                                - {{ count($products) }} ítem(s)
+                                                                            @endif
+                                                                            | Fact: {{ $venta['invoice_number'] ?? 'N/A' }}
                                                                         </small>
                                                                     </td>
                                                                     <td class="text-end text-success">
@@ -641,11 +824,25 @@
                                                                 <tr>
                                                                     <td><strong>4101</strong></td>
                                                                     <td>
-                                                                        @if(strtolower($tipoTarifa) === 'producto')
+                                                                        @if($isProduct && $isService)
+                                                                            Ingresos por Ventas Mixtas (Productos y Servicios)
+                                                                        @elseif($isProduct)
                                                                             Ingresos por Ventas - Productos
                                                                         @else
                                                                             Ingresos por Ventas - Servicios
                                                                         @endif
+                                                                        <br><small class="text-muted">
+                                                                            @if($isProduct && $isService)
+                                                                                <span class="badge bg-warning">Mixto</span>
+                                                                            @elseif($isProduct)
+                                                                                <span class="badge bg-primary">Producto</span>
+                                                                            @else
+                                                                                <span class="badge bg-info">Servicio</span>
+                                                                            @endif
+                                                                            @if(count($products) > 0)
+                                                                                - {{ count($products) }} ítem(s)
+                                                                            @endif
+                                                                        </small>
                                                                     </td>
                                                                     <td class="text-end">-</td>
                                                                     <td class="text-end text-danger">
@@ -660,6 +857,9 @@
                                                                         <br><small class="text-danger">
                                                                             <i class="fas fa-coins"></i>
                                                                             <strong>DÉBITO TRIBUTARIO</strong>
+                                                                            @if($isProduct)
+                                                                                (15% sobre productos)
+                                                                            @endif
                                                                         </small>
                                                                     </td>
                                                                     <td class="text-end">-</td>
