@@ -4,6 +4,89 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
+            <!-- Filtros por Mes y Año -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter"></i>
+                        Filtros de Período
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ route('contabilidad.index') }}" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="mes" class="form-label">
+                                <i class="fas fa-calendar-alt"></i>
+                                Mes
+                            </label>
+                            <select class="form-select" id="mes" name="mes">
+                                <option value="1" {{ ($mes ?? now()->month) == 1 ? 'selected' : '' }}>Enero</option>
+                                <option value="2" {{ ($mes ?? now()->month) == 2 ? 'selected' : '' }}>Febrero</option>
+                                <option value="3" {{ ($mes ?? now()->month) == 3 ? 'selected' : '' }}>Marzo</option>
+                                <option value="4" {{ ($mes ?? now()->month) == 4 ? 'selected' : '' }}>Abril</option>
+                                <option value="5" {{ ($mes ?? now()->month) == 5 ? 'selected' : '' }}>Mayo</option>
+                                <option value="6" {{ ($mes ?? now()->month) == 6 ? 'selected' : '' }}>Junio</option>
+                                <option value="7" {{ ($mes ?? now()->month) == 7 ? 'selected' : '' }}>Julio</option>
+                                <option value="8" {{ ($mes ?? now()->month) == 8 ? 'selected' : '' }}>Agosto</option>
+                                <option value="9" {{ ($mes ?? now()->month) == 9 ? 'selected' : '' }}>Septiembre</option>
+                                <option value="10" {{ ($mes ?? now()->month) == 10 ? 'selected' : '' }}>Octubre</option>
+                                <option value="11" {{ ($mes ?? now()->month) == 11 ? 'selected' : '' }}>Noviembre</option>
+                                <option value="12" {{ ($mes ?? now()->month) == 12 ? 'selected' : '' }}>Diciembre</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="anio" class="form-label">
+                                <i class="fas fa-calendar"></i>
+                                Año
+                            </label>
+                            <select class="form-select" id="anio" name="anio">
+                                @for($year = 2020; $year <= now()->year + 5; $year++)
+                                    <option value="{{ $year }}" {{ ($anio ?? now()->year) == $year ? 'selected' : '' }}>
+                                        {{ $year }}
+                                    </option>
+                                @endfor
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i>
+                                    Filtrar
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <a href="{{ route('contabilidad.index') }}" class="btn btn-secondary">
+                                    <i class="fas fa-refresh"></i>
+                                    Limpiar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <!-- Información del período seleccionado -->
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Período seleccionado:</strong> 
+                                @php
+                                    $meses = [
+                                        1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+                                        5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+                                        9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+                                    ];
+                                @endphp
+                                {{ $meses[$mes ?? now()->month] }} {{ $anio ?? now()->year }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Sección de Compras y Ventas -->
             @if((isset($compras['compras']) && count($compras['compras']) > 0) || (isset($ventas['ventas']) && count($ventas['ventas']) > 0))
                 <div class="row mb-4">
@@ -24,12 +107,21 @@
                                                 <tr>
                                                     <th>Proveedor</th>
                                                     <th>Fecha</th>
+                                                    <th>Tipo</th>
+                                                    <th>Subtotal</th>
+                                                    <th>IVA</th>
                                                     <th>Total</th>
                                                     <th>RIDE</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @foreach($compras['compras'] as $compra)
+                                                    @php
+                                                        $totalValue = $compra['total_value'] ?? 0;
+                                                        $subtotalValue = $compra['subtotal_value'] ?? ($totalValue / 1.15);
+                                                        $ivaValue = $totalValue - $subtotalValue;
+                                                        $tipoTarifa = $compra['tipo_tarifa'] ?? 'servicio'; // Por defecto servicio
+                                                    @endphp
                                                     <tr>
                                                         <td>
                                                             <strong>{{ $compra['supplier_name'] }}</strong>
@@ -39,8 +131,31 @@
                                                         </td>
                                                         <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y', $compra['invoice_date'])->format('d/m/Y') }}</td>
                                                         <td>
+                                                            @if(strtolower($tipoTarifa) === 'producto')
+                                                                <span class="badge bg-primary">
+                                                                    <i class="fas fa-box"></i> Producto
+                                                                </span>
+                                                            @else
+                                                                <span class="badge bg-info">
+                                                                    <i class="fas fa-cogs"></i> Servicio
+                                                                </span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-secondary">
+                                                                ${{ number_format($subtotalValue, 2) }}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-warning text-dark">
+                                                                <i class="fas fa-percent"></i>
+                                                                ${{ number_format($ivaValue, 2) }}
+                                                            </span>
+                                                            <br><small class="text-muted">Crédito Tributario</small>
+                                                        </td>
+                                                        <td>
                                                             <span class="badge bg-danger">
-                                                                ${{ number_format($compra['total_value'] ?? 0, 2) }}
+                                                                ${{ number_format($totalValue, 2) }}
                                                             </span>
                                                         </td>
                                                         <td class="text-center">
@@ -61,12 +176,33 @@
                                             </tbody>
                                             <tfoot class="table-light">
                                                 <tr>
-                                                    <th colspan="2" class="text-end">Total de Compras:</th>
+                                                    <th colspan="3" class="text-end">Totales de Compras:</th>
                                                     <th>
-                                                        <span class="badge bg-danger">
+                                                        <span class="badge bg-secondary">
                                                             @php
+                                                                $totalSubtotalCompras = 0;
+                                                                $totalIvaCompras = 0;
+                                                                foreach($compras['compras'] as $compra) {
+                                                                    $total = $compra['total_value'] ?? 0;
+                                                                    $subtotal = $compra['subtotal_value'] ?? ($total / 1.15);
+                                                                    $iva = $total - $subtotal;
+                                                                    $totalSubtotalCompras += $subtotal;
+                                                                    $totalIvaCompras += $iva;
+                                                                }
                                                                 $totalComprasValue = array_sum(array_column($compras['compras'], 'total_value'));
                                                             @endphp
+                                                            ${{ number_format($totalSubtotalCompras, 2) }}
+                                                        </span>
+                                                    </th>
+                                                    <th>
+                                                        <span class="badge bg-warning text-dark">
+                                                            <i class="fas fa-hand-holding-usd"></i>
+                                                            ${{ number_format($totalIvaCompras, 2) }}
+                                                        </span>
+                                                        <br><small class="text-success"><strong>Crédito Tributario</strong></small>
+                                                    </th>
+                                                    <th>
+                                                        <span class="badge bg-danger">
                                                             ${{ number_format($totalComprasValue, 2) }}
                                                         </span>
                                                     </th>
@@ -123,6 +259,13 @@
                                                         <small class="text-muted">
                                                             Fecha: {{ \Carbon\Carbon::createFromFormat('d/m/Y', $compra['invoice_date'])->format('d/m/Y') }} 
                                                             | Total: ${{ number_format($totalValue, 2) }}
+                                                            | Tipo: 
+                                                            @php $tipoTarifa = $compra['tipo_tarifa'] ?? 'servicio'; @endphp
+                                                            @if(strtolower($tipoTarifa) === 'producto')
+                                                                <span class="badge bg-primary">Producto</span>
+                                                            @else
+                                                                <span class="badge bg-info">Servicio</span>
+                                                            @endif
                                                         </small>
                                                     </div>
                                                     <div>
@@ -154,18 +297,41 @@
                                                                 <!-- Gastos de Operación (Debe) -->
                                                                 <tr>
                                                                     <td><strong>5101</strong></td>
-                                                                    <td>Gastos de Operación - Compra a {{ $compra['supplier_name'] }}</td>
+                                                                    <td>
+                                                                        @php $tipoTarifa = $compra['tipo_tarifa'] ?? 'servicio'; @endphp
+                                                                        @if(strtolower($tipoTarifa) === 'producto')
+                                                                            Gastos en Compra de Productos - {{ $compra['supplier_name'] }}
+                                                                        @else
+                                                                            Gastos de Servicios - {{ $compra['supplier_name'] }}
+                                                                        @endif
+                                                                        <br><small class="text-muted">
+                                                                            Tipo: 
+                                                                            @if(strtolower($tipoTarifa) === 'producto')
+                                                                                <span class="badge bg-primary">Producto</span>
+                                                                            @else
+                                                                                <span class="badge bg-info">Servicio</span>
+                                                                            @endif
+                                                                        </small>
+                                                                    </td>
                                                                     <td class="text-end text-success">
                                                                         <strong>${{ number_format($subtotalValue, 2) }}</strong>
                                                                     </td>
                                                                     <td class="text-end">-</td>
                                                                 </tr>
-                                                                <!-- IVA por Pagar (Debe) -->
-                                                                <tr>
+                                                                <!-- IVA Crédito Tributario (Debe) - DESTACADO -->
+                                                                <tr class="table-warning">
                                                                     <td><strong>1105</strong></td>
-                                                                    <td>IVA Pagado - Crédito Tributario</td>
+                                                                    <td>
+                                                                        <strong>IVA Pagado - Crédito Tributario</strong>
+                                                                        <br><small class="text-success">
+                                                                            <i class="fas fa-hand-holding-usd"></i>
+                                                                            <strong>CRÉDITO TRIBUTARIO</strong>
+                                                                        </small>
+                                                                    </td>
                                                                     <td class="text-end text-success">
-                                                                        <strong>${{ number_format($ivaValue, 2) }}</strong>
+                                                                        <strong style="background: linear-gradient(45deg, #28a745, #20c997); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.1em;">
+                                                                            ${{ number_format($ivaValue, 2) }}
+                                                                        </strong>
                                                                     </td>
                                                                     <td class="text-end">-</td>
                                                                 </tr>
@@ -262,25 +428,57 @@
                                         <table class="table table-striped table-hover">
                                             <thead class="table-dark">
                                                 <tr>
-                                                    <th>Empresa</th>
+                                                    <th>Cliente</th>
                                                     <th>Fecha</th>
+                                                    <th>Tipo</th>
+                                                    <th>Subtotal</th>
+                                                    <th>IVA</th>
                                                     <th>Total</th>
                                                     <th>RIDE</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @foreach($ventas['ventas'] as $venta)
+                                                    @php
+                                                        $totalValue = $venta['total_value'] ?? 0;
+                                                        $subtotalValue = $venta['subtotal_value'] ?? ($totalValue / 1.15);
+                                                        $ivaValue = $totalValue - $subtotalValue;
+                                                        $tipoTarifa = $venta['tipo_tarifa'] ?? 'servicio'; // Por defecto servicio
+                                                    @endphp
                                                     <tr>
                                                         <td>
-                                                            <strong>{{ $venta['supplier_name'] }}</strong>
+                                                            <strong>{{ $venta['customer_name'] ?? $venta['supplier_name'] ?? 'Cliente' }}</strong>
                                                             @if(isset($venta['business_name']))
                                                                 <br><small class="text-muted">{{ $venta['business_name'] }}</small>
                                                             @endif
                                                         </td>
                                                         <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y', $venta['invoice_date'])->format('d/m/Y') }}</td>
                                                         <td>
+                                                            @if(strtolower($tipoTarifa) === 'producto')
+                                                                <span class="badge bg-primary">
+                                                                    <i class="fas fa-box"></i> Producto
+                                                                </span>
+                                                            @else
+                                                                <span class="badge bg-info">
+                                                                    <i class="fas fa-cogs"></i> Servicio
+                                                                </span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-secondary">
+                                                                ${{ number_format($subtotalValue, 2) }}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-warning text-dark">
+                                                                <i class="fas fa-percent"></i>
+                                                                ${{ number_format($ivaValue, 2) }}
+                                                            </span>
+                                                            <br><small class="text-muted">Débito Tributario</small>
+                                                        </td>
+                                                        <td>
                                                             <span class="badge bg-success">
-                                                                ${{ number_format($venta['total_value'] ?? 0, 2) }}
+                                                                ${{ number_format($totalValue, 2) }}
                                                             </span>
                                                         </td>
                                                         <td class="text-center">
@@ -301,12 +499,33 @@
                                             </tbody>
                                             <tfoot class="table-light">
                                                 <tr>
-                                                    <th colspan="2" class="text-end">Total de Ventas:</th>
+                                                    <th colspan="3" class="text-end">Totales de Ventas:</th>
                                                     <th>
-                                                        <span class="badge bg-success">
+                                                        <span class="badge bg-secondary">
                                                             @php
+                                                                $totalSubtotalVentas = 0;
+                                                                $totalIvaVentas = 0;
+                                                                foreach($ventas['ventas'] as $venta) {
+                                                                    $total = $venta['total_value'] ?? 0;
+                                                                    $subtotal = $venta['subtotal_value'] ?? ($total / 1.15);
+                                                                    $iva = $total - $subtotal;
+                                                                    $totalSubtotalVentas += $subtotal;
+                                                                    $totalIvaVentas += $iva;
+                                                                }
                                                                 $totalVentasValue = array_sum(array_column($ventas['ventas'], 'total_value'));
                                                             @endphp
+                                                            ${{ number_format($totalSubtotalVentas, 2) }}
+                                                        </span>
+                                                    </th>
+                                                    <th>
+                                                        <span class="badge bg-warning text-dark">
+                                                            <i class="fas fa-coins"></i>
+                                                            ${{ number_format($totalIvaVentas, 2) }}
+                                                        </span>
+                                                        <br><small class="text-danger"><strong>Débito Tributario</strong></small>
+                                                    </th>
+                                                    <th>
+                                                        <span class="badge bg-success">
                                                             ${{ number_format($totalVentasValue, 2) }}
                                                         </span>
                                                     </th>
@@ -363,6 +582,13 @@
                                                         <small class="text-muted">
                                                             Fecha: {{ \Carbon\Carbon::createFromFormat('d/m/Y', $venta['invoice_date'])->format('d/m/Y') }} 
                                                             | Total: ${{ number_format($totalValue, 2) }}
+                                                            | Tipo: 
+                                                            @php $tipoTarifa = $venta['tipo_tarifa'] ?? 'servicio'; @endphp
+                                                            @if(strtolower($tipoTarifa) === 'producto')
+                                                                <span class="badge bg-primary">Producto</span>
+                                                            @else
+                                                                <span class="badge bg-info">Servicio</span>
+                                                            @endif
                                                         </small>
                                                     </div>
                                                     <div>
@@ -394,7 +620,18 @@
                                                                 <!-- Cuentas por Cobrar (Debe) -->
                                                                 <tr>
                                                                     <td><strong>1201</strong></td>
-                                                                    <td>Cuentas por Cobrar - {{ $venta['customer_name'] ?? 'Cliente' }}</td>
+                                                                    <td>
+                                                                        Cuentas por Cobrar - {{ $venta['customer_name'] ?? 'Cliente' }}
+                                                                        <br><small class="text-muted">
+                                                                            Tipo: 
+                                                                            @php $tipoTarifa = $venta['tipo_tarifa'] ?? 'servicio'; @endphp
+                                                                            @if(strtolower($tipoTarifa) === 'producto')
+                                                                                <span class="badge bg-primary">Producto</span>
+                                                                            @else
+                                                                                <span class="badge bg-info">Servicio</span>
+                                                                            @endif
+                                                                        </small>
+                                                                    </td>
                                                                     <td class="text-end text-success">
                                                                         <strong>${{ number_format($totalValue, 2) }}</strong>
                                                                     </td>
@@ -403,19 +640,33 @@
                                                                 <!-- Ingresos por Ventas (Haber) -->
                                                                 <tr>
                                                                     <td><strong>4101</strong></td>
-                                                                    <td>Ingresos por Ventas - Servicios</td>
+                                                                    <td>
+                                                                        @if(strtolower($tipoTarifa) === 'producto')
+                                                                            Ingresos por Ventas - Productos
+                                                                        @else
+                                                                            Ingresos por Ventas - Servicios
+                                                                        @endif
+                                                                    </td>
                                                                     <td class="text-end">-</td>
                                                                     <td class="text-end text-danger">
                                                                         <strong>${{ number_format($subtotalValue, 2) }}</strong>
                                                                     </td>
                                                                 </tr>
-                                                                <!-- IVA por Pagar (Haber) -->
-                                                                <tr>
+                                                                <!-- IVA por Pagar (Haber) - DÉBITO TRIBUTARIO -->
+                                                                <tr class="table-warning">
                                                                     <td><strong>2104</strong></td>
-                                                                    <td>IVA por Pagar - Débito Fiscal</td>
+                                                                    <td>
+                                                                        <strong>IVA por Pagar - Débito Fiscal</strong>
+                                                                        <br><small class="text-danger">
+                                                                            <i class="fas fa-coins"></i>
+                                                                            <strong>DÉBITO TRIBUTARIO</strong>
+                                                                        </small>
+                                                                    </td>
                                                                     <td class="text-end">-</td>
                                                                     <td class="text-end text-danger">
-                                                                        <strong>${{ number_format($ivaValue, 2) }}</strong>
+                                                                        <strong style="background: linear-gradient(45deg, #ffc107, #ff6b6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.1em;">
+                                                                            ${{ number_format($ivaValue, 2) }}
+                                                                        </strong>
                                                                     </td>
                                                                 </tr>
                                                             </tbody>

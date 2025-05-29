@@ -13,17 +13,31 @@ class ContabilidadController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $contabilidad = Contabilidad::with('usuario')
-            ->orderBy('fecha', 'desc')
-            ->paginate(15);
+        $query = Contabilidad::with('usuario');
+        
+        // Filtros por mes y año
+        $mes = $request->get('mes', now()->month);
+        $anio = $request->get('anio', now()->year);
+        
+        // Aplicar filtros de fecha al mes y año seleccionados
+        if ($mes && $anio) {
+            $query->whereMonth('fecha', $mes)
+                  ->whereYear('fecha', $anio);
+        }
+        
+        $contabilidad = $query->orderBy('fecha', 'desc')->paginate(15);
 
         // Leer archivos JSON de compras y ventas
         $compras = $this->readJsonFile(resource_path('views/contabilidad/compra/compras.txt'));
         $ventas = $this->readJsonFile(resource_path('views/contabilidad/venta/ventas.txt'));
+        
+        // Filtrar compras y ventas por mes y año seleccionados
+        $compras = $this->filterDataByDate($compras, $mes, $anio);
+        $ventas = $this->filterDataByDate($ventas, $mes, $anio);
 
-        return view('contabilidad.index', compact('contabilidad', 'compras', 'ventas'));
+        return view('contabilidad.index', compact('contabilidad', 'compras', 'ventas', 'mes', 'anio'));
     }
 
     /**
@@ -37,6 +51,43 @@ class ContabilidadController extends Controller
             return $data ?? [];
         }
         return [];
+    }
+
+    /**
+     * Filtrar datos de compras/ventas por mes y año
+     */
+    private function filterDataByDate($data, $mes, $anio)
+    {
+        if (!isset($data['compras']) && !isset($data['ventas'])) {
+            return $data;
+        }
+
+        // Determinar la clave principal (compras o ventas)
+        $key = isset($data['compras']) ? 'compras' : 'ventas';
+        
+        if (!isset($data[$key])) {
+            return $data;
+        }
+
+        $filteredData = [];
+        foreach ($data[$key] as $item) {
+            if (isset($item['invoice_date'])) {
+                try {
+                    // Parsear la fecha en formato d/m/Y
+                    $itemDate = \Carbon\Carbon::createFromFormat('d/m/Y', $item['invoice_date']);
+                    
+                    // Verificar si coincide con el mes y año
+                    if ($itemDate->month == $mes && $itemDate->year == $anio) {
+                        $filteredData[] = $item;
+                    }
+                } catch (\Exception $e) {
+                    // Si hay error en el formato de fecha, incluir el item
+                    continue;
+                }
+            }
+        }
+
+        return [$key => $filteredData];
     }
 
     /**
