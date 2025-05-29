@@ -87,81 +87,160 @@
                                     </h6>
                                 </div>
                                 <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-sm table-striped">
-                                            <thead class="table-dark">
-                                                <tr>
-                                                    <th>Fecha</th>
-                                                    <th>Descripción</th>
-                                                    <th>Cuenta</th>
-                                                    <th class="text-end">Debe</th>
-                                                    <th class="text-end">Haber</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @php 
-                                                    $totalDebeCompras = 0;
-                                                    $totalHaberCompras = 0;
-                                                @endphp
-                                                @foreach($compras['compras'] as $compra)
-                                                    @php
-                                                        $totalValue = $compra['total_value'] ?? 0;
-                                                        $totalDebeCompras += $totalValue;
-                                                        $totalHaberCompras += $totalValue;
-                                                    @endphp
-                                                    <!-- Cuenta de Gasto (Debe) -->
-                                                    <tr>
-                                                        <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y', $compra['invoice_date'])->format('d/m/Y') }}</td>
-                                                        <td>Compra a {{ $compra['supplier_name'] }}</td>
-                                                        <td>Gastos de Operación</td>
-                                                        <td class="text-end text-success">
-                                                            <strong>${{ number_format($totalValue, 2) }}</strong>
-                                                        </td>
-                                                        <td class="text-end">-</td>
-                                                    </tr>
-                                                    <!-- Cuenta por Pagar (Haber) -->
-                                                    <tr>
-                                                        <td></td>
-                                                        <td></td>
-                                                        <td class="ps-4">Cuentas por Pagar</td>
-                                                        <td class="text-end">-</td>
-                                                        <td class="text-end text-danger">
-                                                            <strong>${{ number_format($totalValue, 2) }}</strong>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                            <tfoot class="table-light">
-                                                <tr>
-                                                    <th colspan="3" class="text-end">TOTALES:</th>
-                                                    <th class="text-end">
-                                                        <span class="badge bg-success">
-                                                            ${{ number_format($totalDebeCompras, 2) }}
-                                                        </span>
-                                                    </th>
-                                                    <th class="text-end">
-                                                        <span class="badge bg-danger">
-                                                            ${{ number_format($totalHaberCompras, 2) }}
-                                                        </span>
-                                                    </th>
-                                                </tr>
-                                                <tr>
-                                                    <th colspan="5" class="text-center">
-                                                        @if($totalDebeCompras == $totalHaberCompras)
+                                    @php 
+                                        $totalDebeCompras = 0;
+                                        $totalHaberCompras = 0;
+                                        $compraIndex = 0;
+                                    @endphp
+                                    
+                                    @foreach($compras['compras'] as $compra)
+                                        @php
+                                            $totalValue = $compra['total_value'] ?? 0;
+                                            $subtotalValue = $compra['subtotal_value'] ?? ($totalValue / 1.15); // Calculamos subtotal
+                                            $ivaValue = $totalValue - $subtotalValue; // Calculamos IVA
+                                            
+                                            // Acumulamos para los totales
+                                            $totalDebeCompras += $subtotalValue + $ivaValue; // Gastos + IVA
+                                            $totalHaberCompras += $totalValue; // Cuentas por Pagar
+                                            $compraIndex++;
+                                        @endphp
+                                        
+                                        <!-- Asiento Individual por Factura -->
+                                        <div class="card border-warning mb-3">
+                                            <div class="card-header bg-light p-2">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <h6 class="mb-0">
+                                                            <button class="btn btn-sm btn-outline-warning" 
+                                                                    type="button" 
+                                                                    data-bs-toggle="collapse" 
+                                                                    data-bs-target="#asientoCompra{{ $compraIndex }}" 
+                                                                    aria-expanded="false">
+                                                                <i class="fas fa-chevron-down"></i>
+                                                            </button>
+                                                            Asiento #{{ $compraIndex }} - {{ $compra['supplier_name'] }}
+                                                        </h6>
+                                                        <small class="text-muted">
+                                                            Fecha: {{ \Carbon\Carbon::createFromFormat('d/m/Y', $compra['invoice_date'])->format('d/m/Y') }} 
+                                                            | Total: ${{ number_format($totalValue, 2) }}
+                                                        </small>
+                                                    </div>
+                                                    <div>
+                                                        @if(($subtotalValue + $ivaValue) == $totalValue)
                                                             <span class="badge bg-success">
-                                                                <i class="fas fa-check"></i>
-                                                                Asiento Balanceado
+                                                                <i class="fas fa-check"></i> Balanceado
                                                             </span>
                                                         @else
                                                             <span class="badge bg-danger">
-                                                                <i class="fas fa-exclamation-triangle"></i>
-                                                                Asiento Desbalanceado
+                                                                <i class="fas fa-exclamation-triangle"></i> Desbalanceado
                                                             </span>
                                                         @endif
-                                                    </th>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="collapse" id="asientoCompra{{ $compraIndex }}">
+                                                <div class="card-body p-2">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm table-striped mb-0">
+                                                            <thead class="table-dark">
+                                                                <tr>
+                                                                    <th width="20%">Cuenta</th>
+                                                                    <th width="40%">Descripción</th>
+                                                                    <th width="20%" class="text-end">Debe</th>
+                                                                    <th width="20%" class="text-end">Haber</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <!-- Gastos de Operación (Debe) -->
+                                                                <tr>
+                                                                    <td><strong>5101</strong></td>
+                                                                    <td>Gastos de Operación - Compra a {{ $compra['supplier_name'] }}</td>
+                                                                    <td class="text-end text-success">
+                                                                        <strong>${{ number_format($subtotalValue, 2) }}</strong>
+                                                                    </td>
+                                                                    <td class="text-end">-</td>
+                                                                </tr>
+                                                                <!-- IVA por Pagar (Debe) -->
+                                                                <tr>
+                                                                    <td><strong>1105</strong></td>
+                                                                    <td>IVA Pagado - Crédito Tributario</td>
+                                                                    <td class="text-end text-success">
+                                                                        <strong>${{ number_format($ivaValue, 2) }}</strong>
+                                                                    </td>
+                                                                    <td class="text-end">-</td>
+                                                                </tr>
+                                                                <!-- Cuentas por Pagar (Haber) -->
+                                                                <tr>
+                                                                    <td><strong>2101</strong></td>
+                                                                    <td>Cuentas por Pagar - {{ $compra['supplier_name'] }}</td>
+                                                                    <td class="text-end">-</td>
+                                                                    <td class="text-end text-danger">
+                                                                        <strong>${{ number_format($totalValue, 2) }}</strong>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                            <tfoot class="table-light">
+                                                                <tr>
+                                                                    <th colspan="2" class="text-end">SUBTOTALES:</th>
+                                                                    <th class="text-end">
+                                                                        <span class="badge bg-success">
+                                                                            ${{ number_format($subtotalValue + $ivaValue, 2) }}
+                                                                        </span>
+                                                                    </th>
+                                                                    <th class="text-end">
+                                                                        <span class="badge bg-danger">
+                                                                            ${{ number_format($totalValue, 2) }}
+                                                                        </span>
+                                                                    </th>
+                                                                </tr>
+                                                            </tfoot>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                    
+                                    <!-- Resumen Total de Compras -->
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="fas fa-calculator"></i>
+                                                Resumen Total - Asientos de Compras
+                                            </h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span>Total Debe:</span>
+                                                        <span class="badge bg-success fs-6">
+                                                            ${{ number_format($totalDebeCompras, 2) }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span>Total Haber:</span>
+                                                        <span class="badge bg-danger fs-6">
+                                                            ${{ number_format($totalHaberCompras, 2) }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr>
+                                            <div class="text-center">
+                                                @if($totalDebeCompras == $totalHaberCompras)
+                                                    <span class="badge bg-success fs-6">
+                                                        <i class="fas fa-check"></i>
+                                                        TODAS LAS COMPRAS BALANCEADAS
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-danger fs-6">
+                                                        <i class="fas fa-exclamation-triangle"></i>
+                                                        DIFERENCIA: ${{ number_format(abs($totalDebeCompras - $totalHaberCompras), 2) }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -248,81 +327,160 @@
                                     </h6>
                                 </div>
                                 <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-sm table-striped">
-                                            <thead class="table-dark">
-                                                <tr>
-                                                    <th>Fecha</th>
-                                                    <th>Descripción</th>
-                                                    <th>Cuenta</th>
-                                                    <th class="text-end">Debe</th>
-                                                    <th class="text-end">Haber</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @php 
-                                                    $totalDebeVentas = 0;
-                                                    $totalHaberVentas = 0;
-                                                @endphp
-                                                @foreach($ventas['ventas'] as $venta)
-                                                    @php
-                                                        $totalValue = $venta['total_value'] ?? 0;
-                                                        $totalDebeVentas += $totalValue;
-                                                        $totalHaberVentas += $totalValue;
-                                                    @endphp
-                                                    <!-- Cuenta por Cobrar (Debe) -->
-                                                    <tr>
-                                                        <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y', $venta['invoice_date'])->format('d/m/Y') }}</td>
-                                                        <td>Venta a {{ $venta['customer_name'] ?? 'Cliente' }}</td>
-                                                        <td>Cuentas por Cobrar</td>
-                                                        <td class="text-end text-success">
-                                                            <strong>${{ number_format($totalValue, 2) }}</strong>
-                                                        </td>
-                                                        <td class="text-end">-</td>
-                                                    </tr>
-                                                    <!-- Ingreso por Ventas (Haber) -->
-                                                    <tr>
-                                                        <td></td>
-                                                        <td></td>
-                                                        <td class="ps-4">Ingresos por Ventas</td>
-                                                        <td class="text-end">-</td>
-                                                        <td class="text-end text-danger">
-                                                            <strong>${{ number_format($totalValue, 2) }}</strong>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                            <tfoot class="table-light">
-                                                <tr>
-                                                    <th colspan="3" class="text-end">TOTALES:</th>
-                                                    <th class="text-end">
-                                                        <span class="badge bg-success">
-                                                            ${{ number_format($totalDebeVentas, 2) }}
-                                                        </span>
-                                                    </th>
-                                                    <th class="text-end">
-                                                        <span class="badge bg-danger">
-                                                            ${{ number_format($totalHaberVentas, 2) }}
-                                                        </span>
-                                                    </th>
-                                                </tr>
-                                                <tr>
-                                                    <th colspan="5" class="text-center">
-                                                        @if($totalDebeVentas == $totalHaberVentas)
+                                    @php 
+                                        $totalDebeVentas = 0;
+                                        $totalHaberVentas = 0;
+                                        $ventaIndex = 0;
+                                    @endphp
+                                    
+                                    @foreach($ventas['ventas'] as $venta)
+                                        @php
+                                            $totalValue = $venta['total_value'] ?? 0;
+                                            $subtotalValue = $venta['subtotal_value'] ?? ($totalValue / 1.15); // Calculamos subtotal
+                                            $ivaValue = $totalValue - $subtotalValue; // Calculamos IVA
+                                            
+                                            // Acumulamos para los totales
+                                            $totalDebeVentas += $totalValue; // Cuentas por Cobrar
+                                            $totalHaberVentas += $subtotalValue + $ivaValue; // Ingresos + IVA
+                                            $ventaIndex++;
+                                        @endphp
+                                        
+                                        <!-- Asiento Individual por Factura -->
+                                        <div class="card border-info mb-3">
+                                            <div class="card-header bg-light p-2">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <h6 class="mb-0">
+                                                            <button class="btn btn-sm btn-outline-info" 
+                                                                    type="button" 
+                                                                    data-bs-toggle="collapse" 
+                                                                    data-bs-target="#asientoVenta{{ $ventaIndex }}" 
+                                                                    aria-expanded="false">
+                                                                <i class="fas fa-chevron-down"></i>
+                                                            </button>
+                                                            Asiento #{{ $ventaIndex }} - {{ $venta['customer_name'] ?? 'Cliente' }}
+                                                        </h6>
+                                                        <small class="text-muted">
+                                                            Fecha: {{ \Carbon\Carbon::createFromFormat('d/m/Y', $venta['invoice_date'])->format('d/m/Y') }} 
+                                                            | Total: ${{ number_format($totalValue, 2) }}
+                                                        </small>
+                                                    </div>
+                                                    <div>
+                                                        @if($totalValue == ($subtotalValue + $ivaValue))
                                                             <span class="badge bg-success">
-                                                                <i class="fas fa-check"></i>
-                                                                Asiento Balanceado
+                                                                <i class="fas fa-check"></i> Balanceado
                                                             </span>
                                                         @else
                                                             <span class="badge bg-danger">
-                                                                <i class="fas fa-exclamation-triangle"></i>
-                                                                Asiento Desbalanceado
+                                                                <i class="fas fa-exclamation-triangle"></i> Desbalanceado
                                                             </span>
                                                         @endif
-                                                    </th>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="collapse" id="asientoVenta{{ $ventaIndex }}">
+                                                <div class="card-body p-2">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm table-striped mb-0">
+                                                            <thead class="table-dark">
+                                                                <tr>
+                                                                    <th width="20%">Cuenta</th>
+                                                                    <th width="40%">Descripción</th>
+                                                                    <th width="20%" class="text-end">Debe</th>
+                                                                    <th width="20%" class="text-end">Haber</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <!-- Cuentas por Cobrar (Debe) -->
+                                                                <tr>
+                                                                    <td><strong>1201</strong></td>
+                                                                    <td>Cuentas por Cobrar - {{ $venta['customer_name'] ?? 'Cliente' }}</td>
+                                                                    <td class="text-end text-success">
+                                                                        <strong>${{ number_format($totalValue, 2) }}</strong>
+                                                                    </td>
+                                                                    <td class="text-end">-</td>
+                                                                </tr>
+                                                                <!-- Ingresos por Ventas (Haber) -->
+                                                                <tr>
+                                                                    <td><strong>4101</strong></td>
+                                                                    <td>Ingresos por Ventas - Servicios</td>
+                                                                    <td class="text-end">-</td>
+                                                                    <td class="text-end text-danger">
+                                                                        <strong>${{ number_format($subtotalValue, 2) }}</strong>
+                                                                    </td>
+                                                                </tr>
+                                                                <!-- IVA por Pagar (Haber) -->
+                                                                <tr>
+                                                                    <td><strong>2104</strong></td>
+                                                                    <td>IVA por Pagar - Débito Fiscal</td>
+                                                                    <td class="text-end">-</td>
+                                                                    <td class="text-end text-danger">
+                                                                        <strong>${{ number_format($ivaValue, 2) }}</strong>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                            <tfoot class="table-light">
+                                                                <tr>
+                                                                    <th colspan="2" class="text-end">SUBTOTALES:</th>
+                                                                    <th class="text-end">
+                                                                        <span class="badge bg-success">
+                                                                            ${{ number_format($totalValue, 2) }}
+                                                                        </span>
+                                                                    </th>
+                                                                    <th class="text-end">
+                                                                        <span class="badge bg-danger">
+                                                                            ${{ number_format($subtotalValue + $ivaValue, 2) }}
+                                                                        </span>
+                                                                    </th>
+                                                                </tr>
+                                                            </tfoot>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                    
+                                    <!-- Resumen Total de Ventas -->
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="fas fa-calculator"></i>
+                                                Resumen Total - Asientos de Ventas
+                                            </h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span>Total Debe:</span>
+                                                        <span class="badge bg-success fs-6">
+                                                            ${{ number_format($totalDebeVentas, 2) }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span>Total Haber:</span>
+                                                        <span class="badge bg-danger fs-6">
+                                                            ${{ number_format($totalHaberVentas, 2) }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr>
+                                            <div class="text-center">
+                                                @if($totalDebeVentas == $totalHaberVentas)
+                                                    <span class="badge bg-success fs-6">
+                                                        <i class="fas fa-check"></i>
+                                                        TODAS LAS VENTAS BALANCEADAS
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-danger fs-6">
+                                                        <i class="fas fa-exclamation-triangle"></i>
+                                                        DIFERENCIA: ${{ number_format(abs($totalDebeVentas - $totalHaberVentas), 2) }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -353,14 +511,42 @@
                                                     <div class="card-body">
                                                         @php
                                                             $totalComprasGeneral = array_sum(array_column($compras['compras'], 'total_value'));
+                                                            $totalSubtotalCompras = 0;
+                                                            $totalIvaCompras = 0;
+                                                            
+                                                            foreach($compras['compras'] as $compra) {
+                                                                $total = $compra['total_value'] ?? 0;
+                                                                $subtotal = $compra['subtotal_value'] ?? ($total / 1.15);
+                                                                $iva = $total - $subtotal;
+                                                                $totalSubtotalCompras += $subtotal;
+                                                                $totalIvaCompras += $iva;
+                                                            }
                                                         @endphp
                                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                                             <span>Gastos de Operación (Debe):</span>
-                                                            <span class="badge bg-success fs-6">${{ number_format($totalComprasGeneral, 2) }}</span>
+                                                            <span class="badge bg-success fs-6">${{ number_format($totalSubtotalCompras, 2) }}</span>
+                                                        </div>
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                            <span>IVA Crédito Tributario (Debe):</span>
+                                                            <span class="badge bg-success fs-6">${{ number_format($totalIvaCompras, 2) }}</span>
                                                         </div>
                                                         <div class="d-flex justify-content-between align-items-center">
                                                             <span>Cuentas por Pagar (Haber):</span>
                                                             <span class="badge bg-danger fs-6">${{ number_format($totalComprasGeneral, 2) }}</span>
+                                                        </div>
+                                                        <hr>
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <strong>Balance:</strong>
+                                                            @if(($totalSubtotalCompras + $totalIvaCompras) == $totalComprasGeneral)
+                                                                <span class="badge bg-success">
+                                                                    <i class="fas fa-check"></i> Cuadrado
+                                                                </span>
+                                                            @else
+                                                                <span class="badge bg-warning">
+                                                                    <i class="fas fa-exclamation-triangle"></i> 
+                                                                    Dif: ${{ number_format(abs(($totalSubtotalCompras + $totalIvaCompras) - $totalComprasGeneral), 2) }}
+                                                                </span>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 </div>
@@ -377,14 +563,42 @@
                                                     <div class="card-body">
                                                         @php
                                                             $totalVentasGeneral = array_sum(array_column($ventas['ventas'], 'total_value'));
+                                                            $totalSubtotalVentas = 0;
+                                                            $totalIvaVentas = 0;
+                                                            
+                                                            foreach($ventas['ventas'] as $venta) {
+                                                                $total = $venta['total_value'] ?? 0;
+                                                                $subtotal = $venta['subtotal_value'] ?? ($total / 1.15);
+                                                                $iva = $total - $subtotal;
+                                                                $totalSubtotalVentas += $subtotal;
+                                                                $totalIvaVentas += $iva;
+                                                            }
                                                         @endphp
                                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                                             <span>Cuentas por Cobrar (Debe):</span>
                                                             <span class="badge bg-success fs-6">${{ number_format($totalVentasGeneral, 2) }}</span>
                                                         </div>
-                                                        <div class="d-flex justify-content-between align-items-center">
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
                                                             <span>Ingresos por Ventas (Haber):</span>
-                                                            <span class="badge bg-danger fs-6">${{ number_format($totalVentasGeneral, 2) }}</span>
+                                                            <span class="badge bg-danger fs-6">${{ number_format($totalSubtotalVentas, 2) }}</span>
+                                                        </div>
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <span>IVA por Pagar (Haber):</span>
+                                                            <span class="badge bg-danger fs-6">${{ number_format($totalIvaVentas, 2) }}</span>
+                                                        </div>
+                                                        <hr>
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <strong>Balance:</strong>
+                                                            @if($totalVentasGeneral == ($totalSubtotalVentas + $totalIvaVentas))
+                                                                <span class="badge bg-success">
+                                                                    <i class="fas fa-check"></i> Cuadrado
+                                                                </span>
+                                                            @else
+                                                                <span class="badge bg-warning">
+                                                                    <i class="fas fa-exclamation-triangle"></i> 
+                                                                    Dif: ${{ number_format(abs($totalVentasGeneral - ($totalSubtotalVentas + $totalIvaVentas)), 2) }}
+                                                                </span>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 </div>
@@ -396,52 +610,128 @@
                                     <div class="row mt-3">
                                         <div class="col-md-12">
                                             <div class="card bg-light">
-                                                <div class="card-body text-center">
+                                                <div class="card-body">
                                                     @php
                                                         $totalDebeGeneral = 0;
                                                         $totalHaberGeneral = 0;
+                                                        $ivaCredito = 0; // IVA pagado en compras
+                                                        $ivaDebito = 0;  // IVA cobrado en ventas
                                                         
+                                                        // Cálculos de Compras
                                                         if(isset($compras['compras'])) {
-                                                            $totalCompras = array_sum(array_column($compras['compras'], 'total_value'));
-                                                            $totalDebeGeneral += $totalCompras;
-                                                            $totalHaberGeneral += $totalCompras;
+                                                            foreach($compras['compras'] as $compra) {
+                                                                $total = $compra['total_value'] ?? 0;
+                                                                $subtotal = $compra['subtotal_value'] ?? ($total / 1.15);
+                                                                $iva = $total - $subtotal;
+                                                                
+                                                                $totalDebeGeneral += $subtotal; // Gastos
+                                                                $totalDebeGeneral += $iva;      // IVA Crédito
+                                                                $totalHaberGeneral += $total;   // Cuentas por Pagar
+                                                                $ivaCredito += $iva;
+                                                            }
                                                         }
                                                         
+                                                        // Cálculos de Ventas
                                                         if(isset($ventas['ventas'])) {
-                                                            $totalVentas = array_sum(array_column($ventas['ventas'], 'total_value'));
-                                                            $totalDebeGeneral += $totalVentas;
-                                                            $totalHaberGeneral += $totalVentas;
+                                                            foreach($ventas['ventas'] as $venta) {
+                                                                $total = $venta['total_value'] ?? 0;
+                                                                $subtotal = $venta['subtotal_value'] ?? ($total / 1.15);
+                                                                $iva = $total - $subtotal;
+                                                                
+                                                                $totalDebeGeneral += $total;    // Cuentas por Cobrar
+                                                                $totalHaberGeneral += $subtotal; // Ingresos
+                                                                $totalHaberGeneral += $iva;      // IVA por Pagar
+                                                                $ivaDebito += $iva;
+                                                            }
                                                         }
+                                                        
+                                                        $ivaResultante = $ivaDebito - $ivaCredito; // IVA neto a pagar/favor
                                                     @endphp
-                                                    <h5 class="mb-3">Balance General de Asientos</h5>
+                                                    
+                                                    <h5 class="mb-3 text-center">Balance General de Asientos Contables</h5>
+                                                    
                                                     <div class="row">
-                                                        <div class="col-md-4">
-                                                            <h6>Total Debe:</h6>
-                                                            <span class="badge bg-success fs-5">
-                                                                ${{ number_format($totalDebeGeneral, 2) }}
-                                                            </span>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <h6>Total Haber:</h6>
-                                                            <span class="badge bg-danger fs-5">
-                                                                ${{ number_format($totalHaberGeneral, 2) }}
-                                                            </span>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <h6>Estado:</h6>
-                                                            @if($totalDebeGeneral == $totalHaberGeneral)
+                                                        <div class="col-md-3">
+                                                            <div class="text-center">
+                                                                <h6>Total Debe:</h6>
                                                                 <span class="badge bg-success fs-5">
-                                                                    <i class="fas fa-check"></i>
-                                                                    BALANCEADO
+                                                                    ${{ number_format($totalDebeGeneral, 2) }}
                                                                 </span>
-                                                            @else
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="text-center">
+                                                                <h6>Total Haber:</h6>
                                                                 <span class="badge bg-danger fs-5">
-                                                                    <i class="fas fa-exclamation-triangle"></i>
-                                                                    DESBALANCEADO
+                                                                    ${{ number_format($totalHaberGeneral, 2) }}
                                                                 </span>
-                                                            @endif
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="text-center">
+                                                                <h6>Estado:</h6>
+                                                                @if($totalDebeGeneral == $totalHaberGeneral)
+                                                                    <span class="badge bg-success fs-5">
+                                                                        <i class="fas fa-check"></i>
+                                                                        BALANCEADO
+                                                                    </span>
+                                                                @else
+                                                                    <span class="badge bg-danger fs-5">
+                                                                        <i class="fas fa-exclamation-triangle"></i>
+                                                                        DESBALANCEADO
+                                                                    </span>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="text-center">
+                                                                <h6>IVA Resultante:</h6>
+                                                                @if($ivaResultante > 0)
+                                                                    <span class="badge bg-warning fs-5">
+                                                                        A Pagar: ${{ number_format($ivaResultante, 2) }}
+                                                                    </span>
+                                                                @elseif($ivaResultante < 0)
+                                                                    <span class="badge bg-info fs-5">
+                                                                        A Favor: ${{ number_format(abs($ivaResultante), 2) }}
+                                                                    </span>
+                                                                @else
+                                                                    <span class="badge bg-secondary fs-5">
+                                                                        Neutro: $0.00
+                                                                    </span>
+                                                                @endif
+                                                            </div>
                                                         </div>
                                                     </div>
+                                                    
+                                                    <!-- Detalle del IVA -->
+                                                    @if($ivaCredito > 0 || $ivaDebito > 0)
+                                                        <hr>
+                                                        <div class="row">
+                                                            <div class="col-md-12">
+                                                                <h6 class="text-center mb-3">Detalle de IVA</h6>
+                                                                <div class="row">
+                                                                    <div class="col-md-4 text-center">
+                                                                        <small class="text-muted">IVA Crédito (Compras)</small><br>
+                                                                        <span class="badge bg-primary">
+                                                                            ${{ number_format($ivaCredito, 2) }}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div class="col-md-4 text-center">
+                                                                        <small class="text-muted">IVA Débito (Ventas)</small><br>
+                                                                        <span class="badge bg-primary">
+                                                                            ${{ number_format($ivaDebito, 2) }}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div class="col-md-4 text-center">
+                                                                        <small class="text-muted">Diferencia</small><br>
+                                                                        <span class="badge bg-{{ $ivaResultante >= 0 ? 'warning' : 'info' }}">
+                                                                            ${{ number_format($ivaResultante, 2) }}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </div>
