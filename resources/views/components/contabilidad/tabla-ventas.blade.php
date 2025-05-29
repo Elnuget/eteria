@@ -13,7 +13,6 @@
                         <th>Cliente</th>
                         <th>Fecha</th>
                         <th>Productos/Servicios</th>
-                        <th>Tipo Tarifa</th>
                         <th>Subtotal</th>
                         <th>IVA</th>
                         <th>Total</th>
@@ -144,13 +143,7 @@
                                             <span class="badge bg-primary">Productos</span>
                                         @endif
                                     </div>
-                                @endif
-                            </td>
-                            <td>
-                                <span class="badge @if($tipoTarifa == 'IVA 15%') bg-warning @elseif($tipoTarifa == 'IVA 0%') bg-info @else bg-secondary @endif">
-                                    {{ $tipoTarifa }}
-                                </span>
-                            </td>
+                                @endif                            </td>
                             <td>${{ number_format($subtotalSinIva, 2) }}</td>
                             <td>${{ number_format($iva, 2) }}</td>
                             <td>
@@ -184,7 +177,7 @@
                     @endforeach
                 </tbody>                <tfoot class="table-light">
                     <tr>
-                        <th colspan="4" class="text-end">Totales de Ventas:</th>
+                        <th colspan="3" class="text-end">Totales de Ventas:</th>
                         <th>${{ number_format(collect($ventas['ventas'])->sum('subtotal_without_taxes'), 2) }}</th>
                         <th>${{ number_format(collect($ventas['ventas'])->sum(function($venta) { return ($venta['total_value'] ?? 0) - ($venta['subtotal_without_taxes'] ?? 0); }), 2) }}</th>
                         <th>${{ number_format(collect($ventas['ventas'])->sum('total_value'), 2) }}</th>

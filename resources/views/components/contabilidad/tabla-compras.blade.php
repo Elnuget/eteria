@@ -13,7 +13,6 @@
                         <th>Proveedor</th>
                         <th>Fecha</th>
                         <th>Productos</th>
-                        <th>Tipo Tarifa</th>
                         <th>Subtotal</th>
                         <th>IVA</th>
                         <th>Total</th>
@@ -131,13 +130,7 @@
                                     @endforeach
                                 @else
                                     <span class="text-muted">Sin productos</span>
-                                @endif
-                            </td>
-                            <td>
-                                <span class="badge @if($tipoTarifa == 'IVA 15%') bg-warning @elseif($tipoTarifa == 'IVA 0%') bg-info @else bg-secondary @endif">
-                                    {{ $tipoTarifa }}
-                                </span>
-                            </td>
+                                @endif                            </td>
                             <td>${{ number_format($subtotalSinIva, 2) }}</td>
                             <td>${{ number_format($iva, 2) }}</td>
                             <td>
@@ -171,7 +164,7 @@
                     @endforeach
                 </tbody>                <tfoot class="table-light">
                     <tr>
-                        <th colspan="4" class="text-end">Totales de Compras:</th>
+                        <th colspan="3" class="text-end">Totales de Compras:</th>
                         <th>${{ number_format(collect($compras['compras'])->sum('subtotal_without_taxes'), 2) }}</th>
                         <th>${{ number_format(collect($compras['compras'])->sum(function($compra) { return ($compra['total_value'] ?? 0) - ($compra['subtotal_without_taxes'] ?? 0); }), 2) }}</th>
                         <th>${{ number_format(collect($compras['compras'])->sum('total_value'), 2) }}</th>
