@@ -13,7 +13,8 @@ class FacturaController extends Controller
      */
     public function index()
     {
-        return view('facturas.index');
+        $facturas = Factura::orderBy('created_at', 'desc')->get();
+        return view('facturas.index', compact('facturas'));
     }
 
     /**
