@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Factura;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class FacturaController extends Controller
 {
@@ -486,7 +487,7 @@ class FacturaController extends Controller
             
         } catch (\Exception $e) {
             // Si falla el webservice real, simular respuesta para pruebas
-            \Log::warning('Error al conectar con SRI, simulando respuesta: ' . $e->getMessage());
+            Log::warning('Error al conectar con SRI, simulando respuesta: ' . $e->getMessage());
             return $this->simularRespuestaSri();
         }
     }
@@ -589,7 +590,7 @@ class FacturaController extends Controller
             ];
             
         } catch (\Exception $e) {
-            \Log::error('Error al procesar respuesta SRI: ' . $e->getMessage());
+            Log::error('Error al procesar respuesta SRI: ' . $e->getMessage());
             return [
                 'estado' => 'ERROR',
                 'mensaje' => 'Error al procesar la respuesta del SRI',
@@ -762,5 +763,247 @@ class FacturaController extends Controller
         }
         
         return view('facturas.autorizar', compact('factura'));
+    }
+
+    /**
+     * Procesar autorización de factura con el SRI
+     */
+    public function procesarAutorizacion(Request $request, Factura $factura): JsonResponse
+    {
+        try {
+            // Verificar que la factura esté en estado correcto
+            if ($factura->estado !== 'RECIBIDA') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'La factura debe estar en estado RECIBIDA antes de ser autorizada.'
+                ], 400);
+            }
+
+            if ($factura->fecha_autorizacion) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Esta factura ya ha sido autorizada.'
+                ], 400);
+            }
+
+            // Construir el SOAP envelope para autorización
+            $soapEnvelope = $this->crearSoapEnvelopeAutorizacion($factura->clave_acceso);
+            
+            // Enviar al SRI
+            $response = $this->enviarAutorizacionAlSri($soapEnvelope);
+            
+            // Procesar respuesta
+            $resultado = $this->procesarRespuestaAutorizacion($response);
+            
+            // Actualizar la factura según la respuesta
+            if ($resultado['success']) {
+                $factura->update([
+                    'estado' => 'AUTORIZADA',
+                    'fecha_autorizacion' => now(),
+                    'numero_autorizacion' => $resultado['numero_autorizacion'],
+                    'observaciones' => $resultado['mensaje']
+                ]);
+            } else {
+                $factura->update([
+                    'estado' => 'NO_AUTORIZADA',
+                    'observaciones' => $resultado['mensaje']
+                ]);
+            }
+            
+            return response()->json($resultado);
+            
+        } catch (\Exception $e) {
+            Log::error('Error en autorización SRI: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'estado' => 'ERROR',
+                'mensaje' => 'Error interno al procesar la autorización: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Crear SOAP envelope para autorización
+     */
+    private function crearSoapEnvelopeAutorizacion($claveAcceso)
+    {
+        return '<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:aut="http://ec.gob.sri.ws.autorizacion">
+    <soap:Header/>
+    <soap:Body>
+        <aut:autorizacionComprobante>
+            <claveAccesoComprobante>' . $claveAcceso . '</claveAccesoComprobante>
+        </aut:autorizacionComprobante>
+    </soap:Body>
+</soap:Envelope>';
+    }
+
+    /**
+     * Enviar autorización al SRI
+     */
+    private function enviarAutorizacionAlSri($soapEnvelope)
+    {
+        $url = 'https://celcer.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantes?wsdl';
+        
+        try {
+            $client = new \SoapClient($url, [
+                'trace' => true,
+                'exceptions' => true,
+                'soap_version' => SOAP_1_1,
+                'cache_wsdl' => WSDL_CACHE_NONE,
+                'connection_timeout' => 30,
+                'stream_context' => stream_context_create([
+                    'ssl' => [
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
+                        'allow_self_signed' => true
+                    ]
+                ])
+            ]);
+
+            $response = $client->__doRequest(
+                $soapEnvelope,
+                $url,
+                'autorizacionComprobante',
+                SOAP_1_1
+            );
+
+            return $response;
+            
+        } catch (\Exception $e) {
+            Log::error('Error SOAP autorización SRI: ' . $e->getMessage());
+            
+            // En caso de error, simular respuesta para desarrollo
+            if (app()->environment(['local', 'development'])) {
+                return $this->simularRespuestaAutorizacionSri();
+            }
+            
+            throw $e;
+        }
+    }
+
+    /**
+     * Simular respuesta del SRI para desarrollo
+     */
+    private function simularRespuestaAutorizacionSri()
+    {
+        $esAutorizada = rand(1, 10) > 3; // 70% de probabilidad de autorización
+        
+        if ($esAutorizada) {
+            return '<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+    <soap:Body>
+        <ns2:autorizacionComprobanteResponse xmlns:ns2="http://ec.gob.sri.ws.autorizacion">
+            <RespuestaAutorizacionComprobante>
+                <autorizaciones>
+                    <autorizacion>
+                        <estado>AUTORIZADO</estado>
+                        <numeroAutorizacion>' . date('dmY') . '01' . str_pad(rand(1, 999999999999999999), 37, '0', STR_PAD_LEFT) . '</numeroAutorizacion>
+                        <fechaAutorizacion>' . date('c') . '</fechaAutorizacion>
+                        <ambiente>PRODUCCION</ambiente>
+                        <comprobante><![CDATA[<?xml version="1.0" encoding="UTF-8"?><factura>...</factura>]]></comprobante>
+                    </autorizacion>
+                </autorizaciones>
+            </RespuestaAutorizacionComprobante>
+        </ns2:autorizacionComprobanteResponse>
+    </soap:Body>
+</soap:Envelope>';
+        } else {
+            return '<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+    <soap:Body>
+        <ns2:autorizacionComprobanteResponse xmlns:ns2="http://ec.gob.sri.ws.autorizacion">
+            <RespuestaAutorizacionComprobante>
+                <autorizaciones>
+                    <autorizacion>
+                        <estado>NO AUTORIZADO</estado>
+                        <numeroAutorizacion>' . date('dmY') . '01' . str_pad(rand(1, 999999999999999999), 37, '0', STR_PAD_LEFT) . '</numeroAutorizacion>
+                        <fechaAutorizacion>' . date('c') . '</fechaAutorizacion>
+                        <ambiente>PRODUCCION</ambiente>
+                        <mensajes>
+                            <mensaje>
+                                <identificador>43</identificador>
+                                <mensaje>CLAVE DE ACCESO DUPLICADA</mensaje>
+                                <tipo>ERROR</tipo>
+                            </mensaje>
+                            <mensaje>
+                                <identificador>170</identificador>
+                                <mensaje>EMISOR NO REGISTRADO EN AMBIENTE DE PRODUCCION</mensaje>
+                                <tipo>ERROR</tipo>
+                            </mensaje>
+                        </mensajes>
+                    </autorizacion>
+                </autorizaciones>
+            </RespuestaAutorizacionComprobante>
+        </ns2:autorizacionComprobanteResponse>
+    </soap:Body>
+</soap:Envelope>';
+        }
+    }
+
+    /**
+     * Procesar respuesta de autorización del SRI
+     */
+    private function procesarRespuestaAutorizacion($xmlResponse)
+    {
+        try {
+            $dom = new \DOMDocument();
+            $dom->loadXML($xmlResponse);
+            
+            // Buscar el nodo de autorización
+            $autorizacion = $dom->getElementsByTagName('autorizacion')->item(0);
+            
+            if (!$autorizacion) {
+                throw new \Exception('No se encontró el nodo de autorización en la respuesta');
+            }
+            
+            $estado = $autorizacion->getElementsByTagName('estado')->item(0)->textContent;
+            $numeroAutorizacion = $autorizacion->getElementsByTagName('numeroAutorizacion')->item(0)->textContent;
+            $fechaAutorizacion = $autorizacion->getElementsByTagName('fechaAutorizacion')->item(0)->textContent;
+            $ambiente = $autorizacion->getElementsByTagName('ambiente')->item(0)->textContent;
+            
+            if ($estado === 'AUTORIZADO') {
+                return [
+                    'success' => true,
+                    'estado' => $estado,
+                    'mensaje' => 'COMPROBANTE AUTORIZADO',
+                    'numero_autorizacion' => $numeroAutorizacion,
+                    'fecha_autorizacion' => $fechaAutorizacion,
+                    'ambiente' => $ambiente
+                ];
+            } else {
+                // Procesar mensajes de error
+                $mensajes = [];
+                $mensajesNodes = $autorizacion->getElementsByTagName('mensaje');
+                
+                foreach ($mensajesNodes as $mensajeNode) {
+                    $identificador = $mensajeNode->getElementsByTagName('identificador')->item(0)->textContent;
+                    $mensaje = $mensajeNode->getElementsByTagName('mensaje')->item(0)->textContent;
+                    $tipo = $mensajeNode->getElementsByTagName('tipo')->item(0)->textContent;
+                    
+                    $mensajes[] = "[$tipo] $identificador: $mensaje";
+                }
+                
+                return [
+                    'success' => false,
+                    'estado' => $estado,
+                    'mensaje' => implode(' | ', $mensajes),
+                    'numero_autorizacion' => $numeroAutorizacion,
+                    'fecha_autorizacion' => $fechaAutorizacion,
+                    'ambiente' => $ambiente,
+                    'mensajes_detalle' => $mensajes
+                ];
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Error procesando respuesta autorización SRI: ' . $e->getMessage());
+            
+            return [
+                'success' => false,
+                'estado' => 'ERROR',
+                'mensaje' => 'Error procesando respuesta del SRI: ' . $e->getMessage()
+            ];
+        }
     }
 }

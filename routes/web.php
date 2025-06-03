@@ -78,6 +78,7 @@ Route::post('/facturas/{factura}/procesar-firma', [FacturaController::class, 'pr
 Route::get('/facturas/{factura}/envio', [FacturaController::class, 'envio'])->name('facturas.envio')->middleware('auth');
 Route::post('/facturas/{factura}/enviar-sri', [FacturaController::class, 'enviarSri'])->name('facturas.enviar-sri')->middleware('auth');
 Route::get('/facturas/{factura}/autorizar', [FacturaController::class, 'autorizar'])->name('facturas.autorizar')->middleware('auth');
+Route::post('/facturas/{factura}/procesar-autorizacion', [FacturaController::class, 'procesarAutorizacion'])->name('facturas.procesar-autorizacion')->middleware('auth');
 Route::put('/mensajes/update-nombre', [App\Http\Controllers\MensajeController::class, 'updateNombre'])->name('mensajes.updateNombre')->middleware('auth');
 Route::resource('mensajes', MensajeController::class)->middleware('auth');
 Route::post('/webhook/twilio', [WebhookController::class, 'handleTwilioWebhook'])->name('webhook.twilio');

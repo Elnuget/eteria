@@ -265,36 +265,39 @@ function autorizarFactura(facturaId) {
     // Obtener el token CSRF
     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     
-    // TODO: Implementar envío al SRI para autorización
-    // Por ahora simular respuesta
-    setTimeout(() => {
-        // Simular respuesta exitosa o con error
-        const esExitosa = Math.random() > 0.3; // 70% de éxito
-        
-        if (esExitosa) {
-            const data = {
-                success: true,
-                estado: 'AUTORIZADA',
-                mensaje: 'COMPROBANTE AUTORIZADO',
-                numero_autorizacion: '2406202501' + Math.random().toString().substr(2, 39),
-                fecha_autorizacion: new Date().toISOString()
-            };
+    // Enviar solicitud al controlador
+    fetch(`/facturas/${facturaId}/procesar-autorizacion`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': token,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
             mostrarModalExito(data);
         } else {
-            const data = {
-                success: false,
-                estado: 'NO_AUTORIZADA',
-                mensaje: 'ERROR EN VALIDACIÓN DE COMPROBANTE',
-                informacion_adicional: 'El certificado digital ha expirado',
-                tipo: 'ERROR'
-            };
             mostrarModalError(data);
         }
-        
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const errorData = {
+            success: false,
+            estado: 'ERROR',
+            mensaje: 'Error de conexión con el servidor',
+            tipo: 'ERROR'
+        };
+        mostrarModalError(errorData);
+    })
+    .finally(() => {
         // Restaurar botón
         btn.innerHTML = textOriginal;
         btn.disabled = false;
-    }, 3000);
+    });
 }
 
 function mostrarModalExito(data) {
