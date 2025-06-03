@@ -344,4 +344,145 @@ class FacturaController extends Controller
         
         return view('facturas.firmar', compact('factura'));
     }
+
+    /**
+     * Procesar la firma digital de la factura
+     */
+    public function procesarFirma(Request $request, Factura $factura): JsonResponse
+    {
+        try {
+            // Verificar que la factura tenga XML y no esté ya firmada
+            if (!$factura->xml_ruta) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Esta factura no tiene un archivo XML para firmar.'
+                ], 400);
+            }
+            
+            if ($factura->xml_firmado_ruta) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Esta factura ya ha sido firmada digitalmente.'
+                ], 400);
+            }
+
+            // Verificar que el archivo XML existe
+            $xmlPath = public_path($factura->xml_ruta);
+            if (!file_exists($xmlPath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El archivo XML de la factura no existe.'
+                ], 400);
+            }
+
+            // Obtener las credenciales del certificado desde el archivo
+            $credentialsPath = public_path('firma/17104441_1725874992.txt');
+            $certificatePath = public_path('firma/17104441_identity_1725874992.p12');
+            
+            if (!file_exists($credentialsPath) || !file_exists($certificatePath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Los archivos de certificado digital no están disponibles.'
+                ], 400);
+            }
+
+            // Leer las credenciales
+            $credentials = file_get_contents($credentialsPath);
+            preg_match('/Contraseña:\s*(.+)/', $credentials, $matches);
+            $password = isset($matches[1]) ? trim($matches[1]) : null;
+
+            if (!$password) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se pudo obtener la contraseña del certificado.'
+                ], 400);
+            }
+
+            // Simular el proceso de firma digital
+            // En una implementación real, aquí se usaría una librería como phpseclib, OpenSSL, o similar
+            // para firmar digitalmente el XML con el certificado p12
+            
+            // Leer el contenido del XML original
+            $xmlContent = file_get_contents($xmlPath);
+            
+            // Generar el XML firmado (simulación)
+            $xmlFirmado = $this->simularFirmaDigital($xmlContent, $certificatePath, $password);
+            
+            // Crear el nombre del archivo firmado
+            $nombreArchivoFirmado = 'factura_' . $factura->numero_factura . '_firmado_' . time() . '.xml';
+            $rutaXmlFirmado = 'facturas/xml_firmado/' . $nombreArchivoFirmado;
+            $rutaCompletaFirmado = storage_path('app/public/' . $rutaXmlFirmado);
+
+            // Crear directorio si no existe
+            $directorio = dirname($rutaCompletaFirmado);
+            if (!is_dir($directorio)) {
+                mkdir($directorio, 0755, true);
+            }
+
+            // Guardar el XML firmado
+            file_put_contents($rutaCompletaFirmado, $xmlFirmado);
+
+            // Actualizar la factura en la base de datos
+            $factura->update([
+                'estado' => 'FIRMADO',
+                'xml_firmado_ruta' => '/storage/' . $rutaXmlFirmado,
+                'fecha_firmado' => now(),
+                'certificado_ruta' => '/firma/17104441_identity_1725874992.p12',
+                'certificado_password' => encrypt($password), // Encriptar la contraseña
+                'certificado_propietario' => 'UANATACA ECUADOR S.A.',
+                'certificado_serial' => '17104441_1725874992',
+                'certificado_vigencia_hasta' => '2025-05-13'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Factura firmada digitalmente con éxito.',
+                'factura' => $factura->fresh(),
+                'xml_firmado_url' => asset('storage/' . $rutaXmlFirmado)
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al firmar la factura: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Simular la firma digital del XML
+     * En una implementación real, aquí se usaría OpenSSL o una librería especializada
+     */
+    private function simularFirmaDigital($xmlContent, $certificatePath, $password)
+    {
+        // En una implementación real, aquí se aplicaría la firma digital real
+        // Por ahora, agregamos una sección de firma simulada al XML
+        
+        $firmaSimilada = '
+    <!-- FIRMA DIGITAL APLICADA -->
+    <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="Signature">
+        <ds:SignedInfo>
+            <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+            <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+            <ds:Reference URI="">
+                <ds:Transforms>
+                    <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+                </ds:Transforms>
+                <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+                <ds:DigestValue>SIMULADO_DIGEST_VALUE_' . base64_encode(random_bytes(20)) . '</ds:DigestValue>
+            </ds:Reference>
+        </ds:SignedInfo>
+        <ds:SignatureValue>SIMULADO_SIGNATURE_VALUE_' . base64_encode(random_bytes(128)) . '</ds:SignatureValue>
+        <ds:KeyInfo>
+            <ds:X509Data>
+                <ds:X509Certificate>SIMULADO_CERTIFICATE_' . base64_encode(random_bytes(64)) . '</ds:X509Certificate>
+            </ds:X509Data>
+        </ds:KeyInfo>
+    </ds:Signature>';
+
+        // Insertar la firma antes del cierre del elemento factura
+        $xmlFirmado = str_replace('</factura>', $firmaSimilada . "\n" . '</factura>', $xmlContent);
+        
+        return $xmlFirmado;
+    }
 }

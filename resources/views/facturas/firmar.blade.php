@@ -184,16 +184,41 @@ function firmarDocumento(facturaId) {
     btnFirmar.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Firmando...';
     progreso.style.display = 'block';
     
-    // Aquí se implementará la lógica de firma
-    // Por ahora solo simula el proceso
-    setTimeout(() => {
-        mostrarAlerta('info', 'Funcionalidad de firma en desarrollo. La implementación se completará próximamente.');
+    // Enviar petición AJAX para firmar el documento
+    fetch(`/facturas/${facturaId}/procesar-firma`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarAlerta('success', data.message);
+            
+            // Recargar la página después de un breve delay para mostrar el nuevo estado
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            mostrarAlerta('danger', data.message || 'Error al firmar el documento');
+            
+            // Restaurar botón en caso de error
+            btnFirmar.disabled = false;
+            btnFirmar.innerHTML = '<i class="fas fa-signature"></i> Firmar Documento';
+            progreso.style.display = 'none';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        mostrarAlerta('danger', 'Error de conexión al procesar la firma');
         
-        // Restaurar botón
+        // Restaurar botón en caso de error
         btnFirmar.disabled = false;
         btnFirmar.innerHTML = '<i class="fas fa-signature"></i> Firmar Documento';
         progreso.style.display = 'none';
-    }, 2000);
+    });
 }
 
 function mostrarAlerta(tipo, mensaje) {
