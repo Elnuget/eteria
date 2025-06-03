@@ -106,4 +106,12 @@ class FacturaController extends Controller
             'message' => 'Factura eliminada exitosamente'
         ]);
     }
+
+    /**
+     * Show the form for generating XML.
+     */
+    public function generarxml()
+    {
+        return view('facturas.generarxml');
+    }
 }
