@@ -2,28 +2,6 @@
 
 @section('content')
 <div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Generar XML</h4>
-                </div>
-                <div class="card-body text-center">
-                    <h2 class="mb-4">Create XML</h2>
-                    
-                    <button type="button" class="btn btn-success btn-lg">
-                        <i class="fas fa-file-code"></i> Create XML
-                    </button>
-                    
-                    <div class="mt-4">
-                        <a href="{{ route('facturas.index') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Volver
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
     <div class="card mt-4">
         <div class="card-header">
             <h5>Paso 1</h5>
