@@ -176,6 +176,13 @@
                                                     <i class="fas fa-signature"></i> Firmar
                                                 </a>
                                             @endif
+                                            @if($factura->xml_firmado_ruta && !$factura->fecha_recepcion)
+                                                <a href="{{ route('facturas.envio', $factura->id) }}" 
+                                                   class="btn btn-success btn-sm" 
+                                                   title="Enviar XML Firmado">
+                                                    <i class="fas fa-paper-plane"></i> Enviar
+                                                </a>
+                                            @endif
                                             <button type="button" 
                                                     class="btn btn-danger btn-sm" 
                                                     onclick="confirmarBorrar({{ $factura->id }}, '{{ $factura->numero_factura }}')"

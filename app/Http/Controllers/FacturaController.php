@@ -346,6 +346,25 @@ class FacturaController extends Controller
     }
 
     /**
+     * Show the form for sending a factura.
+     */
+    public function envio(Factura $factura)
+    {
+        // Verificar que la factura esté firmada y no haya sido recibida
+        if (!$factura->xml_firmado_ruta) {
+            return redirect()->route('facturas.index')
+                ->with('error', 'Esta factura no está firmada digitalmente.');
+        }
+        
+        if ($factura->fecha_recepcion) {
+            return redirect()->route('facturas.index')
+                ->with('info', 'Esta factura ya ha sido enviada y recibida por el SRI.');
+        }
+        
+        return view('facturas.envio', compact('factura'));
+    }
+
+    /**
      * Procesar la firma digital de la factura
      */
     public function procesarFirma(Request $request, Factura $factura): JsonResponse
