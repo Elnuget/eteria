@@ -96,10 +96,14 @@
                                     </td>
                                     <td>
                                         @if($factura->xml_firmado_ruta)
-                                            <small class="text-info">
-                                                <i class="fas fa-file-signature"></i> 
-                                                {{ basename($factura->xml_firmado_ruta) }}
-                                            </small>
+                                            <a href="{{ asset($factura->xml_firmado_ruta) }}" target="_blank" class="text-decoration-none">
+                                                <small class="text-info">
+                                                    <i class="fas fa-file-signature"></i> 
+                                                    {{ basename($factura->xml_firmado_ruta) }}
+                                                </small>
+                                                <br>
+                                                <small class="text-muted">Click para ver XML firmado</small>
+                                            </a>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif

@@ -69,14 +69,50 @@
                                     {{ $factura->clave_acceso }}
                                 </small>
                             </td>
-                        </tr>
-                    </table>
+                        </tr>                    </table>
+
+                    @if($factura->xml_firmado_ruta)
+                        <div class="mt-3">
+                            <h6 class="text-success">
+                                <i class="fas fa-certificate"></i> Información del Certificado Digital
+                            </h6>
+                            <table class="table table-borderless table-sm">
+                                @if($factura->certificado_propietario)
+                                <tr>
+                                    <td><strong>Propietario:</strong></td>
+                                    <td><small>{{ $factura->certificado_propietario }}</small></td>
+                                </tr>
+                                @endif
+                                @if($factura->certificado_serial)
+                                <tr>
+                                    <td><strong>Serial:</strong></td>
+                                    <td><small class="font-monospace">{{ $factura->certificado_serial }}</small></td>
+                                </tr>
+                                @endif
+                                @if($factura->certificado_vigencia_hasta)
+                                <tr>
+                                    <td><strong>Vigencia:</strong></td>
+                                    <td>
+                                        <small class="text-{{ $factura->certificado_vigencia_hasta->isPast() ? 'danger' : 'success' }}">
+                                            Hasta {{ $factura->certificado_vigencia_hasta->format('d/m/Y') }}
+                                        </small>
+                                    </td>
+                                </tr>
+                                @endif
+                            </table>
+                        </div>
+                    @endif
 
                     @if($factura->xml_ruta)
                         <div class="mt-3">
                             <a href="{{ asset($factura->xml_ruta) }}" target="_blank" class="btn btn-outline-primary btn-sm">
                                 <i class="fas fa-download"></i> Descargar XML Original
                             </a>
+                            @if($factura->xml_firmado_ruta)
+                                <a href="{{ asset($factura->xml_firmado_ruta) }}" target="_blank" class="btn btn-outline-success btn-sm ms-2">
+                                    <i class="fas fa-file-signature"></i> Descargar XML Firmado
+                                </a>
+                            @endif
                         </div>
                     @endif
                 </div>
@@ -119,13 +155,19 @@
                         <i class="fas fa-signature"></i> Firmar Documento
                     </h5>
                 </div>
-                <div class="card-body">
-                    @if($factura->xml_firmado_ruta)
+                <div class="card-body">                    @if($factura->xml_firmado_ruta)
                         <div class="alert alert-success">
                             <i class="fas fa-check-circle"></i> 
                             Esta factura ya ha sido firmada digitalmente.
                             <br>
                             <small class="text-muted">Archivo firmado: {{ basename($factura->xml_firmado_ruta) }}</small>
+                            <br>
+                            <small class="text-muted">Firmado el: {{ $factura->fecha_firmado ? $factura->fecha_firmado->format('d/m/Y H:i') : '-' }}</small>
+                            <div class="mt-2">
+                                <a href="{{ asset($factura->xml_firmado_ruta) }}" target="_blank" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-download"></i> Descargar XML Firmado
+                                </a>
+                            </div>
                         </div>
                     @else
                         <div class="row">
