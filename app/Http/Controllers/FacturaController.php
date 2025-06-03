@@ -744,4 +744,23 @@ class FacturaController extends Controller
         
         return $xmlFirmado;
     }
+
+    /**
+     * Show the form for authorizing a factura.
+     */
+    public function autorizar(Factura $factura)
+    {
+        // Verificar que la factura esté en estado RECIBIDA y no haya sido autorizada
+        if ($factura->estado !== 'RECIBIDA') {
+            return redirect()->route('facturas.index')
+                ->with('error', 'Esta factura debe estar en estado RECIBIDA para ser autorizada.');
+        }
+        
+        if ($factura->fecha_autorizacion) {
+            return redirect()->route('facturas.index')
+                ->with('info', 'Esta factura ya ha sido autorizada.');
+        }
+        
+        return view('facturas.autorizar', compact('factura'));
+    }
 }

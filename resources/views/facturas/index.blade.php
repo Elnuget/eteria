@@ -183,6 +183,13 @@
                                                     <i class="fas fa-paper-plane"></i> Enviar
                                                 </a>
                                             @endif
+                                            @if($factura->estado === 'RECIBIDA' && !$factura->fecha_autorizacion)
+                                                <a href="{{ route('facturas.autorizar', $factura->id) }}" 
+                                                   class="btn btn-info btn-sm" 
+                                                   title="Autorizar Factura">
+                                                    <i class="fas fa-check-circle"></i> Autorizar
+                                                </a>
+                                            @endif
                                             <button type="button" 
                                                     class="btn btn-danger btn-sm" 
                                                     onclick="confirmarBorrar({{ $factura->id }}, '{{ $factura->numero_factura }}')"
