@@ -84,8 +84,7 @@
                 <div class="card-body text-center">
                     <p class="text-muted mb-3">
                         El XML está firmado y listo para ser enviado al SRI para su autorización.
-                    </p>
-                    <button type="button" 
+                    </p>                    <button type="button" 
                             class="btn btn-success btn-lg" 
                             id="btnEnviarFactura"
                             onclick="enviarFactura({{ $factura->id }})">
@@ -127,6 +126,106 @@
                     @endif
                 </div>
             </div>
+        </div>    </div>
+</div>
+
+<!-- Modal de Éxito (RECIBIDA) -->
+<div class="modal fade" id="modalExito" tabindex="-1" aria-labelledby="modalExitoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modalExitoLabel">
+                    <i class="fas fa-check-circle"></i> Factura Recibida por el SRI
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-info-circle"></i> Estado: <span id="estadoExito"></span></h6>
+                    <p><strong>Mensaje:</strong> <span id="mensajeExito"></span></p>
+                    <div id="infoAdicionalExito" style="display: none;">
+                        <p><strong>Información Adicional:</strong> <span id="infoAdicionalTexto"></span></p>
+                    </div>
+                    <p><strong>Tipo:</strong> <span id="tipoExito"></span></p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Información de la Factura:</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item"><strong>Número:</strong> {{ $factura->numero_factura }}</li>
+                            <li class="list-group-item"><strong>Clave de Acceso:</strong> <small class="font-monospace">{{ $factura->clave_acceso }}</small></li>
+                            <li class="list-group-item"><strong>Fecha de Envío:</strong> <span id="fechaEnvio"></span></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Próximos Pasos:</h6>
+                        <div class="alert alert-info">
+                            <p class="mb-1"><i class="fas fa-clock"></i> La factura ha sido recibida correctamente por el SRI.</p>
+                            <p class="mb-0"><i class="fas fa-info-circle"></i> Ahora debe esperar la autorización del SRI para completar el proceso.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">
+                    <i class="fas fa-check"></i> Entendido
+                </button>
+                <a href="{{ route('facturas.index') }}" class="btn btn-outline-success">
+                    <i class="fas fa-list"></i> Volver al Listado
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Error (DEVUELTA) -->
+<div class="modal fade" id="modalError" tabindex="-1" aria-labelledby="modalErrorLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalErrorLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Factura Devuelta por el SRI
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-times-circle"></i> Estado: <span id="estadoError"></span></h6>
+                    <p><strong>Mensaje de Error:</strong> <span id="mensajeError"></span></p>
+                    <div id="infoAdicionalError" style="display: none;">
+                        <p><strong>Información Adicional:</strong> <span id="infoAdicionalErrorTexto"></span></p>
+                    </div>
+                    <p><strong>Tipo:</strong> <span id="tipoError"></span></p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Información de la Factura:</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item"><strong>Número:</strong> {{ $factura->numero_factura }}</li>
+                            <li class="list-group-item"><strong>Clave de Acceso:</strong> <small class="font-monospace">{{ $factura->clave_acceso }}</small></li>
+                            <li class="list-group-item"><strong>Fecha de Intento:</strong> <span id="fechaIntento"></span></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Qué Hacer Ahora:</h6>
+                        <div class="alert alert-warning">
+                            <p class="mb-1"><i class="fas fa-tools"></i> La factura fue devuelta por errores.</p>
+                            <p class="mb-1"><i class="fas fa-edit"></i> Revise y corrija los errores indicados.</p>
+                            <p class="mb-0"><i class="fas fa-redo"></i> Genere una nueva factura con los datos corregidos.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+                <a href="{{ route('facturas.generarxml') }}" class="btn btn-outline-warning">
+                    <i class="fas fa-plus"></i> Generar Nueva Factura
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -137,18 +236,73 @@ function enviarFactura(facturaId) {
     const textOriginal = btn.innerHTML;
     
     // Mostrar loading
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Enviando...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Enviando al SRI...';
     btn.disabled = true;
     
-    // Aquí puedes implementar la lógica de envío cuando esté lista
-    // Por ahora solo simula el envío
-    setTimeout(() => {
-        mostrarAlerta('info', 'Funcionalidad de envío será implementada próximamente');
-        
+    // Obtener el token CSRF
+    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    // Enviar request al SRI
+    fetch(`/facturas/${facturaId}/enviar-sri`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': token,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.estado === 'RECIBIDA') {
+                mostrarModalExito(data);
+            } else {
+                mostrarModalError(data);
+            }
+        } else {
+            mostrarAlerta('danger', data.message || 'Error al enviar la factura');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        mostrarAlerta('danger', 'Error de conexión al enviar la factura');
+    })
+    .finally(() => {
         // Restaurar botón
         btn.innerHTML = textOriginal;
         btn.disabled = false;
-    }, 2000);
+    });
+}
+
+function mostrarModalExito(data) {
+    document.getElementById('estadoExito').textContent = data.estado;
+    document.getElementById('mensajeExito').textContent = data.mensaje;
+    document.getElementById('tipoExito').textContent = data.tipo || 'INFORMATIVO';
+    document.getElementById('fechaEnvio').textContent = new Date().toLocaleString('es-EC');
+    
+    if (data.informacion_adicional) {
+        document.getElementById('infoAdicionalTexto').textContent = data.informacion_adicional;
+        document.getElementById('infoAdicionalExito').style.display = 'block';
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalExito'));
+    modal.show();
+}
+
+function mostrarModalError(data) {
+    document.getElementById('estadoError').textContent = data.estado;
+    document.getElementById('mensajeError').textContent = data.mensaje;
+    document.getElementById('tipoError').textContent = data.tipo || 'ERROR';
+    document.getElementById('fechaIntento').textContent = new Date().toLocaleString('es-EC');
+    
+    if (data.informacion_adicional) {
+        document.getElementById('infoAdicionalErrorTexto').textContent = data.informacion_adicional;
+        document.getElementById('infoAdicionalError').style.display = 'block';
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalError'));
+    modal.show();
 }
 
 function mostrarAlerta(tipo, mensaje) {
@@ -162,6 +316,14 @@ function mostrarAlerta(tipo, mensaje) {
     // Insertar la alerta al inicio del contenedor principal
     const container = document.querySelector('.container-fluid');
     container.insertAdjacentHTML('afterbegin', alertaHtml);
+    
+    // Auto-eliminar después de 5 segundos
+    setTimeout(() => {
+        const alerta = container.querySelector('.alert');
+        if (alerta) {
+            alerta.remove();
+        }
+    }, 5000);
 }
 </script>
 @endsection
