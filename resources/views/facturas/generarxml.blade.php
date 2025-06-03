@@ -89,10 +89,6 @@
                     </tbody>
                 </table>
             </div>
-
-            <div class="mt-4">
-                <button type="button" class="btn btn-primary">Generar XML</button>
-            </div>
         </div>
     </div>
 
@@ -409,6 +405,7 @@
     </div>
 </div>
 @endsection
+
 @push('scripts')
 <script>
 function generarClaveAcceso() {
