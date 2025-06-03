@@ -1,3 +1,6 @@
+promt incial:
+Hola, hablo español. Estamos trabajando con Laravel Framework 11.41.3 y Vite en Windows con PowerShell.
+
 composer install
 npm install
 npm run dev

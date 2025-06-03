@@ -95,6 +95,11 @@
                                                 <i class="fas fa-calculator"></i> Contabilidad
                                             </a>
                                         </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('facturas.index') }}">
+                                                <i class="fas fa-receipt"></i> Facturas
+                                            </a>
+                                        </li>
                                     </ul>
                                 </li>
 

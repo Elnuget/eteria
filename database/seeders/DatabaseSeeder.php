@@ -45,6 +45,7 @@ class DatabaseSeeder extends Seeder
             ContactoWebsSeeder::class,
             ChatWebsSeeder::class,
             TurnosSeeder::class,
+            FacturaSeeder::class,
         ]);
     }
 }
