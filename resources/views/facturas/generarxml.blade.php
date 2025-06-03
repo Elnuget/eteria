@@ -537,7 +537,17 @@ function generarXMLCompleto() {
         clave_acceso: document.getElementById('claveAccesoInput').value,
         ambiente: '{{ env("SRI_AMBIENTE") }}',
         fecha_emision: document.getElementById('fechaEmision').value,
-        xml_ruta: '/storage/facturas/xml/factura_' + document.getElementById('secuencial').value.padStart(9, '0') + '.xml'
+        // Datos adicionales del formulario
+        razon_social_comprador: document.getElementById('razonSocialComprador').value,
+        identificacion_comprador: document.getElementById('identificacionComprador').value,
+        total_sin_impuestos: parseFloat(document.getElementById('totalSinImpuestos').value) || 100.00,
+        total_descuento: parseFloat(document.getElementById('totalDescuento').value) || 0.00,
+        importe_total: parseFloat(document.getElementById('importeTotal').value) || 115.00,
+        descripcion: document.getElementById('descripcion').value,
+        cantidad: parseFloat(document.getElementById('cantidad').value) || 1.00,
+        precio_unitario: parseFloat(document.getElementById('precioUnitario').value) || 100.00,
+        telefono: document.getElementById('telefono').value,
+        email: document.getElementById('email').value
     };
     
     // Verificar que todos los datos requeridos estén presentes
@@ -553,6 +563,12 @@ function generarXMLCompleto() {
     
     console.log('Datos a enviar:', datosFactura);
     
+    // Mostrar loading
+    const boton = event.target;
+    const textoOriginal = boton.innerHTML;
+    boton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando XML...';
+    boton.disabled = true;
+    
     // Enviar datos al servidor
     fetch('{{ route("facturas.guardarxml") }}', {
         method: 'POST',
@@ -565,8 +581,18 @@ function generarXMLCompleto() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('¡Factura guardada exitosamente en la base de datos!\n\nID: ' + data.factura.id + '\nEstado: ' + data.factura.estado);
+            alert('¡Factura guardada exitosamente!\n\n' +
+                  'ID: ' + data.factura.id + '\n' +
+                  'Estado: ' + data.factura.estado + '\n' +
+                  'XML generado y guardado correctamente\n' +
+                  'Ruta: ' + data.factura.xml_ruta);
             console.log('Factura guardada:', data.factura);
+            console.log('URL del XML:', data.xml_url);
+            
+            // Opcional: abrir el XML en nueva pestaña
+            if (confirm('¿Desea ver el XML generado?')) {
+                window.open(data.xml_url, '_blank');
+            }
         } else {
             alert('Error al guardar la factura: ' + data.message);
         }
@@ -574,6 +600,11 @@ function generarXMLCompleto() {
     .catch(error => {
         console.error('Error:', error);
         alert('Error al comunicarse con el servidor');
+    })
+    .finally(() => {
+        // Restaurar botón
+        boton.innerHTML = textoOriginal;
+        boton.disabled = false;
     });
 }
 

@@ -80,10 +80,14 @@
                                     </td>
                                     <td>
                                         @if($factura->xml_ruta)
-                                            <small class="text-success">
-                                                <i class="fas fa-file-code"></i> 
-                                                {{ basename($factura->xml_ruta) }}
-                                            </small>
+                                            <a href="{{ asset($factura->xml_ruta) }}" target="_blank" class="text-decoration-none">
+                                                <small class="text-success">
+                                                    <i class="fas fa-file-code"></i> 
+                                                    {{ basename($factura->xml_ruta) }}
+                                                </small>
+                                                <br>
+                                                <small class="text-muted">Click para ver XML</small>
+                                            </a>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif

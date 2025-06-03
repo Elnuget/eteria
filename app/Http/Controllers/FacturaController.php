@@ -127,15 +127,37 @@ class FacturaController extends Controller
                 'clave_acceso' => 'required|string|max:49',
                 'ambiente' => 'required|in:1,2',
                 'fecha_emision' => 'required|date',
-                'xml_ruta' => 'nullable|string'
+                'xml_ruta' => 'nullable|string',
+                // Campos adicionales del formulario
+                'razon_social_comprador' => 'nullable|string',
+                'identificacion_comprador' => 'nullable|string',
+                'total_sin_impuestos' => 'nullable|numeric',
+                'total_descuento' => 'nullable|numeric',
+                'importe_total' => 'nullable|numeric',
+                'descripcion' => 'nullable|string',
+                'cantidad' => 'nullable|numeric',
+                'precio_unitario' => 'nullable|numeric',
+                'telefono' => 'nullable|string',
+                'email' => 'nullable|string'
             ]);
+
+            // Generar nombre único para el archivo XML
+            $nombreArchivo = 'factura_' . $validated['numero_factura'] . '_' . time() . '.xml';
+            $rutaXML = 'facturas/xml/' . $nombreArchivo;
+            $rutaCompleta = storage_path('app/public/' . $rutaXML);
+
+            // Generar contenido XML
+            $xmlContent = $this->generarContenidoXML($validated);
+
+            // Guardar el archivo XML
+            file_put_contents($rutaCompleta, $xmlContent);
 
             // Preparar los datos según las especificaciones
             $facturaData = [
                 'numero_factura' => $validated['numero_factura'], // el secuencial
                 'clave_acceso' => $validated['clave_acceso'],
                 'estado' => 'PENDIENTE',
-                'xml_ruta' => $validated['xml_ruta'] ?? null,
+                'xml_ruta' => '/storage/' . $rutaXML, // Ruta accesible desde web
                 'xml_firmado_ruta' => null,
                 'pdf_ruta' => null,
                 'ambiente' => $validated['ambiente'],
@@ -156,8 +178,9 @@ class FacturaController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Factura guardada exitosamente',
-                'factura' => $factura
+                'message' => 'Factura guardada exitosamente con XML generado',
+                'factura' => $factura,
+                'xml_url' => asset('storage/' . $rutaXML)
             ]);
 
         } catch (\Exception $e) {
@@ -166,5 +189,106 @@ class FacturaController extends Controller
                 'message' => 'Error al guardar la factura: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Generar contenido XML de la factura
+     */
+    private function generarContenidoXML($datos)
+    {
+        $fecha = date('d/m/Y', strtotime($datos['fecha_emision']));
+        $ambiente = $datos['ambiente'] == '2' ? 'PRODUCCIÓN' : 'PRUEBAS';
+        
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<factura id="comprobante" version="2.1.0">' . "\n";
+        $xml .= '  <infoTributaria>' . "\n";
+        $xml .= '    <ambiente>' . $datos['ambiente'] . '</ambiente>' . "\n";
+        $xml .= '    <tipoEmision>1</tipoEmision>' . "\n";
+        $xml .= '    <razonSocial>' . env('EMISOR_RAZON_SOCIAL') . '</razonSocial>' . "\n";
+        $xml .= '    <nombreComercial>' . env('EMISOR_NOMBRE_COMERCIAL') . '</nombreComercial>' . "\n";
+        $xml .= '    <ruc>' . env('EMISOR_RUC') . '</ruc>' . "\n";
+        $xml .= '    <claveAcceso>' . $datos['clave_acceso'] . '</claveAcceso>' . "\n";
+        $xml .= '    <codDoc>01</codDoc>' . "\n";
+        $xml .= '    <estab>' . env('EMISOR_ESTABLECIMIENTO') . '</estab>' . "\n";
+        $xml .= '    <ptoEmi>' . env('EMISOR_PUNTO_EMISION') . '</ptoEmi>' . "\n";
+        $xml .= '    <secuencial>' . str_pad($datos['numero_factura'], 9, '0', STR_PAD_LEFT) . '</secuencial>' . "\n";
+        $xml .= '    <dirMatriz>' . env('EMISOR_DIRECCION') . '</dirMatriz>' . "\n";
+        $xml .= '    <regimenGeneral>' . env('EMISOR_REGIMEN_GENERAL', 'RÉGIMEN GENERAL') . '</regimenGeneral>' . "\n";
+        $xml .= '    <contribuyenteRimpe>' . env('EMISOR_CONTRIBUYENTE_RIMPE') . '</contribuyenteRimpe>' . "\n";
+        $xml .= '  </infoTributaria>' . "\n";
+        
+        $xml .= '  <infoFactura>' . "\n";
+        $xml .= '    <fechaEmision>' . $fecha . '</fechaEmision>' . "\n";
+        $xml .= '    <dirEstablecimiento>Calle: E3J Numero: S56-65 Interseccion: S57 P INOCENCIO JACOME</dirEstablecimiento>' . "\n";
+        $xml .= '    <obligadoContabilidad>NO</obligadoContabilidad>' . "\n";
+        $xml .= '    <tipoIdentificacionComprador>07</tipoIdentificacionComprador>' . "\n";
+        $xml .= '    <razonSocialComprador>' . ($datos['razon_social_comprador'] ?? 'CONSUMIDOR FINAL') . '</razonSocialComprador>' . "\n";
+        $xml .= '    <identificacionComprador>' . ($datos['identificacion_comprador'] ?? '9999999999') . '</identificacionComprador>' . "\n";
+        $xml .= '    <totalSinImpuestos>' . number_format($datos['total_sin_impuestos'] ?? 100.00, 2, '.', '') . '</totalSinImpuestos>' . "\n";
+        $xml .= '    <totalDescuento>' . number_format($datos['total_descuento'] ?? 0.00, 2, '.', '') . '</totalDescuento>' . "\n";
+        
+        // Impuestos
+        $baseImponible = ($datos['total_sin_impuestos'] ?? 100.00) - ($datos['total_descuento'] ?? 0.00);
+        $valorIva = $baseImponible * 0.15;
+        
+        $xml .= '    <totalConImpuestos>' . "\n";
+        $xml .= '      <totalImpuesto>' . "\n";
+        $xml .= '        <codigo>2</codigo>' . "\n";
+        $xml .= '        <codigoPorcentaje>4</codigoPorcentaje>' . "\n";
+        $xml .= '        <baseImponible>' . number_format($baseImponible, 2, '.', '') . '</baseImponible>' . "\n";
+        $xml .= '        <valor>' . number_format($valorIva, 2, '.', '') . '</valor>' . "\n";
+        $xml .= '      </totalImpuesto>' . "\n";
+        $xml .= '    </totalConImpuestos>' . "\n";
+        
+        $xml .= '    <propina>0.00</propina>' . "\n";
+        $xml .= '    <importeTotal>' . number_format($datos['importe_total'] ?? ($baseImponible + $valorIva), 2, '.', '') . '</importeTotal>' . "\n";
+        $xml .= '    <moneda>DOLAR</moneda>' . "\n";
+        
+        // Pagos
+        $xml .= '    <pagos>' . "\n";
+        $xml .= '      <pago>' . "\n";
+        $xml .= '        <formaPago>01</formaPago>' . "\n";
+        $xml .= '        <total>' . number_format($datos['importe_total'] ?? ($baseImponible + $valorIva), 2, '.', '') . '</total>' . "\n";
+        $xml .= '      </pago>' . "\n";
+        $xml .= '    </pagos>' . "\n";
+        $xml .= '  </infoFactura>' . "\n";
+        
+        // Detalles
+        $xml .= '  <detalles>' . "\n";
+        $xml .= '    <detalle>' . "\n";
+        $xml .= '      <codigoPrincipal>PRODGENERICO</codigoPrincipal>' . "\n";
+        $xml .= '      <descripcion>' . ($datos['descripcion'] ?? 'SERVICIO GENERAL') . '</descripcion>' . "\n";
+        $xml .= '      <cantidad>' . number_format($datos['cantidad'] ?? 1.00, 2, '.', '') . '</cantidad>' . "\n";
+        $xml .= '      <precioUnitario>' . number_format($datos['precio_unitario'] ?? 100.00, 2, '.', '') . '</precioUnitario>' . "\n";
+        $xml .= '      <descuento>0.00</descuento>' . "\n";
+        $xml .= '      <precioTotalSinImpuesto>' . number_format($datos['total_sin_impuestos'] ?? 100.00, 2, '.', '') . '</precioTotalSinImpuesto>' . "\n";
+        
+        $xml .= '      <impuestos>' . "\n";
+        $xml .= '        <impuesto>' . "\n";
+        $xml .= '          <codigo>2</codigo>' . "\n";
+        $xml .= '          <codigoPorcentaje>4</codigoPorcentaje>' . "\n";
+        $xml .= '          <tarifa>15.00</tarifa>' . "\n";
+        $xml .= '          <baseImponible>' . number_format($datos['total_sin_impuestos'] ?? 100.00, 2, '.', '') . '</baseImponible>' . "\n";
+        $xml .= '          <valor>' . number_format($valorIva, 2, '.', '') . '</valor>' . "\n";
+        $xml .= '        </impuesto>' . "\n";
+        $xml .= '      </impuestos>' . "\n";
+        $xml .= '    </detalle>' . "\n";
+        $xml .= '  </detalles>' . "\n";
+        
+        // Información adicional
+        if (!empty($datos['telefono']) || !empty($datos['email'])) {
+            $xml .= '  <infoAdicional>' . "\n";
+            if (!empty($datos['telefono'])) {
+                $xml .= '    <campoAdicional nombre="Telefono">' . $datos['telefono'] . '</campoAdicional>' . "\n";
+            }
+            if (!empty($datos['email'])) {
+                $xml .= '    <campoAdicional nombre="Email">' . $datos['email'] . '</campoAdicional>' . "\n";
+            }
+            $xml .= '  </infoAdicional>' . "\n";
+        }
+        
+        $xml .= '</factura>';
+        
+        return $xml;
     }
 }
