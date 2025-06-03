@@ -100,12 +100,46 @@ class FacturaController extends Controller
      */
     public function destroy(Factura $factura): JsonResponse
     {
-        $factura->delete();
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Factura eliminada exitosamente'
-        ]);
+        try {
+            // Eliminar archivos asociados si existen
+            if ($factura->xml_ruta) {
+                $xmlPath = str_replace('/storage/', '', $factura->xml_ruta);
+                $fullPath = storage_path('app/public/' . $xmlPath);
+                if (file_exists($fullPath)) {
+                    unlink($fullPath);
+                }
+            }
+            
+            if ($factura->xml_firmado_ruta) {
+                $xmlFirmadoPath = str_replace('/storage/', '', $factura->xml_firmado_ruta);
+                $fullPath = storage_path('app/public/' . $xmlFirmadoPath);
+                if (file_exists($fullPath)) {
+                    unlink($fullPath);
+                }
+            }
+            
+            if ($factura->pdf_ruta) {
+                $pdfPath = str_replace('/storage/', '', $factura->pdf_ruta);
+                $fullPath = storage_path('app/public/' . $pdfPath);
+                if (file_exists($fullPath)) {
+                    unlink($fullPath);
+                }
+            }
+            
+            // Eliminar la factura de la base de datos
+            $factura->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Factura y archivos asociados eliminados exitosamente'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar la factura: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

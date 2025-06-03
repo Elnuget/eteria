@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Facturas SRI</h1>
@@ -38,6 +39,7 @@
                                 <th>Número Autorización</th>
                                 <th>Observaciones</th>
                                 <th>Creado</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -161,6 +163,14 @@
                                             {{ $factura->created_at->format('d/m/Y H:i') }}
                                         </small>
                                     </td>
+                                    <td>
+                                        <button type="button" 
+                                                class="btn btn-danger btn-sm" 
+                                                onclick="confirmarBorrar({{ $factura->id }}, '{{ $factura->numero_factura }}')"
+                                                title="Eliminar factura">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -230,5 +240,108 @@
         </div>
     @endif
 </div>
+
+<!-- Modal de Confirmación -->
+<div class="modal fade" id="modalConfirmarBorrar" tabindex="-1" aria-labelledby="modalConfirmarBorrarLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConfirmarBorrarLabel">
+                    <i class="fas fa-exclamation-triangle text-warning"></i> Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar la factura <strong id="numeroFacturaModal"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle"></i> Esta acción no se puede deshacer. Se eliminarán todos los datos de la factura y los archivos asociados.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarBorrar">
+                    <i class="fas fa-trash"></i> Eliminar Factura
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let facturaAEliminar = null;
+
+function confirmarBorrar(facturaId, numeroFactura) {
+    facturaAEliminar = facturaId;
+    document.getElementById('numeroFacturaModal').textContent = numeroFactura;
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalConfirmarBorrar'));
+    modal.show();
+}
+
+document.getElementById('btnConfirmarBorrar').addEventListener('click', function() {
+    if (facturaAEliminar) {
+        eliminarFactura(facturaAEliminar);
+    }
+});
+
+function eliminarFactura(facturaId) {
+    const btnConfirmar = document.getElementById('btnConfirmarBorrar');
+    const textOriginal = btnConfirmar.innerHTML;
+    
+    // Mostrar loading
+    btnConfirmar.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Eliminando...';
+    btnConfirmar.disabled = true;
+    
+    fetch(`/facturas/${facturaId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Cerrar modal
+            bootstrap.Modal.getInstance(document.getElementById('modalConfirmarBorrar')).hide();
+            
+            // Mostrar mensaje de éxito
+            mostrarAlerta('success', data.message);
+            
+            // Recargar la página después de un breve delay
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            mostrarAlerta('danger', data.message || 'Error al eliminar la factura');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        mostrarAlerta('danger', 'Error de conexión al eliminar la factura');
+    })
+    .finally(() => {
+        // Restaurar botón
+        btnConfirmar.innerHTML = textOriginal;
+        btnConfirmar.disabled = false;
+        facturaAEliminar = null;
+    });
+}
+
+function mostrarAlerta(tipo, mensaje) {
+    const alertaHtml = `
+        <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${tipo === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+    
+    // Insertar la alerta al inicio del contenedor principal
+    const container = document.querySelector('.container-fluid');
+    container.insertAdjacentHTML('afterbegin', alertaHtml);
+}
+</script>
 @endsection
 
