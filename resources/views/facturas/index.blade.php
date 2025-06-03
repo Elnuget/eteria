@@ -44,8 +44,14 @@
                         <tr>
                             <td><code>claveAcceso</code></td>
                             <td>
-                                <span class="text-danger">PENDIENTE GENERAR</span><br>
-                                <small class="text-muted">Clave de 49 dígitos (se calculará automáticamente)</small>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span id="claveAccesoValue" class="text-danger">PENDIENTE GENERAR</span>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="generarClaveAcceso()">
+                                        <i class="fas fa-key"></i> Generar
+                                    </button>
+                                </div>
+                                <small class="text-muted d-block">Clave de 49 dígitos (se calculará automáticamente)</small>
+                                <input type="hidden" id="claveAccesoInput" value="">
                             </td>
                             <td>Clave única de identificación del comprobante</td>
                         </tr>
@@ -93,3 +99,78 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function generarClaveAcceso() {
+    // 1. Fecha de Emisión (8 dígitos) - DDMMAAAA
+    const fechaActual = new Date();
+    const dia = fechaActual.getDate().toString().padStart(2, '0');
+    const mes = (fechaActual.getMonth() + 1).toString().padStart(2, '0');
+    const año = fechaActual.getFullYear().toString();
+    const fechaEmision = dia + mes + año;
+    
+    // 2. Tipo de Comprobante (2 dígitos) - 01 para Factura
+    const tipoComprobante = '01';
+    
+    // 3. RUC del Emisor (13 dígitos)
+    const rucEmisor = '{{ env("EMISOR_RUC") }}';
+    
+    // 4. Ambiente (1 dígito)
+    const ambiente = '{{ env("SRI_AMBIENTE") }}';
+    
+    // 5. Serie del Comprobante (6 dígitos) - establecimiento + punto de emisión
+    const establecimiento = '{{ env("EMISOR_ESTABLECIMIENTO") }}';
+    const puntoEmision = '{{ env("EMISOR_PUNTO_EMISION") }}';
+    const serie = establecimiento + puntoEmision;
+    
+    // 6. Número Secuencial (9 dígitos)
+    const secuencial = document.getElementById('secuencial').value.padStart(9, '0');
+    
+    // 7. Código Numérico (8 dígitos) - aleatorio para pruebas
+    const codigoNumerico = '12345678'; // Fijo para pruebas
+    
+    // 8. Tipo de Emisión (1 dígito) - 1 para emisión normal
+    const tipoEmision = '1';
+    
+    // Concatenar los primeros 48 dígitos
+    const clave48 = fechaEmision + tipoComprobante + rucEmisor + ambiente + serie + secuencial + codigoNumerico + tipoEmision;
+    
+    // 9. Calcular Dígito Verificador usando Módulo 11
+    const digitoVerificador = calcularModulo11(clave48);
+    
+    // Clave de acceso completa (49 dígitos)
+    const claveAcceso = clave48 + digitoVerificador;
+    
+    // Mostrar la clave generada
+    document.getElementById('claveAccesoValue').innerHTML = `<span class="text-success"><strong>${claveAcceso}</strong></span>`;
+    document.getElementById('claveAccesoInput').value = claveAcceso;
+    
+    console.log('Clave de Acceso generada:', claveAcceso);
+    console.log('Desglose:');
+    console.log('- Fecha:', fechaEmision);
+    console.log('- Tipo Comprobante:', tipoComprobante);
+    console.log('- RUC:', rucEmisor);
+    console.log('- Ambiente:', ambiente);
+    console.log('- Serie:', serie);
+    console.log('- Secuencial:', secuencial);
+    console.log('- Código Numérico:', codigoNumerico);
+    console.log('- Tipo Emisión:', tipoEmision);
+    console.log('- Dígito Verificador:', digitoVerificador);
+}
+
+function calcularModulo11(cadena) {
+    const factores = [2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7];
+    
+    let suma = 0;
+    for (let i = 0; i < cadena.length; i++) {
+        suma += parseInt(cadena[i]) * factores[i];
+    }
+    
+    const residuo = suma % 11;
+    const digito = residuo === 0 ? 0 : residuo === 1 ? 1 : 11 - residuo;
+    
+    return digito.toString();
+}
+</script>
+@endpush
