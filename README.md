@@ -1,5 +1,6 @@
 promt incial:
 Hola, hablo español. Estamos trabajando con Laravel Framework 11.41.3 y Vite en Windows con PowerShell.
+Vas a hacer Exactamente lo que te digo ni mas ni menos.
 
 composer install
 npm install
