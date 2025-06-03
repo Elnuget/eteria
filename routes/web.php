@@ -72,6 +72,7 @@ Route::resource('turnos', TurnoController::class)->middleware('auth');
 Route::resource('contabilidad', ContabilidadController::class)->middleware('auth');
 Route::resource('facturas', FacturaController::class)->middleware('auth');
 Route::get('/facturas/generar/xml', [FacturaController::class, 'generarxml'])->name('facturas.generarxml')->middleware('auth');
+Route::post('/facturas/guardar/xml', [FacturaController::class, 'guardarxml'])->name('facturas.guardarxml')->middleware('auth');
 Route::put('/mensajes/update-nombre', [App\Http\Controllers\MensajeController::class, 'updateNombre'])->name('mensajes.updateNombre')->middleware('auth');
 Route::resource('mensajes', MensajeController::class)->middleware('auth');
 Route::post('/webhook/twilio', [WebhookController::class, 'handleTwilioWebhook'])->name('webhook.twilio');

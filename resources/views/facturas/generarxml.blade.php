@@ -2,6 +2,7 @@
 
 @section('content')
 <div class="container">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <div class="card mt-4">
         <div class="card-header">
             <h5>Paso 1</h5>
@@ -529,10 +530,51 @@ function generarXMLCompleto() {
     generarClaveAcceso();
     
     console.log('=== GENERANDO XML COMPLETO ===');
-    console.log('Todos los datos han sido capturados y están listos para el XML');
     
-    // Aquí se implementaría la generación real del XML
-    alert('XML generado correctamente!\nRevisa la consola del navegador para ver los detalles.');
+    // Recopilar todos los datos del formulario
+    const datosFactura = {
+        numero_factura: document.getElementById('secuencial').value.padStart(9, '0'),
+        clave_acceso: document.getElementById('claveAccesoInput').value,
+        ambiente: '{{ env("SRI_AMBIENTE") }}',
+        fecha_emision: document.getElementById('fechaEmision').value,
+        xml_ruta: '/storage/facturas/xml/factura_' + document.getElementById('secuencial').value.padStart(9, '0') + '.xml'
+    };
+    
+    // Verificar que todos los datos requeridos estén presentes
+    if (!datosFactura.clave_acceso) {
+        alert('Error: Debe generar la clave de acceso primero');
+        return;
+    }
+    
+    if (!datosFactura.fecha_emision) {
+        alert('Error: Debe especificar la fecha de emisión');
+        return;
+    }
+    
+    console.log('Datos a enviar:', datosFactura);
+    
+    // Enviar datos al servidor
+    fetch('{{ route("facturas.guardarxml") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify(datosFactura)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('¡Factura guardada exitosamente en la base de datos!\n\nID: ' + data.factura.id + '\nEstado: ' + data.factura.estado);
+            console.log('Factura guardada:', data.factura);
+        } else {
+            alert('Error al guardar la factura: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al comunicarse con el servidor');
+    });
 }
 
 // Función para mostrar resumen

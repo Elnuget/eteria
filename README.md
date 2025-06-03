@@ -2,6 +2,12 @@ promt incial:
 Hola, hablo español. Estamos trabajando con Laravel Framework 11.41.3 y Vite en Windows con PowerShell.
 Vas a hacer Exactamente lo que te digo ni mas ni menos.
 
+
+php artisan config:clear 
+php artisan route:clear 
+php artisan view:clear
+php artisan cache:clear
+
 composer install
 npm install
 npm run dev
@@ -14,6 +20,8 @@ php artisan config:clear
 php artisan config:cache 
 php artisan route:clear 
 php artisan route:cache
+php artisan view:clear
+php artisan cache:clear
 php artisan migrate:fresh --seed
 
 sudo php artisan config:clear

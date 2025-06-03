@@ -114,4 +114,56 @@ class FacturaController extends Controller
     {
         return view('facturas.generarxml');
     }
+
+    /**
+     * Save the XML data to database.
+     */
+    public function guardarxml(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'numero_factura' => 'required|string|max:50',
+                'clave_acceso' => 'required|string|max:49',
+                'ambiente' => 'required|in:1,2',
+                'fecha_emision' => 'required|date',
+                'xml_ruta' => 'nullable|string'
+            ]);
+
+            // Preparar los datos según las especificaciones
+            $facturaData = [
+                'numero_factura' => $validated['numero_factura'], // el secuencial
+                'clave_acceso' => $validated['clave_acceso'],
+                'estado' => 'PENDIENTE',
+                'xml_ruta' => $validated['xml_ruta'] ?? null,
+                'xml_firmado_ruta' => null,
+                'pdf_ruta' => null,
+                'ambiente' => $validated['ambiente'],
+                'certificado_ruta' => null,
+                'certificado_password' => null,
+                'certificado_serial' => null,
+                'certificado_propietario' => null,
+                'certificado_vigencia_hasta' => null,
+                'fecha_firmado' => null,
+                'fecha_emision' => $validated['fecha_emision'],
+                'fecha_recepcion' => null,
+                'fecha_autorizacion' => null,
+                'numero_autorizacion' => null,
+                'observaciones' => null
+            ];
+
+            $factura = Factura::create($facturaData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Factura guardada exitosamente',
+                'factura' => $factura
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al guardar la factura: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
