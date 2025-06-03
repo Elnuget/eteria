@@ -164,12 +164,21 @@
                                         </small>
                                     </td>
                                     <td>
-                                        <button type="button" 
-                                                class="btn btn-danger btn-sm" 
-                                                onclick="confirmarBorrar({{ $factura->id }}, '{{ $factura->numero_factura }}')"
-                                                title="Eliminar factura">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        <div class="d-flex gap-1">
+                                            @if($factura->xml_ruta && !$factura->xml_firmado_ruta)
+                                                <a href="{{ route('facturas.firmar', $factura->id) }}" 
+                                                   class="btn btn-warning btn-sm" 
+                                                   title="Firmar XML">
+                                                    <i class="fas fa-signature"></i> Firmar
+                                                </a>
+                                            @endif
+                                            <button type="button" 
+                                                    class="btn btn-danger btn-sm" 
+                                                    onclick="confirmarBorrar({{ $factura->id }}, '{{ $factura->numero_factura }}')"
+                                                    title="Eliminar factura">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

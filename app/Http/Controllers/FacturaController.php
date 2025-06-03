@@ -325,4 +325,23 @@ class FacturaController extends Controller
         
         return $xml;
     }
+
+    /**
+     * Show the form for signing a factura.
+     */
+    public function firmar(Factura $factura)
+    {
+        // Verificar que la factura tenga XML y no esté ya firmada
+        if (!$factura->xml_ruta) {
+            return redirect()->route('facturas.index')
+                ->with('error', 'Esta factura no tiene un archivo XML para firmar.');
+        }
+        
+        if ($factura->xml_firmado_ruta) {
+            return redirect()->route('facturas.index')
+                ->with('info', 'Esta factura ya ha sido firmada digitalmente.');
+        }
+        
+        return view('facturas.firmar', compact('factura'));
+    }
 }
