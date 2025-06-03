@@ -239,7 +239,6 @@ class FacturaController extends Controller
         $xml .= '    <ambiente>' . $datos['ambiente'] . '</ambiente>' . "\n";
         $xml .= '    <tipoEmision>1</tipoEmision>' . "\n";
         $xml .= '    <razonSocial>' . env('EMISOR_RAZON_SOCIAL') . '</razonSocial>' . "\n";
-        $xml .= '    <nombreComercial>' . env('EMISOR_NOMBRE_COMERCIAL') . '</nombreComercial>' . "\n";
         $xml .= '    <ruc>' . env('EMISOR_RUC') . '</ruc>' . "\n";
         $xml .= '    <claveAcceso>' . $datos['clave_acceso'] . '</claveAcceso>' . "\n";
         $xml .= '    <codDoc>01</codDoc>' . "\n";
@@ -247,8 +246,6 @@ class FacturaController extends Controller
         $xml .= '    <ptoEmi>' . env('EMISOR_PUNTO_EMISION') . '</ptoEmi>' . "\n";
         $xml .= '    <secuencial>' . str_pad($datos['numero_factura'], 9, '0', STR_PAD_LEFT) . '</secuencial>' . "\n";
         $xml .= '    <dirMatriz>' . env('EMISOR_DIRECCION') . '</dirMatriz>' . "\n";
-        $xml .= '    <regimenGeneral>' . env('EMISOR_REGIMEN_GENERAL', 'RÉGIMEN GENERAL') . '</regimenGeneral>' . "\n";
-        $xml .= '    <contribuyenteRimpe>' . env('EMISOR_CONTRIBUYENTE_RIMPE') . '</contribuyenteRimpe>' . "\n";
         $xml .= '  </infoTributaria>' . "\n";
         
         $xml .= '  <infoFactura>' . "\n";
