@@ -67,18 +67,27 @@
                         <tr>
                             <td><strong>Fecha Recepción:</strong></td>
                             <td>{{ $factura->fecha_recepcion ? $factura->fecha_recepcion->format('d/m/Y H:i') : '-' }}</td>
-                        </tr>
-                        <tr>
+                        </tr>                        <tr>
                             <td><strong>Clave de Acceso:</strong></td>
                             <td>
                                 <small class="font-monospace">{{ $factura->clave_acceso }}</small>
+                                @if(app()->environment(['local', 'development']))
+                                    <br><small class="text-muted">
+                                        <i class="fas fa-info-circle"></i> 
+                                        Longitud: {{ strlen($factura->clave_acceso) }}/49 caracteres
+                                        @if(strlen($factura->clave_acceso) !== 49)
+                                            <span class="text-danger">⚠️ Longitud inválida</span>
+                                        @else
+                                            <span class="text-success">✓ Longitud correcta</span>
+                                        @endif
+                                    </small>
+                                @endif
                             </td>
                         </tr>
                     </table>
                 </div>
             </div>
-            
-            <!-- Botón de Autorización -->
+              <!-- Botón de Autorización -->
             <div class="card mt-3">
                 <div class="card-header bg-info text-white">
                     <h5 class="mb-0">
@@ -86,15 +95,38 @@
                     </h5>
                 </div>
                 <div class="card-body text-center">
-                    <p class="text-muted mb-3">
-                        La factura ha sido recibida por el SRI. Proceda con la autorización final.
-                    </p>
-                    <button type="button" 
-                            class="btn btn-info btn-lg" 
-                            id="btnAutorizarFactura"
-                            onclick="autorizarFactura({{ $factura->id }})">
-                        <i class="fas fa-check-circle"></i> Autorizar Factura
-                    </button>
+                    @if($factura->estado === 'RECIBIDA')
+                        <p class="text-muted mb-3">
+                            <i class="fas fa-info-circle"></i> La factura ha sido recibida por el SRI. 
+                            Proceda con la consulta de autorización.
+                        </p>
+                        <button type="button" 
+                                class="btn btn-info btn-lg" 
+                                id="btnAutorizarFactura"
+                                onclick="autorizarFactura({{ $factura->id }})">
+                            <i class="fas fa-search"></i> Consultar Autorización SRI
+                        </button>
+                    @elseif($factura->estado === 'AUTORIZADA')
+                        <div class="alert alert-success mb-3">
+                            <i class="fas fa-check-circle"></i> Esta factura ya está autorizada por el SRI.
+                            <br><strong>Número de Autorización:</strong> {{ $factura->numero_autorizacion }}
+                        </div>
+                        <button type="button" 
+                                class="btn btn-outline-info" 
+                                id="btnAutorizarFactura"
+                                onclick="autorizarFactura({{ $factura->id }})">
+                            <i class="fas fa-sync"></i> Revalidar con SRI
+                        </button>
+                    @else
+                        <div class="alert alert-warning mb-3">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            La factura debe estar en estado "RECIBIDA" para ser autorizada.
+                            <br>Estado actual: <strong>{{ $factura->estado_label }}</strong>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-lg" disabled>
+                            <i class="fas fa-ban"></i> No Disponible
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -259,7 +291,7 @@ function autorizarFactura(facturaId) {
     const textOriginal = btn.innerHTML;
     
     // Mostrar loading
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Autorizando...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Consultando SRI...';
     btn.disabled = true;
     
     // Obtener el token CSRF
@@ -275,21 +307,43 @@ function autorizarFactura(facturaId) {
         },
         body: JSON.stringify({})
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
     .then(data => {
-        if (data.success) {
+        console.log('Respuesta del SRI:', data);
+        
+        // Validar que la respuesta tenga la estructura esperada
+        if (!data || typeof data !== 'object') {
+            throw new Error('Respuesta inválida del servidor');
+        }
+        
+        // Validar específicamente si está autorizada
+        if (data.success === true && data.estado === 'AUTORIZADO' && data.numero_autorizacion) {
             mostrarModalExito(data);
         } else {
-            mostrarModalError(data);
+            // Si no cumple todos los criterios de autorización, mostrar error
+            const errorData = {
+                success: false,
+                estado: data.estado || 'NO_AUTORIZADO',
+                mensaje: data.mensaje || 'La factura no pudo ser autorizada por el SRI',
+                tipo: data.tipo || 'ERROR',
+                informacion_adicional: data.informacion_adicional || ''
+            };
+            mostrarModalError(errorData);
         }
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('Error en autorización:', error);
         const errorData = {
             success: false,
-            estado: 'ERROR',
-            mensaje: 'Error de conexión con el servidor',
-            tipo: 'ERROR'
+            estado: 'ERROR_CONEXION',
+            mensaje: error.message || 'Error de conexión con el servidor SRI',
+            tipo: 'ERROR',
+            informacion_adicional: 'Verifique su conexión a internet y que el servicio SRI esté disponible'
         };
         mostrarModalError(errorData);
     })
@@ -301,15 +355,35 @@ function autorizarFactura(facturaId) {
 }
 
 function mostrarModalExito(data) {
+    // Validar que realmente tengamos todos los datos de autorización
+    if (!data.numero_autorizacion || data.numero_autorizacion === 'N/A' || data.numero_autorizacion.trim() === '') {
+        console.warn('Número de autorización inválido:', data.numero_autorizacion);
+        mostrarModalError({
+            success: false,
+            estado: 'ERROR_AUTORIZACION',
+            mensaje: 'No se recibió un número de autorización válido del SRI',
+            tipo: 'ERROR',
+            informacion_adicional: 'El SRI no proporcionó un número de autorización válido'
+        });
+        return;
+    }
+    
     document.getElementById('estadoExito').textContent = data.estado;
     document.getElementById('mensajeExito').textContent = data.mensaje;
-    document.getElementById('numeroAutorizacion').textContent = data.numero_autorizacion || 'N/A';
-    document.getElementById('fechaAutorizacion').textContent = new Date().toLocaleString('es-EC');
+    document.getElementById('numeroAutorizacion').textContent = data.numero_autorizacion;
+    document.getElementById('fechaAutorizacion').textContent = data.fecha_autorizacion || new Date().toLocaleString('es-EC');
     
     if (data.informacion_adicional) {
         document.getElementById('infoAdicionalTexto').textContent = data.informacion_adicional;
         document.getElementById('infoAdicionalExito').style.display = 'block';
     }
+    
+    // Agregar información de validación en consola
+    console.log('Factura autorizada exitosamente:', {
+        estado: data.estado,
+        numeroAutorizacion: data.numero_autorizacion,
+        fecha: data.fecha_autorizacion
+    });
     
     const modal = new bootstrap.Modal(document.getElementById('modalExito'));
     modal.show();
@@ -325,6 +399,15 @@ function mostrarModalError(data) {
         document.getElementById('infoAdicionalErrorTexto').textContent = data.informacion_adicional;
         document.getElementById('infoAdicionalError').style.display = 'block';
     }
+    
+    // Log detallado para debugging
+    console.error('Error en autorización SRI:', {
+        estado: data.estado,
+        mensaje: data.mensaje,
+        tipo: data.tipo,
+        informacion_adicional: data.informacion_adicional,
+        timestamp: new Date().toISOString()
+    });
     
     const modal = new bootstrap.Modal(document.getElementById('modalError'));
     modal.show();
