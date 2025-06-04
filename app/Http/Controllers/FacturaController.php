@@ -751,15 +751,10 @@ class FacturaController extends Controller
      */
     public function autorizar(Factura $factura)
     {
-        // Verificar que la factura esté en estado RECIBIDA y no haya sido autorizada
-        if ($factura->estado !== 'RECIBIDA') {
+        // Permitir autorización para facturas RECIBIDA y AUTORIZADA (para reintentos)
+        if (!in_array($factura->estado, ['RECIBIDA', 'AUTORIZADA'])) {
             return redirect()->route('facturas.index')
-                ->with('error', 'Esta factura debe estar en estado RECIBIDA para ser autorizada.');
-        }
-        
-        if ($factura->fecha_autorizacion) {
-            return redirect()->route('facturas.index')
-                ->with('info', 'Esta factura ya ha sido autorizada.');
+                ->with('error', 'Esta factura debe estar en estado RECIBIDA o AUTORIZADA para ser procesada.');
         }
         
         return view('facturas.autorizar', compact('factura'));
@@ -771,18 +766,11 @@ class FacturaController extends Controller
     public function procesarAutorizacion(Request $request, Factura $factura): JsonResponse
     {
         try {
-            // Verificar que la factura esté en estado correcto
-            if ($factura->estado !== 'RECIBIDA') {
+            // Permitir autorización para facturas RECIBIDA y AUTORIZADA (para reintentos)
+            if (!in_array($factura->estado, ['RECIBIDA', 'AUTORIZADA'])) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'La factura debe estar en estado RECIBIDA antes de ser autorizada.'
-                ], 400);
-            }
-
-            if ($factura->fecha_autorizacion) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Esta factura ya ha sido autorizada.'
+                    'message' => 'La factura debe estar en estado RECIBIDA o AUTORIZADA para ser procesada.'
                 ], 400);
             }
 

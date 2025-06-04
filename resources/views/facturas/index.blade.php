@@ -183,11 +183,11 @@
                                                     <i class="fas fa-paper-plane"></i> Enviar
                                                 </a>
                                             @endif
-                                            @if($factura->estado === 'RECIBIDA' && !$factura->fecha_autorizacion)
+                                            @if($factura->estado === 'RECIBIDA' || $factura->estado === 'AUTORIZADA')
                                                 <a href="{{ route('facturas.autorizar', $factura->id) }}" 
                                                    class="btn btn-info btn-sm" 
-                                                   title="Autorizar Factura">
-                                                    <i class="fas fa-check-circle"></i> Autorizar
+                                                   title="{{ $factura->estado === 'AUTORIZADA' ? 'Reintentar Autorización' : 'Autorizar Factura' }}">
+                                                    <i class="fas fa-check-circle"></i> {{ $factura->estado === 'AUTORIZADA' ? 'Reintentar' : 'Autorizar' }}
                                                 </a>
                                             @endif
                                             <button type="button" 
