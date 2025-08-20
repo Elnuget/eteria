@@ -85,6 +85,15 @@ class ChatController extends Controller
             $totalVentas += $venta['Unidades Vendidas'] * $venta['Precio Unitario (USD)'];
         }
 
+        $mensaje_lower = strtolower($mensaje);
+
+        // Detectar si es una solicitud de informe específico
+        if ((strpos($mensaje_lower, 'informe') !== false || strpos($mensaje_lower, 'reporte') !== false) && 
+            (strpos($mensaje_lower, 'dolorfree') !== false || strpos($mensaje_lower, 'dolor') !== false)) {
+            
+            return $this->generarInformeDolorFree($ventas, $mensaje_lower);
+        }
+
         // Crear resumen contextual
         $resumen = "DATOS DISPONIBLES DE VENTAS:\n";
         $resumen .= "📊 Total registros: " . count($ventas) . "\n";
@@ -95,8 +104,6 @@ class ChatController extends Controller
         $resumen .= "🏪 Canales: " . implode(', ', $canales) . "\n";
 
         // Si el mensaje contiene palabras clave específicas, dar información más detallada
-        $mensaje_lower = strtolower($mensaje);
-        
         if (strpos($mensaje_lower, 'producto') !== false || strpos($mensaje_lower, 'medicamento') !== false) {
             $resumen .= "\n📋 DETALLE POR PRODUCTOS:\n";
             foreach ($productos as $producto) {
@@ -120,6 +127,75 @@ class ChatController extends Controller
         }
 
         return $resumen;
+    }
+
+    /**
+     * Genera un informe específico de DolorFree
+     */
+    private function generarInformeDolorFree($ventas, $mensaje_lower)
+    {
+        // Filtrar solo ventas de DolorFree en Ecuador
+        $ventasDolorFree = array_filter($ventas, function($v) {
+            return strpos(strtolower($v['Producto']), 'dolorfree') !== false && 
+                   strtolower($v['País']) === 'ecuador';
+        });
+
+        if (empty($ventasDolorFree)) {
+            return "No se encontraron datos de ventas de DolorFree en Ecuador.";
+        }
+
+        // Organizar por mes
+        $ventasPorMes = [];
+        foreach ($ventasDolorFree as $venta) {
+            $fecha = Carbon::parse($venta['Fecha']);
+            $mesAno = $fecha->format('Y-m');
+            $mesNombre = $fecha->locale('es')->isoFormat('MMMM YYYY');
+            
+            if (!isset($ventasPorMes[$mesAno])) {
+                $ventasPorMes[$mesAno] = [
+                    'nombre' => ucfirst($mesNombre),
+                    'unidades' => 0,
+                    'ingresos' => 0,
+                    'ciudades' => []
+                ];
+            }
+            
+            $ventasPorMes[$mesAno]['unidades'] += $venta['Unidades Vendidas'];
+            $ventasPorMes[$mesAno]['ingresos'] += $venta['Unidades Vendidas'] * $venta['Precio Unitario (USD)'];
+            
+            $ciudad = $venta['Ciudad'];
+            if (!isset($ventasPorMes[$mesAno]['ciudades'][$ciudad])) {
+                $ventasPorMes[$mesAno]['ciudades'][$ciudad] = 0;
+            }
+            $ventasPorMes[$mesAno]['ciudades'][$ciudad] += $venta['Unidades Vendidas'];
+        }
+
+        // Generar informe
+        $informe = "📋 INFORME MENSUAL - DOLORFREE 500MG EN ECUADOR:\n\n";
+        
+        foreach ($ventasPorMes as $datos) {
+            $informe .= "🗓️ {$datos['nombre']}:\n";
+            $informe .= "   📦 Unidades vendidas: " . number_format($datos['unidades']) . "\n";
+            $informe .= "   💰 Ingresos: $" . number_format($datos['ingresos'], 2) . "\n";
+            $informe .= "   🏙️ Por ciudades: ";
+            
+            $ciudadesTexto = [];
+            foreach ($datos['ciudades'] as $ciudad => $unidades) {
+                $ciudadesTexto[] = "{$ciudad} (" . number_format($unidades) . ")";
+            }
+            $informe .= implode(', ', $ciudadesTexto) . "\n\n";
+        }
+
+        // Totales
+        $totalUnidades = array_sum(array_column($ventasPorMes, 'unidades'));
+        $totalIngresos = array_sum(array_column($ventasPorMes, 'ingresos'));
+        
+        $informe .= "📊 RESUMEN TOTAL:\n";
+        $informe .= "🔹 Total unidades: " . number_format($totalUnidades) . "\n";
+        $informe .= "🔹 Total ingresos: $" . number_format($totalIngresos, 2) . "\n";
+        $informe .= "🔹 Precio promedio: $" . number_format($totalIngresos / $totalUnidades, 2) . "\n";
+        
+        return $informe;
     }
 
     /**
@@ -161,18 +237,21 @@ class ChatController extends Controller
                          
                          'FUNCIÓN PRINCIPAL: Puedes responder preguntas sobre productos farmacéuticos, ciudades, ventas y análisis de datos. ' .
                          'Si preguntan sobre productos específicos, ciudades, unidades vendidas o canales de venta, usa la información de los datos anteriores. ' .
+                         'IMPORTANTE: Si solicitan un INFORME o REPORTE específico de productos (especialmente DolorFree), proporciona los datos detallados disponibles organizados por mes, ciudades e ingresos. ' .
                          
                          'FLUJO DE CONVERSACIÓN: ' .
-                         '1) Si preguntan sobre datos de ventas, productos o ciudades: Responde con información específica de los datos disponibles, ' .
-                         '2) Si no es sobre datos: Entiende el negocio y sus desafíos actuales, ' .
-                         '3) Luego, identifica una oportunidad de mejora y presenta una propuesta de valor específica para su caso, ' .
-                         '4) Si muestra interés, sugiere agendar una reunión virtual para presentar una solución detallada. ' .
+                         '1) Si solicitan INFORMES específicos de productos: Genera el informe detallado con los datos disponibles, ' .
+                         '2) Si preguntan sobre datos de ventas, productos o ciudades: Responde con información específica de los datos disponibles, ' .
+                         '3) Si no es sobre datos: Entiende el negocio y sus desafíos actuales, ' .
+                         '4) Luego, identifica una oportunidad de mejora y presenta una propuesta de valor específica para su caso, ' .
+                         '5) Si muestra interés, sugiere agendar una reunión virtual para presentar una solución detallada. ' .
                          
                          'Para agendar reuniones virtuales (turnos): Solo L-V desde ' . $manana . ', hora: 9:00-17:00. ' .
                          'Cuando tengas fecha y hora confirmadas por el usuario, usa internamente el formato: TURNO_CONFIRMADO:YYYY-MM-DD HH:mm:MOTIVO para registrarlo. '. // Aclaración para el LLM
                          'Al usuario confirma la cita de forma amigable sin mostrar el formato interno. Ejemplo: "¡Perfecto! Tu reunión está agendada para el..." ' .
                          
                          'EJEMPLOS DE RESPUESTAS SOBRE DATOS: ' .
+                         'Si solicitan informe DolorFree: Proporciona el informe mensual detallado con datos de ventas, ciudades e ingresos disponibles. ' .
                          'Si preguntan por productos: "Tenemos DolorFree 500mg y VitaBoost C1000. DolorFree lidera en Quito y Guayaquil 💊 ¿Te interesa alguno en particular?" ' .
                          'Si preguntan por ciudades: "Operamos en Quito, Guayaquil y Cuenca. Quito tiene las mejores ventas 🏙️ ¿Qué ciudad te interesa?" ' .
                          'Si preguntan por ventas: "Hemos vendido [X] unidades por $[Y]. Canal farmacia domina 📈 ¿Quieres análisis detallado?" ' .
@@ -181,7 +260,7 @@ class ChatController extends Controller
                          'Si mencionan ventas: "Con nuestra solución podrías aumentar tus ventas un 30% automatizando seguimiento de clientes 💡 ¿Te gustaría conocer cómo en una breve reunión?" ' .
                          'Si mencionan tiempo: "Podríamos ahorrarte 15 horas semanales automatizando esos procesos ⚡ ¿Te interesa ver cómo en una reunión virtual?" ' .
                          
-                         'RECUERDA: Mensajes cortos, máximo 2 emojis, prioriza responder con datos específicos cuando pregunten sobre productos/ciudades/ventas, sino enfócate en beneficios comerciales y conseguir la reunión.';
+                         'RECUERDA: Para solicitudes de informes específicos proporciona los datos detallados disponibles. Para otras consultas, mensajes cortos, máximo 2 emojis, prioriza responder con datos específicos cuando pregunten sobre productos/ciudades/ventas, sino enfócate en beneficios comerciales y conseguir la reunión.';
             
             // Verificar si el contacto ya tiene un turno pendiente
             $turnoExistente = Turno::where('contacto_web_id', $contactoWebId)
