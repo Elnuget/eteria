@@ -360,20 +360,27 @@ class ChatController extends Controller
             $validatedData = $request->validate([
                 'celular' => 'required|string|regex:/^[0-9+ ]{9,}$/', // Cambiado de email a celular, ajustar regex según necesidad
                 'nombre' => 'required|string|max:255',
+                'email' => 'required|email|max:255',
             ]);
 
             $celular = preg_replace('/\s+/', '', $validatedData['celular']); // Limpiar espacios si es necesario
             $nombre = $validatedData['nombre'];
+            $email = $validatedData['email'];
 
             // Buscar o crear el contacto web por celular
             $contactoWeb = ContactoWeb::firstOrCreate(
                 ['celular' => $celular], // Criterio de búsqueda por celular
-                ['nombre' => $nombre]  // Datos para crear si no existe
+                [
+                    'nombre' => $nombre,
+                    'email' => $email
+                ]  // Datos para crear si no existe
             );
 
-            // Si existe y el nombre es diferente, actualizarlo (opcional)
-            if ($contactoWeb->wasRecentlyCreated === false && $contactoWeb->nombre !== $nombre) {
+            // Si existe y los datos son diferentes, actualizarlos (opcional)
+            if ($contactoWeb->wasRecentlyCreated === false && 
+                ($contactoWeb->nombre !== $nombre || $contactoWeb->email !== $email)) {
                 $contactoWeb->nombre = $nombre;
+                $contactoWeb->email = $email;
                 $contactoWeb->save();
             }
 
