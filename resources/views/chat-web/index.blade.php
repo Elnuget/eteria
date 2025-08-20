@@ -37,6 +37,7 @@
                                     // Usar los datos del contacto relacionado
                                     $userName = $contactoWeb ? $contactoWeb->nombre : 'Usuario Desconocido';
                                     $userCelular = $contactoWeb ? $contactoWeb->celular : 'Celular Desconocido';
+                                    $userEmail = $contactoWeb && $contactoWeb->email ? $contactoWeb->email : null;
                                 @endphp
                                 <div class="accordion-item mb-3">
                                     <div class="accordion-header">
@@ -44,7 +45,12 @@
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div>
                                                     <strong>{{ $userName }}</strong>
-                                                    <small class="text-muted ms-2">{{ $userCelular }}</small>
+                                                    <small class="text-muted ms-2">
+                                                        <i class="fas fa-phone me-1"></i>{{ $userCelular }}
+                                                        @if($userEmail)
+                                                            <i class="fas fa-envelope ms-2 me-1"></i>{{ $userEmail }}
+                                                        @endif
+                                                    </small>
                                                 </div>
                                                 <div class="ms-auto me-3 d-flex align-items-center">
                                                     <span class="badge bg-primary me-2">{{ $messages->count() }} mensajes</span>
