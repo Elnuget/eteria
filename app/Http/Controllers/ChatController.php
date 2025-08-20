@@ -10,6 +10,7 @@ use App\Models\Turno;
 use App\Models\ChatWeb;
 use App\Models\ContactoWeb;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class ChatController extends Controller
 {
@@ -23,6 +24,102 @@ class ChatController extends Controller
         Log::info('API Key configurada: ' . ($this->apiKey ? 'Presente' : 'No presente'));
         // Establecer zona horaria para Guayaquil
         date_default_timezone_set('America/Guayaquil');
+    }
+
+    /**
+     * Lee y procesa los datos de ventas del archivo CSV
+     */
+    private function getDatosVentas($mensaje = '')
+    {
+        try {
+            $csvPath = public_path('data/datos_ventas.csv');
+            
+            if (!file_exists($csvPath)) {
+                return "No se encontraron datos de ventas disponibles.";
+            }
+
+            $ventas = [];
+            $handle = fopen($csvPath, 'r');
+            
+            if ($handle !== false) {
+                // Leer la primera línea (cabeceras)
+                $headers = fgetcsv($handle);
+                
+                // Leer todas las filas
+                while (($data = fgetcsv($handle)) !== false) {
+                    $ventas[] = array_combine($headers, $data);
+                }
+                fclose($handle);
+            }
+
+            // Procesar los datos según el contexto del mensaje
+            $resumen = $this->procesarDatosVentas($ventas, $mensaje);
+            
+            return $resumen;
+
+        } catch (\Exception $e) {
+            Log::error('Error al leer datos de ventas: ' . $e->getMessage());
+            return "Error al acceder a los datos de ventas.";
+        }
+    }
+
+    /**
+     * Procesa y resume los datos de ventas
+     */
+    private function procesarDatosVentas($ventas, $mensaje = '')
+    {
+        if (empty($ventas)) {
+            return "No hay datos de ventas disponibles.";
+        }
+
+        // Obtener listas únicas
+        $productos = array_unique(array_column($ventas, 'Producto'));
+        $ciudades = array_unique(array_column($ventas, 'Ciudad'));
+        $canales = array_unique(array_column($ventas, 'Canal de Venta'));
+        
+        // Calcular totales
+        $totalUnidades = array_sum(array_column($ventas, 'Unidades Vendidas'));
+        $totalVentas = 0;
+        
+        foreach ($ventas as $venta) {
+            $totalVentas += $venta['Unidades Vendidas'] * $venta['Precio Unitario (USD)'];
+        }
+
+        // Crear resumen contextual
+        $resumen = "DATOS DISPONIBLES DE VENTAS:\n";
+        $resumen .= "📊 Total registros: " . count($ventas) . "\n";
+        $resumen .= "📦 Total unidades vendidas: " . number_format($totalUnidades) . "\n";
+        $resumen .= "💰 Total ingresos: $" . number_format($totalVentas, 2) . "\n";
+        $resumen .= "🏛️ Productos: " . implode(', ', $productos) . "\n";
+        $resumen .= "🌍 Ciudades: " . implode(', ', $ciudades) . "\n";
+        $resumen .= "🏪 Canales: " . implode(', ', $canales) . "\n";
+
+        // Si el mensaje contiene palabras clave específicas, dar información más detallada
+        $mensaje_lower = strtolower($mensaje);
+        
+        if (strpos($mensaje_lower, 'producto') !== false || strpos($mensaje_lower, 'medicamento') !== false) {
+            $resumen .= "\n📋 DETALLE POR PRODUCTOS:\n";
+            foreach ($productos as $producto) {
+                $ventasProducto = array_filter($ventas, function($v) use ($producto) {
+                    return $v['Producto'] === $producto;
+                });
+                $unidadesProducto = array_sum(array_column($ventasProducto, 'Unidades Vendidas'));
+                $resumen .= "- {$producto}: " . number_format($unidadesProducto) . " unidades\n";
+            }
+        }
+
+        if (strpos($mensaje_lower, 'ciudad') !== false || strpos($mensaje_lower, 'región') !== false) {
+            $resumen .= "\n🏙️ DETALLE POR CIUDADES:\n";
+            foreach ($ciudades as $ciudad) {
+                $ventasCiudad = array_filter($ventas, function($v) use ($ciudad) {
+                    return $v['Ciudad'] === $ciudad;
+                });
+                $unidadesCiudad = array_sum(array_column($ventasCiudad, 'Unidades Vendidas'));
+                $resumen .= "- {$ciudad}: " . number_format($unidadesCiudad) . " unidades\n";
+            }
+        }
+
+        return $resumen;
     }
 
     /**
@@ -53,20 +150,38 @@ class ChatController extends Controller
             $hoyGuayaquil = Carbon::now('America/Guayaquil');
             $manana = $hoyGuayaquil->copy()->addDay()->format('Y-m-d');
             
-            $contextBase = 'Eres un asistente comercial estratégico de Eteria para nuestro chat web. ' .
+            // Obtener datos de ventas para incluir en el contexto
+            $datosVentas = $this->getDatosVentas($userMessage);
+            
+            $contextBase = 'Eres un asistente comercial estratégico de Eteria especializado en análisis de datos de ventas farmacéuticas. ' .
                          'HOY es ' . $hoyGuayaquil->format('Y-m-d') . '. ' .
                          'IMPORTANTE: Tus respuestas deben ser cortas y en una sola línea. Usa máximo 2 emojis por mensaje. ' .
-                         'Sigue este flujo de conversación: ' .
-                         '1) Primero, entiende el negocio y sus desafíos actuales, ' .
-                         '2) Luego, identifica una oportunidad de mejora y presenta una propuesta de valor específica para su caso, ' .
-                         '3) Si muestra interés, sugiere agendar una reunión virtual para presentar una solución detallada. ' .
+                         
+                         'DATOS DE VENTAS DISPONIBLES: ' . $datosVentas . ' ' .
+                         
+                         'FUNCIÓN PRINCIPAL: Puedes responder preguntas sobre productos farmacéuticos, ciudades, ventas y análisis de datos. ' .
+                         'Si preguntan sobre productos específicos, ciudades, unidades vendidas o canales de venta, usa la información de los datos anteriores. ' .
+                         
+                         'FLUJO DE CONVERSACIÓN: ' .
+                         '1) Si preguntan sobre datos de ventas, productos o ciudades: Responde con información específica de los datos disponibles, ' .
+                         '2) Si no es sobre datos: Entiende el negocio y sus desafíos actuales, ' .
+                         '3) Luego, identifica una oportunidad de mejora y presenta una propuesta de valor específica para su caso, ' .
+                         '4) Si muestra interés, sugiere agendar una reunión virtual para presentar una solución detallada. ' .
+                         
                          'Para agendar reuniones virtuales (turnos): Solo L-V desde ' . $manana . ', hora: 9:00-17:00. ' .
                          'Cuando tengas fecha y hora confirmadas por el usuario, usa internamente el formato: TURNO_CONFIRMADO:YYYY-MM-DD HH:mm:MOTIVO para registrarlo. '. // Aclaración para el LLM
                          'Al usuario confirma la cita de forma amigable sin mostrar el formato interno. Ejemplo: "¡Perfecto! Tu reunión está agendada para el..." ' .
-                         'EJEMPLOS DE PROPUESTAS: ' .
+                         
+                         'EJEMPLOS DE RESPUESTAS SOBRE DATOS: ' .
+                         'Si preguntan por productos: "Tenemos DolorFree 500mg y VitaBoost C1000. DolorFree lidera en Quito y Guayaquil 💊 ¿Te interesa alguno en particular?" ' .
+                         'Si preguntan por ciudades: "Operamos en Quito, Guayaquil y Cuenca. Quito tiene las mejores ventas 🏙️ ¿Qué ciudad te interesa?" ' .
+                         'Si preguntan por ventas: "Hemos vendido [X] unidades por $[Y]. Canal farmacia domina 📈 ¿Quieres análisis detallado?" ' .
+                         
+                         'EJEMPLOS DE PROPUESTAS COMERCIALES: ' .
                          'Si mencionan ventas: "Con nuestra solución podrías aumentar tus ventas un 30% automatizando seguimiento de clientes 💡 ¿Te gustaría conocer cómo en una breve reunión?" ' .
                          'Si mencionan tiempo: "Podríamos ahorrarte 15 horas semanales automatizando esos procesos ⚡ ¿Te interesa ver cómo en una reunión virtual?" ' .
-                         'RECUERDA: Mensajes cortos, máximo 2 emojis, enfócate en beneficios específicos y en conseguir la reunión.';
+                         
+                         'RECUERDA: Mensajes cortos, máximo 2 emojis, prioriza responder con datos específicos cuando pregunten sobre productos/ciudades/ventas, sino enfócate en beneficios comerciales y conseguir la reunión.';
             
             // Verificar si el contacto ya tiene un turno pendiente
             $turnoExistente = Turno::where('contacto_web_id', $contactoWebId)
