@@ -1,0 +1,89 @@
+{
+  "metadata": {
+    "descripcion": "Datos de ventas farmacéuticas para prueba técnica",
+    "formato": "JSON",
+    "codificacion": "UTF-8",
+    "fecha_creacion": "2025-01-31",
+    "moneda": "USD"
+  },
+  "ventas": [
+    {
+      "id": 1,
+      "fecha": "2025-01-31",
+      "pais": "Ecuador",
+      "ciudad": "Quito",
+      "producto": "DolorFree 500mg",
+      "unidades_vendidas": 1200,
+      "precio_unitario": 4.50,
+      "canal_venta": "Farmacia",
+      "total_venta": 5400.00
+    },
+    {
+      "id": 2,
+      "fecha": "2025-01-31",
+      "pais": "Ecuador",
+      "ciudad": "Guayaquil",
+      "producto": "DolorFree 500mg",
+      "unidades_vendidas": 980,
+      "precio_unitario": 4.50,
+      "canal_venta": "Farmacia",
+      "total_venta": 4410.00
+    },
+    {
+      "id": 3,
+      "fecha": "2025-01-31",
+      "pais": "Ecuador",
+      "ciudad": "Cuenca",
+      "producto": "VitaBoost C1000",
+      "unidades_vendidas": 1500,
+      "precio_unitario": 3.20,
+      "canal_venta": "E-commerce",
+      "total_venta": 4800.00
+    },
+    {
+      "id": 4,
+      "fecha": "2025-02-28",
+      "pais": "Ecuador",
+      "ciudad": "Quito",
+      "producto": "DolorFree 500mg",
+      "unidades_vendidas": 1300,
+      "precio_unitario": 4.50,
+      "canal_venta": "Farmacia",
+      "total_venta": 5850.00
+    },
+    {
+      "id": 5,
+      "fecha": "2025-02-28",
+      "pais": "Ecuador",
+      "ciudad": "Guayaquil",
+      "producto": "DolorFree 500mg",
+      "unidades_vendidas": 1100,
+      "precio_unitario": 4.50,
+      "canal_venta": "Farmacia",
+      "total_venta": 4950.00
+    },
+    {
+      "id": 6,
+      "fecha": "2025-02-28",
+      "pais": "Ecuador",
+      "ciudad": "Cuenca",
+      "producto": "VitaBoost C1000",
+      "unidades_vendidas": 1600,
+      "precio_unitario": 3.20,
+      "canal_venta": "E-commerce",
+      "total_venta": 5120.00
+    }
+  ],
+  "resumen": {
+    "total_registros": 6,
+    "productos_unicos": ["DolorFree 500mg", "VitaBoost C1000"],
+    "ciudades_unicas": ["Quito", "Guayaquil", "Cuenca"],
+    "canales_venta": ["Farmacia", "E-commerce"],
+    "periodo": {
+      "inicio": "2025-01-31",
+      "fin": "2025-02-28"
+    },
+    "total_unidades_vendidas": 7680,
+    "total_ingresos": 30530.00
+  }
+}

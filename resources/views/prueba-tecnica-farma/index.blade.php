@@ -395,7 +395,11 @@
                     <h3>Para comenzar, ingresa tus datos:</h3>
                     <div class="form-group">
                         <label for="user-name">Nombre</label>
-                        <input type="text" id="user-name" placeholder="Tu nombre" required>
+                        <input type="text" id="user-name" placeholder="Tu nombre completo" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-celular">Celular</label>
+                        <input type="tel" id="user-celular" placeholder="Tu número de celular" required>
                     </div>
                     <div class="form-group">
                         <label for="user-email">Correo electrónico</label>
@@ -434,6 +438,7 @@
             const chatInputContainer = document.querySelector('.chat-input-container');
             const startChatButton = document.getElementById('start-chat');
             const userNameInput = document.getElementById('user-name');
+            const userCelularInput = document.getElementById('user-celular');
             const userEmailInput = document.getElementById('user-email');
 
             let chatId = localStorage.getItem('pruebaTecnicaChatId');
@@ -441,13 +446,17 @@
             let userInfo = JSON.parse(localStorage.getItem('pruebaTecnicaChatUser'));
 
             // Funciones de LocalStorage
-            function saveChatData(id, contactoId, name, email) {
+            function saveChatData(id, contactoId, name, celular, email) {
                 localStorage.setItem('pruebaTecnicaChatId', id);
                 localStorage.setItem('pruebaTecnicaContactoWebId', contactoId);
-                localStorage.setItem('pruebaTecnicaChatUser', JSON.stringify({ nombre: name, email: email }));
+                localStorage.setItem('pruebaTecnicaChatUser', JSON.stringify({ 
+                    nombre: name, 
+                    celular: celular, 
+                    email: email 
+                }));
                 chatId = id;
                 contactoWebId = contactoId;
-                userInfo = { nombre: name, email: email };
+                userInfo = { nombre: name, celular: celular, email: email };
             }
 
             function clearChatData() {
@@ -595,10 +604,17 @@
             if (startChatButton) {
                 startChatButton.addEventListener('click', async function() {
                     const userName = userNameInput.value.trim();
+                    const userCelular = userCelularInput.value.trim();
                     const userEmail = userEmailInput.value.trim();
 
-                    if (!userName || !userEmail) {
+                    if (!userName || !userCelular || !userEmail) {
                         alert('Por favor, completa todos los campos');
+                        return;
+                    }
+
+                    // Validación básica de celular
+                    if (userCelular.length < 8) {
+                        alert('Por favor, ingresa un número de celular válido (mínimo 8 dígitos)');
                         return;
                     }
 
@@ -620,7 +636,11 @@
                                 'Accept': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                             },
-                            body: JSON.stringify({ nombre: userName, celular: userEmail }) // Usamos celular para almacenar el email
+                            body: JSON.stringify({ 
+                                nombre: userName, 
+                                celular: userCelular, 
+                                email: userEmail 
+                            })
                         });
 
                         if (!response.ok) {
@@ -633,7 +653,7 @@
                             throw new Error('No se recibieron los IDs necesarios del servidor');
                         }
                         
-                        saveChatData(data.chat_id, data.contacto_web_id, userName, userEmail);
+                        saveChatData(data.chat_id, data.contacto_web_id, userName, userCelular, userEmail);
                         updateChatUI(true);
                         await loadChatHistory();
                         

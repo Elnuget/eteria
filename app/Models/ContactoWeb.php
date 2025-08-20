@@ -15,6 +15,7 @@ class ContactoWeb extends Model
     protected $fillable = [
         'nombre',
         'celular',
+        'email',
     ];
 
     /**

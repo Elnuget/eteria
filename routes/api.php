@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\PruebaTecnicaFarmaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,5 +20,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::post('/chat', [ChatController::class, 'chat']);
-Route::get('/chat/history', [ChatController::class, 'getChatHistory']); 
+Route::post('/chat', [PruebaTecnicaFarmaController::class, 'chat']);
+Route::post('/chat/find-or-create', [PruebaTecnicaFarmaController::class, 'findOrCreateChat']);
+Route::get('/chat/history', [PruebaTecnicaFarmaController::class, 'getChatHistory']); 
+
+// Rutas para la prueba técnica farmacéutica
+Route::prefix('prueba-tecnica-farma')->group(function () {
+    Route::get('/datos-ventas', [PruebaTecnicaFarmaController::class, 'getDatosVentas']);
+}); 
