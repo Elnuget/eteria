@@ -538,14 +538,14 @@
                             addMessage(mensaje.mensaje, mensaje.tipo === 'usuario');
                         });
                     } else {
-                        addMessage('¡Bienvenido a la prueba técnica farmacéutica! �‍💻 Como programador, te haré algunas preguntas para evaluar tus conocimientos técnicos. ¿Estás listo para comenzar?', false);
+                        addMessage('Bienvenido a Farma! Aquí podrás consultar informes de ventas. Puedes preguntarme todo sobre las ventas de esta empresa.', false);
                     }
                     
                     chatMessages.scrollTop = chatMessages.scrollHeight;
                 } catch (error) {
                     console.error('Error al cargar historial:', error);
                     chatMessages.innerHTML = '';
-                    addMessage('Bienvenido a la prueba técnica farmacéutica. Como programador, demostrarás tus habilidades técnicas. ¿Comenzamos?', false);
+                    addMessage('Bienvenido a Farma! Aquí podrás consultar informes de ventas. Puedes preguntarme todo sobre las ventas de esta empresa.', false);
                 }
             }
 
