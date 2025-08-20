@@ -18,10 +18,14 @@ use App\Http\Controllers\ChatWebController;
 use App\Http\Controllers\ContactoWebController;
 use App\Http\Controllers\ContabilidadController;
 use App\Http\Controllers\FacturaController;
+use App\Http\Controllers\PruebaTecnicaFarmaController;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Ruta pública para la prueba técnica
+Route::get('/pruebatecnicafarma', [PruebaTecnicaFarmaController::class, 'index'])->name('prueba-tecnica-farma.index');
 
 // Rutas del chat
 Route::post('/api/chat', [ChatController::class, 'chat']);
